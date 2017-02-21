@@ -73,26 +73,32 @@ Hemp.prototype._findElement = function (selector) {
 Hemp.prototype._onMouseDown = function (event) {
   var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
-  var selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
 
-  // if there are no selected obejcts and we've just hit a new object, select it
-  if (selectedObjects.length > 0) {
-    this._transformHandle = this._findTransformHandle(coordinates.x, coordinates.y, selectedObjects[0]);
-    if (this._transformHandle) {
-      this._transformingObject = selectedObjects[0];
-      return;
-    }
+  // if there's already a selected object, transform it if possible
+  if (this._setupTransformingObject(coordinates.x, coordinates.y)) {
+    return;
   }
 
+  // deselect any selected objects
   this._deselectAllObjects();
+
+  // if we hit an object, select it and start transforming it if possible
   if (hitObjects.length > 0) {
     this._selectObject(hitObjects[hitObjects.length - 1]);
-    selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
-    this._transformHandle = this._findTransformHandle(coordinates.x, coordinates.y, selectedObjects[0]);
+    this._setupTransformingObject(coordinates.x, coordinates.y);
+  }
+};
+
+Hemp.prototype._setupTransformingObject = function(mouseX, mouseY) {
+  selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
+  if (selectedObjects.length > 0) {
+    this._transformHandle = this._findTransformHandle(mouseX, mouseY, selectedObjects[0]);
     if (this._transformHandle) {
       this._transformingObject = selectedObjects[0];
+      return true;
     }
   }
+  return false;
 };
 
 Hemp.prototype._findTransformHandle = function (mouseX, mouseY, object) {
