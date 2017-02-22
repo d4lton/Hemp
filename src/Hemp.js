@@ -102,9 +102,10 @@ Hemp.prototype._onMouseDown = function(event) {
 Hemp.prototype._setupTransformingObject = function(mouseX, mouseY) {
   var selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
   if (selectedObjects.length > 0) {
-    this._transformHandle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
-    if (this._transformHandle) {
+    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
+    if (handle) {
       this._transformingObject = selectedObjects[0];
+      TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY);
       return true;
     }
   }
@@ -113,16 +114,17 @@ Hemp.prototype._setupTransformingObject = function(mouseX, mouseY) {
 
 Hemp.prototype._onMouseMove = function(event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
-  if (this._transformHandle) {
+  if (this._transformingObject) {
     var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
-    TransformElement.transformObject(coordinates.x, coordinates.y, this._transformingObject, this._transformHandle);
+    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
   }
 };
 
 Hemp.prototype._onMouseUp = function(event) {
-  if (this._transformHandle) {
-    delete this._transformHandle;
+  if (this._transformingObject) {
+    TransformElement.transformEnd(this._environment, this._transformingObject);
+    this._transformingObject = null;
   }
 };
 

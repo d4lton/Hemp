@@ -374,17 +374,26 @@ TransformElement.prototype.constructor = TransformElement;
 TransformElement.prototype.renderElement = function () {
   this._environment.context.translate(this._object.x, this._object.y);
   this._environment.context.rotate(this._object.rotation * Math.PI / 180);
-  this._environment.context.lineWidth = 8;
+  this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  // body
   this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
+  // ul
   this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, 20, 20);
+  // ur
   this._environment.context.strokeRect(this._object.width / 2 - 20, -this._object.height / 2, 20, 20);
+  // lr
   this._environment.context.strokeRect(this._object.width / 2 - 20, this._object.height / 2 - 20, 20, 20);
+  // ll
   this._environment.context.strokeRect(-this._object.width / 2, this._object.height / 2 - 20, 20, 20);
+  // rotate handle
+  this._environment.context.strokeRect(-10, -(this._object.height / 2) - 40, 20, 20);
+  // rotate connector
+  this._environment.context.strokeRect(0, -(this._object.height / 2) - 20, 1, 20);
 };
 
 TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
-  var handles = ['ul', 'ur', 'll', 'lr', 'body'];
+  var handles = ['ul', 'ur', 'll', 'lr', 'body', 'rotate'];
   for (var i = 0; i < handles.length; i++) {
     var handle = handles[i];
 
@@ -413,11 +422,14 @@ TransformElement.findTransformHandle = function (environment, mouseX, mouseY, ob
         // upper-right
         environment.context.arc(handleX, handleY, handleSize, 0, 2 * Math.PI, false);
         break;
+      case 'rotate':
+        environment.context.arc(0, -handleY - handleSize * 2, handleSize, 0, 2 * Math.PI, false);
+        break;
       case 'body':
         environment.context.rect(-object.width / 2, -object.height / 2, object.width, object.height);
         break;
     }
-    //this._environment.context.fill();
+    //environment.context.fill();
     var hit = environment.context.isPointInPath(mouseX, mouseY);
     environment.context.restore();
     if (hit) {
@@ -426,47 +438,191 @@ TransformElement.findTransformHandle = function (environment, mouseX, mouseY, ob
   }
 };
 
-TransformElement.transformObject = function (mouseX, mouseY, object, handle) {
-  var radians = -object.rotation * Math.PI / 180;
-  // get the current top-left and bottom-right coordinates of the bounding rect
-  var x1 = object.x - object.width / 2;
-  var y1 = object.y - object.height / 2;
-  var x2 = x1 + object.width;
-  var y2 = y1 + object.height;
+TransformElement.rotatePoint = function (radians, object, x, y) {
+  return {
+    x: object.x + Math.cos(radians) * (x - object.x) - Math.sin(radians) * (y - object.y),
+    y: object.y + Math.sin(radians) * (x - object.x) + Math.cos(radians) * (y - object.y)
+  };
+};
 
-  // rotate the mouse coordinates to match the object rotation
-  mouseX = object.x + Math.cos(radians) * (mouseX - object.x) - Math.sin(radians) * (mouseY - object.y);
-  mouseY = object.y + Math.sin(radians) * (mouseX - object.x) + Math.cos(radians) * (mouseY - object.y);
+TransformElement.getCorners = function (radians, object) {
+  var left = object.x - object.width / 2;
+  var right = object.x + object.width / 2;
+  var top = object.y - object.height / 2;
+  var bottom = object.y + object.height / 2;
+  var corners = {
+    top: top,
+    left: left,
+    bottom: bottom,
+    right: right,
+    ul: { x: left, y: top },
+    ur: { x: right, y: top },
+    ll: { x: left, y: bottom },
+    lr: { x: right, y: bottom }
+  };
+  return corners;
+};
+
+TransformElement.updateObjectFromCorners = function (object, corners) {
+  var handle = object.transform.handle;
+  var anchor = object.transform.anchor;
+  var top, left, bottom, right;
+
   switch (handle) {
     case 'ul':
-      object.width = x2 - mouseX;
-      object.x = mouseX + object.width / 2;
-      object.height = y2 - mouseY;
-      object.y = mouseY + object.height / 2;
-      break;
-    case 'ur':
-      object.width = mouseX - x1;
-      object.x = x1 + object.width / 2;
-      object.height = y2 - mouseY;
-      object.y = mouseY + object.height / 2;
-      break;
-    case 'll':
-      object.width = x2 - mouseX;
-      object.x = mouseX + object.width / 2;
-      object.height = mouseY - y1;
-      object.y = y1 + object.height / 2;
+      top = corners[handle].y;
+      left = corners[handle].x;
+      bottom = corners[anchor].y;
+      right = corners[anchor].x;
       break;
     case 'lr':
-      object.width = mouseX - x1;
-      object.x = x1 + object.width / 2;
-      object.height = mouseY - y1;
-      object.y = y1 + object.height / 2;
+      top = corners[anchor].y;
+      left = corners[anchor].x;
+      bottom = corners[handle].y;
+      right = corners[handle].x;
       break;
-    case 'body':
-      object.x = mouseX;
-      object.y = mouseY;
+    case 'ur':
+      top = corners[handle].y;
+      left = corners[anchor].x;
+      bottom = corners[anchor].y;
+      right = corners[handle].x;
+      break;
+    case 'll':
+      top = corners[anchor].y;
+      left = corners[handle].x;
+      bottom = corners[handle].y;
+      right = corners[anchor].x;
       break;
   }
+
+  object.width = right - left;
+  object.height = bottom - top;
+
+  object.x = object.transform.origin.object.x;
+  object.y = object.transform.origin.object.y;
+};
+
+TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY) {
+  var anchor;
+  switch (handle) {
+    case 'ul':
+      anchor = 'lr';
+      break;
+    case 'ur':
+      anchor = 'll';
+      break;
+    case 'll':
+      anchor = 'ur';
+      break;
+    case 'lr':
+      anchor = 'ul';
+      break;
+  }
+  object.transform = {
+    handle: handle,
+    anchor: anchor,
+    origin: {
+      object: {
+        x: object.x,
+        y: object.y
+      },
+      mouse: {
+        x: mouseX,
+        y: mouseY
+      }
+    }
+  };
+};
+
+TransformElement.offsetCorners = function (corners, offsetX, offsetY) {
+  var top = corners.top + offsetY;
+  var left = corners.left + offsetX;
+  var bottom = corners.bottom + offsetY;
+  var right = corners.right + offsetX;
+  var corners = {
+    top: top,
+    left: left,
+    bottom: bottom,
+    right: right,
+    ul: { x: left, y: top },
+    ur: { x: right, y: top },
+    ll: { x: left, y: bottom },
+    lr: { x: right, y: bottom }
+  };
+  return corners;
+};
+
+TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event) {
+  object.x = mouseX;
+  object.y = mouseY;
+};
+
+TransformElement.transformRotateObject = function (environment, object, mouseX, mouseY, event) {
+  var radians = object.rotation * (Math.PI / 180);
+
+  // offset mouse so it will be relative to 0,0 (the object's new origin)
+  mouseX -= object.x;
+  mouseY -= object.y;
+
+  // move the object to 0, 0
+  object.x = 0;
+  object.y = 0;
+
+  // rotate the mouse around 0, 0 so it matches the object's rotation
+  var mouse = TransformElement.rotatePoint(-radians, object, mouseX, mouseY);
+
+  var theta = Math.atan2(mouseY, mouseX) * (180 / Math.PI);
+  if (theta < 0) theta = 360 + theta;
+  theta = (theta + 90) % 360;
+  if (event.shiftKey) {
+    theta = Math.round(theta / 45) * 45;
+  }
+  object.rotation = theta;
+
+  object.x = object.transform.origin.object.x;
+  object.y = object.transform.origin.object.y;
+};
+
+TransformElement.transformResizeObject = function (environment, object, mouseX, mouseY, event) {
+  var radians = object.rotation * (Math.PI / 180);
+
+  // offset mouse so it will be relative to 0,0 (the object's new origin)
+  mouseX -= object.x;
+  mouseY -= object.y;
+
+  // move the object to 0, 0
+  object.x = 0;
+  object.y = 0;
+
+  // rotate the mouse around 0, 0 so it matches the object's rotation
+  var mouse = TransformElement.rotatePoint(-radians, object, mouseX, mouseY);
+
+  // find all the corners of the unrotated object
+  var corners = TransformElement.getCorners(0, object);
+
+  // move the handle to match the rotated mouse coordinates
+  corners[object.transform.handle] = { x: mouse.x, y: mouse.y };
+
+  // rebuild the object from the modified corners
+  TransformElement.updateObjectFromCorners(object, corners);
+};
+
+TransformElement.transformMove = function (environment, object, mouseX, mouseY, event) {
+  switch (object.transform.handle) {
+    case 'body':
+      TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event);
+      break;
+    case 'rotate':
+      TransformElement.transformRotateObject(environment, object, mouseX, mouseY, event);
+      break;
+    default:
+      TransformElement.transformResizeObject(environment, object, mouseX, mouseY, event);
+      break;
+  }
+};
+
+TransformElement.transformEnd = function (environment, object) {
+  delete object.transform;
 };
 
 /**
@@ -602,9 +758,10 @@ Hemp.prototype._onMouseDown = function (event) {
 Hemp.prototype._setupTransformingObject = function (mouseX, mouseY) {
   var selectedObjects = this._getObjects({ name: 'selected', value: true, op: '==' });
   if (selectedObjects.length > 0) {
-    this._transformHandle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
-    if (this._transformHandle) {
+    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
+    if (handle) {
       this._transformingObject = selectedObjects[0];
+      TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY);
       return true;
     }
   }
@@ -613,16 +770,17 @@ Hemp.prototype._setupTransformingObject = function (mouseX, mouseY) {
 
 Hemp.prototype._onMouseMove = function (event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
-  if (this._transformHandle) {
+  if (this._transformingObject) {
     var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
-    TransformElement.transformObject(coordinates.x, coordinates.y, this._transformingObject, this._transformHandle);
+    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
   }
 };
 
 Hemp.prototype._onMouseUp = function (event) {
-  if (this._transformHandle) {
-    delete this._transformHandle;
+  if (this._transformingObject) {
+    TransformElement.transformEnd(this._environment, this._transformingObject);
+    this._transformingObject = null;
   }
 };
 
