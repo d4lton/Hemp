@@ -1,53 +1,72 @@
 /**
- * Base Element object
+ * Hemp
+ * Base Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
  */
 
-function Element() {}
+function Element(environment, object) {
+  this._environment = environment;
+  this._object = object;
+}
 
 /************************************************************************************/
 
-Element.prototype.render = function (context, object) {
-	this.setupCanvas(object);
-	this.renderElement(object);
-	this.renderCanvas(context, object);
+Element.prototype.render = function () {
+  this.setupCanvas();
+  this.renderElement();
+  this.renderCanvas();
 };
 
-Element.prototype.setupCanvas = function (object) {
-	this.canvas = document.createElement('canvas');
-	this.context = this.canvas.getContext('2d');
-	this.canvas.width = object.width;
-	this.canvas.height = object.height;
-	if (object.backgroundColor) {
-		this.context.save();
-		this.context.fillStyle = object.backgroundColor;
-		this.context.fillRect(0, 0, object.width, object.height);
-		this.context.restore();
-	}
+Element.prototype.setupCanvas = function () {
+  this._canvas = document.createElement('canvas');
+  this._context = this._canvas.getContext('2d');
+  this._canvas.width = this._object.width;
+  this._canvas.height = this._object.height;
+  if (this._object.backgroundColor) {
+    this._context.save();
+    this._context.fillStyle = this.resolveColor(this._environment, this._object.backgroundColor);
+    this._context.fillRect(0, 0, this._object.width, this._object.height);
+    this._context.restore();
+  }
 };
 
-Element.prototype.renderElement = function (object) {
-	console.warn('override me');
+Element.prototype.renderElement = function () {
+  console.warn('override me');
 };
 
-Element.prototype.renderCanvas = function (context, object) {
-	context.save();
-	context.translate(object.x, object.y);
-	if (object.rotation) {
-		context.rotate(object.rotation * Math.PI / 180);
-	}
-	if (typeof object.opacity !== 'undefined') {
-		context.globalAlpha = object.opacity;
-	}
-	context.drawImage(this.canvas, -object.width / 2, -object.height / 2);
-	context.restore();
+Element.prototype.renderCanvas = function () {
+  this._environment.context.save();
+  this._environment.context.translate(this._object.x, this._object.y);
+  if (this._object.rotation) {
+    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  }
+  if (typeof this._object.opacity !== 'undefined') {
+    this._environment.context.globalAlpha = this._object.opacity;
+  }
+  this._environment.context.drawImage(this._canvas, -this._object.width / 2, -this._object.height / 2);
+  this._environment.context.restore();
+};
+
+Element.prototype.resolveColor = function (color) {
+  if (this._environment.options && this._environment.options.selectionRender) {
+    return 'black';
+  } else {
+    return color;
+  }
 };
 
 /**
+ * Hemp
  * Image Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
  */
 
-function ImageElement() {
-  Element.call(this);
+function ImageElement(environment, object) {
+  Element.call(this, environment, object);
 }
 
 ImageElement.prototype = Object.create(Element.prototype);
@@ -55,7 +74,7 @@ ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
 
-ImageElement.prototype.renderElement = function (object) {
+ImageElement.prototype.renderElement = function () {
   //var sourceAndOffset = Utilities.getFillSourceAndOffset(object.image, object);
   //this.context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
 };
@@ -67,7 +86,7 @@ ImageElement.prototype.renderElement = function (object) {
  *
  */
 
-var CanvasText$1 = {
+var CanvasText = {
 
     M_HEIGHT_FACTOR: 1.2,
     DEFAULT_FONT_SIZE: 12,
@@ -102,18 +121,18 @@ var CanvasText$1 = {
      * The canvas context you pass to drawText should have a width and height assigned.
      */
     drawText: function drawText(context, object) {
-        var fontSize = object.fontSize ? object.fontSize : CanvasText$1.DEFAULT_FONT_SIZE;
-        var fontFamily = object.fontFamily ? object.fontFamily : CanvasText$1.DEFAULT_FONT_FAMILY;
+        var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
+        var fontFamily = object.fontFamily ? object.fontFamily : CanvasText.DEFAULT_FONT_FAMILY;
 
         context.save();
 
         context.font = fontSize + "pt '" + fontFamily + "'";
         context.textBaseline = 'hanging';
-        context.fillStyle = object.color ? object.color : CanvasText$1.DEFAULT_FONT_COLOR;
+        context.fillStyle = object.color ? object.color : CanvasText.DEFAULT_FONT_COLOR;
 
-        CanvasText$1.resolvePadding(object);
+        CanvasText.resolvePadding(object);
 
-        CanvasText$1.renderWordWrapRows(context, object, CanvasText$1.makeWordWrapRows(context, object));
+        CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
 
         context.restore();
     },
@@ -129,7 +148,7 @@ var CanvasText$1 = {
     makeWordWrapRows: function makeWordWrapRows(context, object) {
         var words = object.text.split(/ /);
         var spaceWidth = context.measureText(' ').width;
-        var rowWidth = CanvasText$1.calculateRowWidth(context, object, '');
+        var rowWidth = CanvasText.calculateRowWidth(context, object, '');
         var rowWords = [];
         var rows = [];
         words.forEach(function (word) {
@@ -137,10 +156,10 @@ var CanvasText$1 = {
             if (rowWidth + width >= context.canvas.width) {
                 rows.push(rowWords.join(' '));
                 rowWords = [];
-                rowWidth = CanvasText$1.calculateRowWidth(context, object, '');
+                rowWidth = CanvasText.calculateRowWidth(context, object, '');
             }
             rowWords.push(word);
-            rowWidth = CanvasText$1.calculateRowWidth(context, object, rowWords.join(' '));
+            rowWidth = CanvasText.calculateRowWidth(context, object, rowWords.join(' '));
         });
         if (rowWords.length > 0) {
             rows.push(rowWords.join(' '));
@@ -154,7 +173,7 @@ var CanvasText$1 = {
 
     renderWordWrapRows: function renderWordWrapRows(context, object, rows) {
         var lineHeight = object.lineHeight ? object.lineHeight : 1;
-        var rowHeight = CanvasText$1.fontHeight(context, object) * lineHeight;
+        var rowHeight = CanvasText.fontHeight(context, object) * lineHeight;
 
         var rowX = object.paddingLeft;
         if (object.align === 'right') {
@@ -173,7 +192,7 @@ var CanvasText$1 = {
         }
 
         rows.forEach(function (row) {
-            var rowCanvas = CanvasText$1.makeWordWrapCanvas(context, object, rowX, rowHeight, row);
+            var rowCanvas = CanvasText.makeWordWrapCanvas(context, object, rowX, rowHeight, row);
             context.drawImage(rowCanvas, 0, rowY);
             rowY += rowCanvas.height;
         });
@@ -181,14 +200,14 @@ var CanvasText$1 = {
 
     fontHeight: function fontHeight(context, object) {
         // why oh why does context.measureText() not return height?
-        if (!CanvasText$1.fontHeightCache[context.font]) {
-            switch (CanvasText$1.FONT_HEIGHT_METHOD) {
+        if (!CanvasText.fontHeightCache[context.font]) {
+            switch (CanvasText.FONT_HEIGHT_METHOD) {
                 case 'fontSize':
-                    var fontSize = object.fontSize ? object.fontSize : CanvasText$1.DEFAULT_FONT_SIZE;
-                    CanvasText$1.fontHeightCache[context.font] = fontSize * CanvasText$1.M_HEIGHT_FACTOR;
+                    var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
+                    CanvasText.fontHeightCache[context.font] = fontSize * CanvasText.M_HEIGHT_FACTOR;
                     break;
                 case 'measureM':
-                    CanvasText$1.fontHeightCache[context.font] = context.measureText('M').width * CanvasText$1.M_HEIGHT_FACTOR;
+                    CanvasText.fontHeightCache[context.font] = context.measureText('M').width * CanvasText.M_HEIGHT_FACTOR;
                     break;
                 case 'dom':
                     var div = document.createElement("div");
@@ -200,19 +219,19 @@ var CanvasText$1 = {
                     document.body.appendChild(div);
                     var size = { width: div.clientWidth, height: div.clientHeight };
                     document.body.removeChild(div);
-                    CanvasText$1.fontHeightCache[context.font] = size.height;
+                    CanvasText.fontHeightCache[context.font] = size.height;
                     break;
                 case 'canvas':
-                    CanvasText$1.fontHeightCache[context.font] = CanvasText$1.canvasFontHeight(context, object);
+                    CanvasText.fontHeightCache[context.font] = CanvasText.canvasFontHeight(context, object);
                     break;
             }
         }
-        return CanvasText$1.fontHeightCache[context.font];
+        return CanvasText.fontHeightCache[context.font];
     },
 
     canvasFontHeight: function canvasFontHeight(context, object) {
         var testString = 'Mjqye';
-        var fontSize = object.fontSize ? object.fontSize : CanvasText$1.DEFAULT_FONT_SIZE;
+        var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
         var canvas = document.createElement('canvas');
         canvas.height = fontSize * 2;
         canvas.width = context.measureText(testString).width;
@@ -261,11 +280,15 @@ var CanvasText$1 = {
 };
 
 /**
+ * Hemp
  * Text Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
  */
 
-function TextElement() {
-  Element.call(this);
+function TextElement(environment, object) {
+  Element.call(this, environment, object);
 }
 
 TextElement.prototype = Object.create(Element.prototype);
@@ -273,17 +296,20 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function (object) {
-  CanvasText$1.drawText(this.context, object);
+TextElement.prototype.renderElement = function () {
+  CanvasText.drawText(this._context, this._object);
 };
 
 /**
+ * Hemp
  * Shape Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
  */
 
-function ShapeElement(type) {
-  Element.call(this);
-  this.type = type;
+function ShapeElement(environment, object) {
+  Element.call(this, environment, object);
 }
 
 ShapeElement.prototype = Object.create(Element.prototype);
@@ -291,62 +317,195 @@ ShapeElement.prototype.constructor = ShapeElement;
 
 /************************************************************************************/
 
-ShapeElement.prototype.renderElement = function (object) {
-  switch (this.type) {
+ShapeElement.prototype.renderElement = function () {
+  switch (this._object.type) {
     case 'rectangle':
-      this.renderRectangle(object);
+      this.renderRectangle();
       break;
     case 'ellipse':
-      this.renderEllipse(object);
+      this.renderEllipse();
       break;
     default:
-      throw new Error('Unknown shape type: ' + type);
+      throw new Error('Unknown shape type: ' + this._object.type);
   }
 };
 
-ShapeElement.prototype.renderRectangle = function (object) {
-  this.context.save();
-  this.context.fillStyle = object.color;
-  this.context.fillRect(0, 0, object.width, object.height);
-  this.context.restore();
+ShapeElement.prototype.renderRectangle = function () {
+  this._context.save();
+  this._context.fillStyle = this.resolveColor(this._object.color);
+  this._context.fillRect(0, 0, this._object.width, this._object.height);
+  this._context.restore();
 };
 
-ShapeElement.prototype.renderEllipse = function (object) {
-  this.context.save();
+ShapeElement.prototype.renderEllipse = function () {
+  this._context.save();
 
-  this.context.save();
-  this.context.beginPath();
-  this.context.scale(object.width / 2, object.height / 2);
-  this.context.arc(1, 1, 1, 0, 2 * Math.PI, false);
-  this.context.restore();
+  this._context.save();
+  this._context.beginPath();
+  this._context.scale(this._object.width / 2, this._object.height / 2);
+  this._context.arc(1, 1, 1, 0, 2 * Math.PI, false);
+  this._context.restore();
 
-  this.context.fillStyle = object.color;
-  this.context.fill();
+  this._context.fillStyle = this.resolveColor(this._object.color);
+  this._context.fill();
 
-  this.context.restore();
+  this._context.restore();
 };
+
+/**
+ * Hemp
+ * Transform Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
+
+function TransformElement(environment, object) {
+  Element.call(this, environment, object);
+}
+
+TransformElement.prototype = Object.create(Element.prototype);
+TransformElement.prototype.constructor = TransformElement;
+
+/************************************************************************************/
+
+TransformElement.prototype.renderElement = function () {
+  this._environment.context.translate(this._object.x, this._object.y);
+  this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  this._environment.context.lineWidth = 8;
+  this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
+  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, 20, 20);
+  this._environment.context.strokeRect(this._object.width / 2 - 20, -this._object.height / 2, 20, 20);
+  this._environment.context.strokeRect(this._object.width / 2 - 20, this._object.height / 2 - 20, 20, 20);
+  this._environment.context.strokeRect(-this._object.width / 2, this._object.height / 2 - 20, 20, 20);
+};
+
+TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
+  var handles = ['ul', 'ur', 'll', 'lr', 'body'];
+  for (var i = 0; i < handles.length; i++) {
+    var handle = handles[i];
+
+    environment.context.save();
+    environment.context.translate(object.x, object.y);
+    environment.context.rotate(object.rotation * Math.PI / 180);
+
+    environment.context.beginPath();
+    var handleSize = 20; // TODO: make this configurable
+    var handleX = object.width / 2 - handleSize;
+    var handleY = object.height / 2 - handleSize;
+    switch (handle) {
+      case 'ul':
+        // upper-left
+        environment.context.arc(-handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
+        break;
+      case 'ur':
+        // upper-right
+        environment.context.arc(handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
+        break;
+      case 'll':
+        // upper-right
+        environment.context.arc(-handleX, handleY, handleSize, 0, 2 * Math.PI, false);
+        break;
+      case 'lr':
+        // upper-right
+        environment.context.arc(handleX, handleY, handleSize, 0, 2 * Math.PI, false);
+        break;
+      case 'body':
+        environment.context.rect(-object.width / 2, -object.height / 2, object.width, object.height);
+        break;
+    }
+    //this._environment.context.fill();
+    var hit = environment.context.isPointInPath(mouseX, mouseY);
+    environment.context.restore();
+    if (hit) {
+      return handle;
+    }
+  }
+};
+
+TransformElement.transformObject = function (mouseX, mouseY, object, handle) {
+  var radians = -object.rotation * Math.PI / 180;
+  // get the current top-left and bottom-right coordinates of the bounding rect
+  var x1 = object.x - object.width / 2;
+  var y1 = object.y - object.height / 2;
+  var x2 = x1 + object.width;
+  var y2 = y1 + object.height;
+
+  // rotate the mouse coordinates to match the object rotation
+  mouseX = object.x + Math.cos(radians) * (mouseX - object.x) - Math.sin(radians) * (mouseY - object.y);
+  mouseY = object.y + Math.sin(radians) * (mouseX - object.x) + Math.cos(radians) * (mouseY - object.y);
+  switch (handle) {
+    case 'ul':
+      object.width = x2 - mouseX;
+      object.x = mouseX + object.width / 2;
+      object.height = y2 - mouseY;
+      object.y = mouseY + object.height / 2;
+      break;
+    case 'ur':
+      object.width = mouseX - x1;
+      object.x = x1 + object.width / 2;
+      object.height = y2 - mouseY;
+      object.y = mouseY + object.height / 2;
+      break;
+    case 'll':
+      object.width = x2 - mouseX;
+      object.x = mouseX + object.width / 2;
+      object.height = mouseY - y1;
+      object.y = y1 + object.height / 2;
+      break;
+    case 'lr':
+      object.width = mouseX - x1;
+      object.x = x1 + object.width / 2;
+      object.height = mouseY - y1;
+      object.y = y1 + object.height / 2;
+      break;
+    case 'body':
+      object.x = mouseX;
+      object.y = mouseY;
+      break;
+  }
+};
+
+/**
+ * Hemp
+ * Element Factory
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
 
 var ElementFactory = {};
 
-ElementFactory.getElement = function (type) {
-	var element;
-	switch (type) {
-		case 'image':
-			element = new ImageElement();
-			break;
-		case 'text':
-			element = new TextElement();
-			break;
-		case 'rectangle':
-		case 'ellipse':
-			element = new ShapeElement(type);
-			break;
-		default:
-			throw new Error('Element ' + type + ' is not supported');
-			break;
-	}
-	return element;
+ElementFactory.getElement = function (environment, object) {
+  var element;
+  switch (object.type) {
+    case 'image':
+      element = new ImageElement(environment, object);
+      break;
+    case 'text':
+      element = new TextElement(environment, object);
+      break;
+    case 'rectangle':
+    case 'ellipse':
+      element = new ShapeElement(environment, object);
+      break;
+    case 'transform':
+      element = new TransformElement(environment, object);
+      break;
+    default:
+      throw new Error('Element ' + type + ' is not supported');
+      break;
+  }
+  return element;
 };
+
+/**
+ * Hemp
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
 
 var Hemp = function Hemp(selector, width, height, objects) {
   this._element = this._findElement(selector);
@@ -441,7 +600,7 @@ Hemp.prototype._onMouseDown = function (event) {
 Hemp.prototype._setupTransformingObject = function (mouseX, mouseY) {
   var selectedObjects = this._getObjects({ name: 'selected', value: true, op: '==' });
   if (selectedObjects.length > 0) {
-    this._transformHandle = this._findTransformHandle(mouseX, mouseY, selectedObjects[0]);
+    this._transformHandle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (this._transformHandle) {
       this._transformingObject = selectedObjects[0];
       return true;
@@ -450,99 +609,12 @@ Hemp.prototype._setupTransformingObject = function (mouseX, mouseY) {
   return false;
 };
 
-Hemp.prototype._findTransformHandle = function (mouseX, mouseY, object) {
-  var handles = ['ul', 'ur', 'll', 'lr', 'body'];
-  for (var i = 0; i < handles.length; i++) {
-    var handle = handles[i];
-
-    this._environment.context.save();
-    this._environment.context.translate(object.x, object.y);
-    this._environment.context.rotate(object.rotation * Math.PI / 180);
-
-    this._environment.context.beginPath();
-    var handleSize = 20; // TODO: make this configurable
-    var handleX = object.width / 2 - handleSize;
-    var handleY = object.height / 2 - handleSize;
-    switch (handle) {
-      case 'ul':
-        // upper-left
-        this._environment.context.arc(-handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
-        break;
-      case 'ur':
-        // upper-right
-        this._environment.context.arc(handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
-        break;
-      case 'll':
-        // upper-right
-        this._environment.context.arc(-handleX, handleY, handleSize, 0, 2 * Math.PI, false);
-        break;
-      case 'lr':
-        // upper-right
-        this._environment.context.arc(handleX, handleY, handleSize, 0, 2 * Math.PI, false);
-        break;
-      case 'body':
-        this._environment.context.rect(-object.width / 2, -object.height / 2, object.width, object.height);
-        break;
-    }
-    //this._environment.context.fill();
-    var hit = this._environment.context.isPointInPath(mouseX, mouseY);
-    this._environment.context.restore();
-    if (hit) {
-      return handle;
-      
-    }
-  }
-};
-
 Hemp.prototype._onMouseMove = function (event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformHandle) {
     var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
-    this._transformObject(coordinates.x, coordinates.y, this._transformingObject, this._transformHandle);
+    TransformElement.transformObject(coordinates.x, coordinates.y, this._transformingObject, this._transformHandle);
     this._renderObjects(this._environment);
-  }
-};
-
-Hemp.prototype._transformObject = function (mouseX, mouseY, object, handle) {
-  var radians = -object.rotation * Math.PI / 180;
-  // get the current top-left and bottom-right coordinates of the bounding rect
-  var x1 = object.x - object.width / 2;
-  var y1 = object.y - object.height / 2;
-  var x2 = x1 + object.width;
-  var y2 = y1 + object.height;
-
-  // rotate the mouse coordinates to match the object rotation
-  mouseX = object.x + Math.cos(radians) * (mouseX - object.x) - Math.sin(radians) * (mouseY - object.y);
-  mouseY = object.y + Math.sin(radians) * (mouseX - object.x) + Math.cos(radians) * (mouseY - object.y);
-  switch (handle) {
-    case 'ul':
-      object.width = x2 - mouseX;
-      object.x = mouseX + object.width / 2;
-      object.height = y2 - mouseY;
-      object.y = mouseY + object.height / 2;
-      break;
-    case 'ur':
-      object.width = mouseX - x1;
-      object.x = x1 + object.width / 2;
-      object.height = y2 - mouseY;
-      object.y = mouseY + object.height / 2;
-      break;
-    case 'll':
-      object.width = x2 - mouseX;
-      object.x = mouseX + object.width / 2;
-      object.height = mouseY - y1;
-      object.y = y1 + object.height / 2;
-      break;
-    case 'lr':
-      object.width = mouseX - x1;
-      object.x = x1 + object.width / 2;
-      object.height = mouseY - y1;
-      object.y = y1 + object.height / 2;
-      break;
-    case 'body':
-      object.x = mouseX;
-      object.y = mouseY;
-      break;
   }
 };
 
@@ -553,16 +625,24 @@ Hemp.prototype._onMouseUp = function (event) {
 };
 
 Hemp.prototype._deselectAllObjects = function () {
+  var deselectedObjects = [];
   this._getObjects().forEach(function (object) {
+    if (object.selected) {
+      deselectedObjects.push(object);
+    }
     object.selected = false;
   });
   this._renderObjects(this._environment);
+  if (deselectedObjects.length > 0) {
+    this._element.dispatchEvent(new CustomEvent('deselect', { detail: deselectedObjects }));
+  }
 };
 
 Hemp.prototype._selectObject = function (object) {
   this._deselectAllObjects();
   object.selected = true;
   this._renderObjects(this._environment);
+  this._element.dispatchEvent(new CustomEvent('select', { detail: object }));
 };
 
 Hemp.prototype._getObjects = function (filter) {
@@ -628,51 +708,17 @@ Hemp.prototype._renderObjects = function (environment) {
 
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
   environment.context.save();
-
-  var transformObject = {
-    height: environment.canvas.height,
-    width: environment.canvas.width
-
-  };
-  //var transformObject = JSON.parse(JSON.stringify(object));
-
-  transformObject.height = environment.canvas.height;
-  transformObject.width = environment.canvas.width;
-  var transformEnvironment = this._setupRenderEnvironment(transformObject);
-  environment.context.translate(object.x, object.y);
-  environment.context.rotate(object.rotation * Math.PI / 180);
-  environment.context.lineWidth = 8;
-  environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-  environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
-  environment.context.strokeRect(-object.width / 2, -object.height / 2, 20, 20);
-  environment.context.strokeRect(object.width / 2 - 20, -object.height / 2, 20, 20);
-  environment.context.strokeRect(object.width / 2 - 20, object.height / 2 - 20, 20, 20);
-  environment.context.strokeRect(-object.width / 2, object.height / 2 - 20, 20, 20);
-
+  var transformObject = JSON.parse(JSON.stringify(object));
+  transformObject.type = 'transform';
+  var element = ElementFactory.getElement(environment, transformObject);
+  element.render();
   environment.context.restore();
 };
 
 Hemp.prototype._renderObject = function (environment, object) {
   environment.context.save();
-  //var objectEnvironment = this._setupRenderEnvironment(object, environment.options);
-
-  var element = ElementFactory.getElement(object.type);
-  element.render(environment.context, object);
-
-  /*  
-    switch (object.type) {
-      case 'rectangle':
-        this._renderRectangle(objectEnvironment, object);
-        break;
-      case 'ellipse':
-        this._renderEllipse(objectEnvironment, object);
-        break;
-      case 'text':
-        this._renderText(objectEnvironment, object);
-        break;
-    }
-    this._renderObjectToCanvas(environment, objectEnvironment, object);
-    */
+  var element = ElementFactory.getElement(environment, object);
+  element.render();
   environment.context.restore();
 };
 
@@ -692,50 +738,8 @@ Hemp.prototype._setupRenderEnvironment = function (object, options) {
   };
 };
 
-Hemp.prototype._renderObjectToCanvas = function (environment, objectEnvironment, object) {
-  environment.context.save();
-  environment.context.translate(object.x, object.y);
-  if (object.rotation) {
-    environment.context.rotate(object.rotation * Math.PI / 180);
-  }
-  if (typeof object.opacity !== 'undefined' && !environment.options.selectionRender) {
-    environment.context.globalAlpha = object.opacity;
-  }
-  environment.context.drawImage(objectEnvironment.canvas, -object.width / 2, -object.height / 2);
-  environment.context.restore();
-};
-
 Hemp.prototype._clearEnvironment = function (environment) {
   environment.context.clearRect(0, 0, environment.canvas.width, environment.canvas.height);
-};
-
-Hemp.prototype._renderRectangle = function (environment, object) {
-  this._setColor(environment, object);
-  environment.context.fillRect(0, 0, object.width, object.height);
-};
-
-Hemp.prototype._renderEllipse = function (environment, object) {
-  environment.context.save();
-  environment.context.beginPath();
-  environment.context.scale(object.width / 2, object.height / 2);
-  environment.context.arc(1, 1, 1, 0, 2 * Math.PI, false);
-  environment.context.restore();
-
-  this._setColor(environment, object);
-  environment.context.fill();
-};
-
-Hemp.prototype._renderText = function (environment, object) {
-  this._setColor(environment, object);
-  CanvasText.drawText(environment.context, object);
-};
-
-Hemp.prototype._setColor = function (environment, object) {
-  if (environment.options.selectionRender) {
-    environment.context.fillStyle = 'black';
-  } else {
-    environment.context.fillStyle = object.color;
-  }
 };
 
 export default Hemp;

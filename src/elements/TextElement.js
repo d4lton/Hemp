@@ -1,21 +1,25 @@
+/**
+ * Hemp
+ * Text Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
+
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
 
-/**
- * Text Element
- */
-
-function TextElement() {
-  Element.call(this);
-}
+function TextElement(environment, object) {
+  Element.call(this, environment, object);
+};
 
 TextElement.prototype = Object.create(Element.prototype);
 TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function(object) {
-  CanvasText.drawText(this.context, object);
+TextElement.prototype.renderElement = function() {
+  CanvasText.drawText(this._context, this._object);
 };
 
 export default TextElement;
