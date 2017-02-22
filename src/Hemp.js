@@ -1,3 +1,5 @@
+import ElementFactory from './elements/ElementFactory.js';
+
 var Hemp = function (selector, width, height, objects) {
   this._element = this._findElement(selector);
   this._width = width;
@@ -90,7 +92,7 @@ Hemp.prototype._onMouseDown = function (event) {
 };
 
 Hemp.prototype._setupTransformingObject = function(mouseX, mouseY) {
-  selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
+  var selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
   if (selectedObjects.length > 0) {
     this._transformHandle = this._findTransformHandle(mouseX, mouseY, selectedObjects[0]);
     if (this._transformHandle) {
@@ -274,8 +276,14 @@ Hemp.prototype._renderObjects = function (environment) {
 
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
   environment.context.save();
+  
+  var transformObject = {
+	  height: environment.canvas.height,
+	  width: environment.canvas.width,
+	  
+  };
+  //var transformObject = JSON.parse(JSON.stringify(object));
 
-  var transformObject = JSON.parse(JSON.stringify(object));
   transformObject.height = environment.canvas.height;
   transformObject.width = environment.canvas.width;
   var transformEnvironment = this._setupRenderEnvironment(transformObject);
@@ -292,9 +300,14 @@ Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
   environment.context.restore();
 }
 
-Hemp.prototype._renderObject = function (environment, object) {
+Hemp.prototype._renderObject = function(environment, object) {
   environment.context.save();
-  var objectEnvironment = this._setupRenderEnvironment(object, environment.options);
+  //var objectEnvironment = this._setupRenderEnvironment(object, environment.options);
+  
+  var element = ElementFactory.getElement(object.type);
+  element.render(environment.context, object);
+
+/*  
   switch (object.type) {
     case 'rectangle':
       this._renderRectangle(objectEnvironment, object);
@@ -307,10 +320,11 @@ Hemp.prototype._renderObject = function (environment, object) {
       break;
   }
   this._renderObjectToCanvas(environment, objectEnvironment, object);
+  */
   environment.context.restore();
 };
 
-Hemp.prototype._setupRenderEnvironment = function (object, options) {
+Hemp.prototype._setupRenderEnvironment = function(object, options) {
   var canvas = this._createCanvas(object.width, object.height);
   var context = this._setupContext(canvas);
   if (object.backgroundColor) {
@@ -371,3 +385,5 @@ Hemp.prototype._setColor = function (environment, object) {
     environment.context.fillStyle = object.color;
   }
 };
+
+export default Hemp;

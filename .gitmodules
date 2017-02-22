@@ -1,0 +1,3 @@
+[submodule "src/CanvasText"]
+	path = src/CanvasText
+	url = https://github.com/d4lton/CanvasText.git
