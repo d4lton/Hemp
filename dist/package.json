@@ -1,0 +1,19 @@
+{
+  "name": "Hemp",
+  "version": "1.0.0",
+  "description": "A lightweight HTML Canvas with object model",
+  "homepage": "https://github.com/d4lton/Hemp",
+  "repository": "d4lton/Hemp",
+  "author": "Dana Basken <dbasken@gmail.com>",
+  "contributors": [
+    "Konstantin Tarkus <hello@tarkus.me>",
+    "Vladimir Kutepov <frenzzy.man@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [],
+  "main": "Hemp.js",
+  "jsnext:main": "Hemp.es.js",
+  "dependencies": {
+    "babel-runtime": "^6.11.6"
+  }
+}

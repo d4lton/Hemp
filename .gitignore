@@ -3,5 +3,3 @@ docs/dist
 node_modules
 npm-debug.log
 .DS_Store
-dist/Hemp.umd.js.map
-dist/package.json
