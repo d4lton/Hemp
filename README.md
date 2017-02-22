@@ -1,2 +1,2 @@
 # Hemp
-HTML Canvas with object model
+A lightweight HTML Canvas with object model
