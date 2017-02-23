@@ -8,30 +8,43 @@
 import ElementFactory from './elements/ElementFactory.js';
 import TransformElement from './elements/TransformElement.js';
 
-var Hemp = function(selector, width, height, objects) {
-  this._element = this._findElement(selector);
+var Hemp = function(width, height, objects, interactive, selector) {
   this._width = width;
   this._height = height;
   this._objects = objects ? objects : [];
+  this._interactive = (typeof interactive !== 'undefined') ? interactive : false;
+
+  if (typeof selector !== 'undefined') {
+    this._element = this._findElement(selector);
+  }
 
   this._environment = this._setupRenderEnvironment({
     width: this._width,
     height: this._height
   });
 
-  this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
-  this._environment.canvas.addEventListener('mousemove', this._onMouseMove.bind(this));
-  this._environment.canvas.addEventListener('mouseup', this._onMouseUp.bind(this));
-
   this._element.append(this._environment.canvas);
 
-  this._setupObserver();
-  this._handleElementResize();
+  if (this._interactive) {
+    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+    this._environment.canvas.addEventListener('mousemove', this._onMouseMove.bind(this));
+    this._environment.canvas.addEventListener('mouseup', this._onMouseUp.bind(this));
+    this._setupObserver();
+    this._handleElementResize();
+  }
 
   this._renderObjects(this._environment);
 
 }
 Hemp.prototype.constructor = Hemp;
+
+Hemp.prototype.getEnvironment = function() {
+  return this._environment;
+};
+
+Hemp.prototype.getObjects = function() {
+  return this._objects;
+};
 
 Hemp.prototype._createCanvas = function(width, height) {
   var canvas = document.createElement('canvas');
