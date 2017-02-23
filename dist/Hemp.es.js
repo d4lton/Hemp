@@ -832,15 +832,18 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
     height: this._height
   });
 
-  this._element.append(this._environment.canvas);
+  if (this._element) {
+    this._element.append(this._environment.canvas);
+  }
 
   if (this._interactive) {
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
     this._environment.canvas.addEventListener('mousemove', this._onMouseMove.bind(this));
     this._environment.canvas.addEventListener('mouseup', this._onMouseUp.bind(this));
-    this._setupObserver();
-    this._handleElementResize();
   }
+
+  this._setupObserver();
+  this._handleElementResize();
 
   this._renderObjects(this._environment);
 };
@@ -866,12 +869,14 @@ Hemp.prototype._setupContext = function (canvas) {
 };
 
 Hemp.prototype._setupObserver = function () {
-  var observer = new MutationObserver(function (mutations) {
-    this._handleElementResize();
-  }.bind(this));
-  observer.observe(this._element, {
-    attributes: true, childList: true, characterData: true
-  });
+  if (this.element) {
+    var observer = new MutationObserver(function (mutations) {
+      this._handleElementResize();
+    }.bind(this));
+    observer.observe(this._element, {
+      attributes: true, childList: true, characterData: true
+    });
+  }
 };
 
 Hemp.prototype._handleElementResize = function () {
@@ -959,7 +964,9 @@ Hemp.prototype._deselectAllObjects = function () {
   });
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
-    this._element.dispatchEvent(new CustomEvent('deselect', { detail: deselectedObjects }));
+    if (this.element) {
+      this._element.dispatchEvent(new CustomEvent('deselect', { detail: deselectedObjects }));
+    }
   }
 };
 
@@ -967,7 +974,9 @@ Hemp.prototype._selectObject = function (object) {
   this._deselectAllObjects();
   object.selected = true;
   this._renderObjects(this._environment);
-  this._element.dispatchEvent(new CustomEvent('select', { detail: object }));
+  if (this.element) {
+    this._element.dispatchEvent(new CustomEvent('select', { detail: object }));
+  }
 };
 
 Hemp.prototype._getObjects = function (filter) {
