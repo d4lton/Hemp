@@ -277,7 +277,7 @@ var CanvasText = {
     },
 
     calculateRowWidth: function calculateRowWidth(context, object, text) {
-        return context.measureText(text).width + (object.paddingLeft + object.paddingRight);
+        return context.measureText(text).width + object.paddingLeft + object.paddingRight;
     },
 
     renderWordWrapRows: function renderWordWrapRows(context, object, rows) {
@@ -381,8 +381,8 @@ var CanvasText = {
         rowContext.fillStyle = context.fillStyle;
         rowContext.textBaseline = context.textBaseline;
         rowContext.textAlign = object.align;
-
         rowContext.fillText(text, xPos, 0);
+
         return canvas;
     }
 
@@ -683,8 +683,20 @@ TransformElement.updateObjectFromCorners = function (object, corners) {
   object.y = object.transform.origin.object.y;
 };
 
-TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY) {
+TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY, begin) {
   var anchor;
+
+  if (!object.clicks) {
+    object.clicks = {
+      count: 0
+    };
+  }
+
+  clearTimeout(object.clicks.timeout);
+  object.clicks.timeout = setTimeout(function () {
+    object.clicks.count = 0;
+  }, 200);
+
   switch (handle) {
     case 'ul':
       anchor = 'lr';
@@ -698,7 +710,11 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
     case 'lr':
       anchor = 'ul';
       break;
+    case 'body':
+      object.clicks.count++;
+      break;
   }
+
   object.transform = {
     handle: handle,
     anchor: anchor,
@@ -713,6 +729,8 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
       }
     }
   };
+
+  return object.clicks.count;
 };
 
 TransformElement.offsetCorners = function (corners, offsetX, offsetY) {
@@ -814,7 +832,7 @@ TransformElement.transformMove = function (environment, object, mouseX, mouseY, 
   }
 };
 
-TransformElement.transformEnd = function (environment, object) {
+TransformElement.transformEnd = function (environment, object, event) {
   delete object.transform;
 };
 
@@ -865,23 +883,23 @@ ElementFactory.getElements = function () {
 var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this._width = width;
   this._height = height;
-  this._objects = objects ? objects : [];
+  this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
-
-  if (typeof selector !== 'undefined') {
-    this._element = this._findElement(selector);
-  }
 
   this._environment = this._setupRenderEnvironment({
     width: this._width,
     height: this._height
   });
 
-  if (this._element) {
+  if (typeof selector !== 'undefined') {
+    this._element = this._findElement(selector);
     this._element.append(this._environment.canvas);
   }
 
   if (this._interactive) {
+    this._element.addEventListener('mouseout', this._onMouseUp.bind(this));
+    this._environment.canvas.setAttribute('tabIndex', '1');
+    this._environment.canvas.addEventListener('keydown', this._onKeyDown.bind(this));
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
     this._environment.canvas.addEventListener('mousemove', this._onMouseMove.bind(this));
     this._environment.canvas.addEventListener('mouseup', this._onMouseUp.bind(this));
@@ -898,8 +916,41 @@ Hemp.prototype.getEnvironment = function () {
   return this._environment;
 };
 
+Hemp.prototype.setObjects = function (objects, callback) {
+  if (Array.isArray(objects)) {
+    // create an array of promises for all image objects
+    var promises = objects.filter(function (object) {
+      return object.type === 'image';
+    }).map(function (object) {
+      return new Promise(function (resolve, reject) {
+        object.image = new Image();
+        object.image.setAttribute('crossOrigin', 'anonymous');
+        object.image.onload = function () {
+          resolve();
+        };
+        object.image.onerror = function (reason) {
+          resolve(); // image will be blank
+        };
+        object.image.src = object.url;
+      });
+    });
+    // once all images are loaded, set the internal list of objects and render
+    Promise.all(promises).then(function (images) {
+      this._objects = objects;
+      this._renderObjects(this._environment);
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }.bind(this));
+  }
+};
+
 Hemp.prototype.getObjects = function () {
   return this._objects;
+};
+
+Hemp.prototype.getElement = function () {
+  return this._element;
 };
 
 Hemp.prototype._createCanvas = function (width, height) {
@@ -951,12 +1002,23 @@ Hemp.prototype._findElement = function (selector) {
   throw new Error('Could not find selector: ' + selector);
 };
 
+Hemp.prototype._onKeyDown = function (event) {
+  switch (event.code) {
+    case 'Escape':
+      this._deselectAllObjects();
+      break;
+    default:
+      console.log('_onKeyDown event.code:', event.code);
+      break;
+  }
+};
+
 Hemp.prototype._onMouseDown = function (event) {
   var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   // if there's already a selected object, transform it if possible
-  if (this._setupTransformingObject(coordinates.x, coordinates.y)) {
+  if (this._setupTransformingObject(coordinates.x, coordinates.y, event)) {
     return;
   }
 
@@ -966,21 +1028,39 @@ Hemp.prototype._onMouseDown = function (event) {
   // if we hit an object, select it and start transforming it if possible
   if (hitObjects.length > 0) {
     this._selectObject(hitObjects[hitObjects.length - 1]);
-    this._setupTransformingObject(coordinates.x, coordinates.y);
+    this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
 };
 
-Hemp.prototype._setupTransformingObject = function (mouseX, mouseY) {
+Hemp.prototype._maximizeObject = function (object) {
+  object.x = this._environment.canvas.width / 2;
+  object.y = this._environment.canvas.height / 2;
+  object.width = this._environment.canvas.width;
+  object.height = this._environment.canvas.height;
+  object.rotation = 0;
+  this._renderObjects(this._environment);
+};
+
+Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event) {
   var selectedObjects = this._getObjects({ name: 'selected', value: true, op: '==' });
   if (selectedObjects.length > 0) {
     var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
       this._transformingObject = selectedObjects[0];
-      TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY);
+      var clicks = TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY, event);
+      if (clicks > 1) {
+        this._maximizeObject(this._transformingObject);
+      }
       return true;
     }
   }
   return false;
+};
+
+Hemp.prototype._reportObjectTransform = function (object) {
+  if (this._element) {
+    this._element.dispatchEvent(new CustomEvent('transform', { detail: object }));
+  }
 };
 
 Hemp.prototype._onMouseMove = function (event) {
@@ -989,12 +1069,14 @@ Hemp.prototype._onMouseMove = function (event) {
     var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
+    this._reportObjectTransform(this._transformingObject);
   }
 };
 
 Hemp.prototype._onMouseUp = function (event) {
   if (this._transformingObject) {
-    TransformElement.transformEnd(this._environment, this._transformingObject);
+    TransformElement.transformEnd(this._environment, this._transformingObject, event);
+    this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }
 };

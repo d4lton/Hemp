@@ -150,8 +150,20 @@ TransformElement.updateObjectFromCorners = function(object, corners) {
   object.y = object.transform.origin.object.y;
 };
 
-TransformElement.transformBegin = function(environment, object, handle, mouseX, mouseY) {
+TransformElement.transformBegin = function(environment, object, handle, mouseX, mouseY, begin) {
   var anchor;
+
+  if (!object.clicks) {
+    object.clicks = {
+      count: 0
+    };
+  }
+
+  clearTimeout(object.clicks.timeout);
+  object.clicks.timeout = setTimeout(function() {
+    object.clicks.count = 0;
+  }, 200);
+
   switch (handle) {
     case 'ul':
       anchor = 'lr';
@@ -165,7 +177,11 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
     case 'lr':
       anchor = 'ul';
       break;
+    case 'body':
+      object.clicks.count++;
+      break;
   }
+
   object.transform = {
     handle: handle,
     anchor: anchor,
@@ -180,6 +196,9 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
       }
     }
   };
+  
+  return object.clicks.count;
+    
 };
 
 TransformElement.offsetCorners = function(corners, offsetX, offsetY) {
@@ -281,7 +300,7 @@ TransformElement.transformMove = function(environment, object, mouseX, mouseY, e
   }
 };
 
-TransformElement.transformEnd = function(environment, object) {
+TransformElement.transformEnd = function(environment, object, event) {
   delete object.transform;
 };
 
