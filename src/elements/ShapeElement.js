@@ -52,4 +52,41 @@ ShapeElement.prototype.renderEllipse = function() {
   this._context.restore();
 };
 
+ShapeElement.prototype.getTypes = function() {
+  return [
+    {
+      type: 'rectangle',
+      displayName: 'Rectangle'
+    },
+    {
+      type: 'ellipse',
+      displayName: 'Ellipse'
+    }
+  ];
+};
+
+ShapeElement.prototype.getProperties = function() {
+  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
+  var properties = {
+    'rectangle': [
+      {
+        name: 'color',
+        displayName: 'Color',
+        type: 'string'
+      }
+    ],
+    'ellipse': [
+      {
+        name: 'color',
+        displayName: 'Color',
+        type: 'string'
+      }
+    ]
+  };
+  Object.keys(properties).forEach(function(type) {
+    properties[type] = properties[type].concat(common.common);
+  });
+  return properties;
+};
+
 export default ShapeElement;

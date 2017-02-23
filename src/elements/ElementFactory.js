@@ -36,4 +36,12 @@ ElementFactory.getElement = function(environment, object) {
   return element;
 };
 
+ElementFactory.getElements = function() {
+  return [
+    ImageElement,
+    ShapeElement,
+    TextElement
+  ];
+};
+
 export default ElementFactory;

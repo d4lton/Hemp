@@ -196,6 +196,10 @@ TransformElement.offsetCorners = function(corners, offsetX, offsetY) {
 };
 
 TransformElement.transformMoveObject = function(environment, object, mouseX, mouseY, event) {
+  if (event.shiftKey) {
+    mouseX = Math.round(mouseX / 100) * 100;
+    mouseY = Math.round(mouseY / 100) * 100;
+  }
   object.x = mouseX;
   object.y = mouseY;
 };

@@ -63,6 +63,60 @@ Element.prototype.resolveColor = function (color) {
   }
 };
 
+Element.prototype.getTypes = function () {
+  console.warn('override me');
+};
+
+Element.prototype.getProperties = function () {
+  return {
+    'common': [{
+      name: 'position',
+      displayName: 'Position',
+      type: 'integers',
+      properties: [{
+        name: 'x',
+        displayName: 'X',
+        default: 0
+      }, {
+        name: 'y',
+        displayName: 'Y',
+        default: 0
+      }]
+    }, {
+      name: 'size',
+      displayName: 'Size',
+      type: 'integers',
+      properties: [{
+        name: 'width',
+        displayName: 'W',
+        default: 200
+      }, {
+        name: 'height',
+        displayName: 'H',
+        default: 200
+      }]
+    }, {
+      name: 'rotation',
+      displayName: 'Rotation',
+      type: 'slider',
+      min: -180,
+      max: 180,
+      step: 1,
+      scale: 1,
+      default: 0
+    }, {
+      name: 'opacity',
+      displayName: 'Opacity',
+      type: 'slider',
+      min: 0,
+      max: 100,
+      step: 1,
+      scale: 100,
+      default: 1
+    }]
+  };
+};
+
 /**
  * Hemp
  * Image Element
@@ -83,6 +137,29 @@ ImageElement.prototype.constructor = ImageElement;
 ImageElement.prototype.renderElement = function () {
   //var sourceAndOffset = Utilities.getFillSourceAndOffset(object.image, object);
   //this.context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+};
+
+ImageElement.prototype.getTypes = function () {
+  return [{
+    type: 'image',
+    displayName: 'Static Image'
+  }];
+};
+
+ImageElement.prototype.getProperties = function () {
+  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
+  var properties = {
+    'image': [{
+      name: 'url',
+      displayName: 'URL',
+      type: 'url',
+      default: ''
+    }]
+  };
+  Object.keys(properties).forEach(function (type) {
+    properties[type] = properties[type].concat(common.common);
+  });
+  return properties;
 };
 
 /**
@@ -306,6 +383,45 @@ TextElement.prototype.renderElement = function () {
   CanvasText.drawText(this._context, this._object);
 };
 
+TextElement.prototype.getTypes = function () {
+  return [{
+    type: 'text',
+    displayName: 'Text'
+  }];
+};
+
+TextElement.prototype.getProperties = function () {
+  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
+  var properties = {
+    'text': [{
+      name: 'text',
+      displayName: 'Text',
+      type: 'string',
+      default: ''
+    }, {
+      name: 'fontFamily',
+      displayName: 'Font',
+      type: 'dropdown',
+      default: 'serif',
+      values: [{ name: 'Serif', value: 'serif' }]
+    }, {
+      name: 'fontSize',
+      displayName: 'Font Size',
+      type: 'dropdown',
+      default: '50',
+      values: [{ name: '50', value: '50' }]
+    }, {
+      name: 'color',
+      displayName: 'Color',
+      type: 'string'
+    }]
+  };
+  Object.keys(properties).forEach(function (type) {
+    properties[type] = properties[type].concat(common.common);
+  });
+  return properties;
+};
+
 /**
  * Hemp
  * Shape Element
@@ -356,6 +472,36 @@ ShapeElement.prototype.renderEllipse = function () {
   this._context.fill();
 
   this._context.restore();
+};
+
+ShapeElement.prototype.getTypes = function () {
+  return [{
+    type: 'rectangle',
+    displayName: 'Rectangle'
+  }, {
+    type: 'ellipse',
+    displayName: 'Ellipse'
+  }];
+};
+
+ShapeElement.prototype.getProperties = function () {
+  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
+  var properties = {
+    'rectangle': [{
+      name: 'color',
+      displayName: 'Color',
+      type: 'string'
+    }],
+    'ellipse': [{
+      name: 'color',
+      displayName: 'Color',
+      type: 'string'
+    }]
+  };
+  Object.keys(properties).forEach(function (type) {
+    properties[type] = properties[type].concat(common.common);
+  });
+  return properties;
 };
 
 /**
@@ -557,6 +703,10 @@ TransformElement.offsetCorners = function (corners, offsetX, offsetY) {
 };
 
 TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event) {
+  if (event.shiftKey) {
+    mouseX = Math.round(mouseX / 100) * 100;
+    mouseY = Math.round(mouseY / 100) * 100;
+  }
   object.x = mouseX;
   object.y = mouseY;
 };
@@ -660,6 +810,10 @@ ElementFactory.getElement = function (environment, object) {
       break;
   }
   return element;
+};
+
+ElementFactory.getElements = function () {
+  return [ImageElement, ShapeElement, TextElement];
 };
 
 /**

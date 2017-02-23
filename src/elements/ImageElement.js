@@ -22,4 +22,31 @@ ImageElement.prototype.renderElement = function() {
   //this.context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
 };
 
+ImageElement.prototype.getTypes = function() {
+  return [
+    {
+      type: 'image',
+      displayName: 'Static Image'
+    }
+  ];
+};
+
+ImageElement.prototype.getProperties = function() {
+  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
+  var properties = {
+    'image': [
+      {
+        name: 'url',
+        displayName: 'URL',
+        type: 'url',
+        default: ''
+      }
+    ]
+  };
+  Object.keys(properties).forEach(function(type) {
+    properties[type] = properties[type].concat(common.common);
+  });
+  return properties;
+};
+
 export default ImageElement;
