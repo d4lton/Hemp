@@ -953,6 +953,10 @@ Hemp.prototype.getElement = function () {
   return this._element;
 };
 
+Hemp.prototype.render = function () {
+  this._renderObjects(this._environment);
+};
+
 Hemp.prototype._createCanvas = function (width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
