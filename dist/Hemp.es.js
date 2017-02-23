@@ -891,7 +891,9 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   }
 
   if (this._interactive) {
-    this._element.addEventListener('mouseout', this._onMouseUp.bind(this));
+    if (this._element) {
+      this._element.addEventListener('mouseout', this._onMouseUp.bind(this));
+    }
     this._environment.canvas.setAttribute('tabIndex', '1');
     this._environment.canvas.addEventListener('keydown', this._onKeyDown.bind(this));
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
@@ -963,7 +965,7 @@ Hemp.prototype._setupContext = function (canvas) {
 };
 
 Hemp.prototype._setupObserver = function () {
-  if (this.element) {
+  if (this._element) {
     var observer = new MutationObserver(function (mutations) {
       this._handleElementResize();
     }.bind(this));
@@ -1089,7 +1091,7 @@ Hemp.prototype._deselectAllObjects = function () {
   });
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
-    if (this.element) {
+    if (this._element) {
       this._element.dispatchEvent(new CustomEvent('deselect', { detail: deselectedObjects }));
     }
   }
@@ -1099,7 +1101,7 @@ Hemp.prototype._selectObject = function (object) {
   this._deselectAllObjects();
   object.selected = true;
   this._renderObjects(this._environment);
-  if (this.element) {
+  if (this._element) {
     this._element.dispatchEvent(new CustomEvent('select', { detail: object }));
   }
 };
