@@ -41,7 +41,7 @@ Element.prototype.renderElement = function () {
 Element.prototype.renderCanvas = function () {
   this._environment.context.save();
   this._environment.context.translate(this._object.x, this._object.y);
-  if (this._object.rotation) {
+  if (typeof this._object.rotation !== 'undefined') {
     this._environment.context.rotate(this._object.rotation * Math.PI / 180);
   }
   if (typeof this._object.opacity !== 'undefined') {
@@ -130,9 +130,35 @@ ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
 
+ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
+  var sourceWidth = src.width;
+  var sourceHeight = sourceWidth * (dst.height / dst.width);
+  if (sourceWidth > src.width) {
+    sourceHeight = src.width * (dst.height / dst.width);
+    sourceWidth = src.width;
+  }
+  if (sourceHeight > src.height) {
+    sourceWidth = src.height * (dst.width / dst.height);
+    sourceHeight = src.height;
+  }
+
+  var offsetX = Math.max(0, src.width - sourceWidth) / 2;
+  var offsetY = Math.max(0, src.height - sourceHeight) / 2;
+  return {
+    source: {
+      width: sourceWidth,
+      height: sourceHeight
+    },
+    offset: {
+      x: offsetX,
+      y: offsetY
+    }
+  };
+};
+
 ImageElement.prototype.renderElement = function () {
-  //var sourceAndOffset = Utilities.getFillSourceAndOffset(object.image, object);
-  //this.context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+  var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
+  this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
 };
 
 ImageElement.prototype.getTypes = function () {
@@ -519,7 +545,9 @@ TransformElement.prototype.constructor = TransformElement;
 
 TransformElement.prototype.renderElement = function () {
   this._environment.context.translate(this._object.x, this._object.y);
-  this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  if (typeof this._object.rotation !== 'undefined') {
+    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  }
   this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
   // body
@@ -544,8 +572,11 @@ TransformElement.findTransformHandle = function (environment, mouseX, mouseY, ob
     var handle = handles[i];
 
     environment.context.save();
+
     environment.context.translate(object.x, object.y);
-    environment.context.rotate(object.rotation * Math.PI / 180);
+
+    var radians = TransformElement.getObjectRotationInRadians(object);
+    environment.context.rotate(radians);
 
     environment.context.beginPath();
     var handleSize = 20; // TODO: make this configurable
@@ -707,8 +738,16 @@ TransformElement.transformMoveObject = function (environment, object, mouseX, mo
   object.y = mouseY;
 };
 
+TransformElement.getObjectRotationInRadians = function (object) {
+  var rotation = 0;
+  if (typeof object.rotation !== 'undefined') {
+    rotation = object.rotation;
+  }
+  return rotation * (Math.PI / 180);
+};
+
 TransformElement.transformRotateObject = function (environment, object, mouseX, mouseY, event) {
-  var radians = object.rotation * (Math.PI / 180);
+  var radians = TransformElement.getObjectRotationInRadians(object);
 
   // offset mouse so it will be relative to 0,0 (the object's new origin)
   mouseX -= object.x;
@@ -734,7 +773,7 @@ TransformElement.transformRotateObject = function (environment, object, mouseX, 
 };
 
 TransformElement.transformResizeObject = function (environment, object, mouseX, mouseY, event) {
-  var radians = object.rotation * (Math.PI / 180);
+  var radians = TransformElement.getObjectRotationInRadians(object);
 
   // offset mouse so it will be relative to 0,0 (the object's new origin)
   mouseX -= object.x;

@@ -19,7 +19,9 @@ TransformElement.prototype.constructor = TransformElement;
 
 TransformElement.prototype.renderElement = function() {
   this._environment.context.translate(this._object.x, this._object.y);
-  this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  if (typeof this._object.rotation !== 'undefined') {
+    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+  }
   this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
   // body
@@ -44,8 +46,11 @@ TransformElement.findTransformHandle = function(environment, mouseX, mouseY, obj
     var handle = handles[i];
 
     environment.context.save();
+
     environment.context.translate(object.x, object.y);
-    environment.context.rotate(object.rotation * Math.PI / 180);
+
+    var radians = TransformElement.getObjectRotationInRadians(object);
+    environment.context.rotate(radians);
 
     environment.context.beginPath();
     var handleSize = 20; // TODO: make this configurable
@@ -204,8 +209,16 @@ TransformElement.transformMoveObject = function(environment, object, mouseX, mou
   object.y = mouseY;
 };
 
+TransformElement.getObjectRotationInRadians = function(object) {
+  var rotation = 0;
+  if (typeof object.rotation !== 'undefined') {
+    rotation = object.rotation;
+  }
+  return rotation * (Math.PI / 180);
+};
+
 TransformElement.transformRotateObject = function(environment, object, mouseX, mouseY, event) {
-  var radians = object.rotation * (Math.PI / 180);
+  var radians = TransformElement.getObjectRotationInRadians(object);
 
   // offset mouse so it will be relative to 0,0 (the object's new origin)
   mouseX -= object.x;
@@ -231,7 +244,7 @@ TransformElement.transformRotateObject = function(environment, object, mouseX, m
 };
 
 TransformElement.transformResizeObject = function(environment, object, mouseX, mouseY, event) {
-  var radians = object.rotation * (Math.PI / 180);
+  var radians = TransformElement.getObjectRotationInRadians(object);
 
   // offset mouse so it will be relative to 0,0 (the object's new origin)
   mouseX -= object.x;

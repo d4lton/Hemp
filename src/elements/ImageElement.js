@@ -17,9 +17,35 @@ ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
 
+ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
+  var sourceWidth = src.width;
+  var sourceHeight = sourceWidth * (dst.height / dst.width);
+  if (sourceWidth > src.width) {
+    sourceHeight = src.width * (dst.height / dst.width);
+    sourceWidth = src.width;
+  }
+  if (sourceHeight > src.height) {
+    sourceWidth = src.height * (dst.width / dst.height);
+    sourceHeight = src.height;
+  }
+
+  var offsetX = Math.max(0, src.width - sourceWidth) / 2;
+  var offsetY = Math.max(0, src.height - sourceHeight) / 2;
+  return {
+    source: {
+      width: sourceWidth,
+      height: sourceHeight
+    },
+    offset: {
+      x: offsetX,
+      y: offsetY
+    }
+  };
+};
+
 ImageElement.prototype.renderElement = function() {
-  //var sourceAndOffset = Utilities.getFillSourceAndOffset(object.image, object);
-  //this.context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+  var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
+  this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
 };
 
 ImageElement.prototype.getTypes = function() {

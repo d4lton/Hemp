@@ -39,7 +39,7 @@ Element.prototype.renderElement = function() {
 Element.prototype.renderCanvas = function() {
   this._environment.context.save();
   this._environment.context.translate(this._object.x, this._object.y);
-  if (this._object.rotation) {
+  if (typeof this._object.rotation !== 'undefined') {
     this._environment.context.rotate(this._object.rotation * Math.PI / 180);
   }
   if (typeof this._object.opacity !== 'undefined') {
