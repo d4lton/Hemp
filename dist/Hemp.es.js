@@ -1094,8 +1094,8 @@ Hemp.prototype._handleElementResize = function () {
   var rect = this._environment.canvas.getBoundingClientRect();
   this._windowToCanvas = function (x, y) {
     return {
-      x: x * (this._width / rect.width),
-      y: y * (this._height / rect.height)
+      x: (x - rect.left) * (this._width / rect.width),
+      y: (y - rect.top) * (this._height / rect.height)
     };
   };
 };
@@ -1134,7 +1134,7 @@ Hemp.prototype._onKeyDown = function (event) {
 };
 
 Hemp.prototype._onMouseDown = function (event) {
-  var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
+  var coordinates = this._windowToCanvas(event.clientX, event.clientY);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   event.preventDefault();
@@ -1193,7 +1193,7 @@ Hemp.prototype._reportObjectTransform = function (object) {
 Hemp.prototype._onMouseMove = function (event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject) {
-    var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
+    var coordinates = this._windowToCanvas(event.clientX, event.clientY);
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
@@ -1201,7 +1201,6 @@ Hemp.prototype._onMouseMove = function (event) {
 };
 
 Hemp.prototype._onMouseUp = function (event) {
-  console.log('_onMouseUp', event);
   event.preventDefault();
   if (this._transformingObject) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
