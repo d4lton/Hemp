@@ -950,6 +950,7 @@ Hemp.prototype.getEnvironment = function () {
 Hemp.prototype.setObjects = function (objects, callback) {
   this._deselectAllObjects();
   if (Array.isArray(objects)) {
+
     // create an array of promises for all image objects
     var promises = objects.filter(function (object) {
       return object.type === 'image';
@@ -961,11 +962,12 @@ Hemp.prototype.setObjects = function (objects, callback) {
           resolve();
         };
         object.image.onerror = function (reason) {
-          resolve(); // image will be blank
+          resolve();
         };
         object.image.src = object.url;
       });
     });
+
     // once all images are loaded, set the internal list of objects and render
     Promise.all(promises).then(function (images) {
       this._objects = objects;
@@ -973,7 +975,9 @@ Hemp.prototype.setObjects = function (objects, callback) {
       if (typeof callback === 'function') {
         callback();
       }
-    }.bind(this));
+    }.bind(this), function (reason) {
+      console.error(reason);
+    });
   }
 };
 
