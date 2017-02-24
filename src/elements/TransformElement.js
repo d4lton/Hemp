@@ -109,7 +109,7 @@ TransformElement.rotatePoint = function(radians, object, x, y) {
   };
 };
 
-TransformElement.getCorners = function(radians, object) {
+TransformElement.getCorners = function(object) {
   var left = object.x - (object.width / 2);
   var right = object.x + (object.width / 2);
   var top = object.y - (object.height / 2);
@@ -119,6 +119,8 @@ TransformElement.getCorners = function(radians, object) {
     left: left,
     bottom: bottom,
     right: right,
+    center: object.x,
+    middle: object.y,
     ul: {x: left, y: top},
     ur: {x: right, y: top},
     ll: {x: left, y: bottom},
@@ -132,6 +134,7 @@ TransformElement.updateObjectFromCorners = function(object, corners, fromCenter)
   var anchor = object.transform.anchor;
   var top, left, bottom, right;
 
+  // position the TRBL based on the handle and anchor
   switch (handle) {
     case 'ul':
       top = corners[handle].y;
@@ -159,9 +162,11 @@ TransformElement.updateObjectFromCorners = function(object, corners, fromCenter)
       break;
   }
   
+  // calculate the object's new width and height
   object.width = right - left;
   object.height = bottom - top;
   
+  // don't allow objects smaller than this (should be configurable)
   if (object.width < 50) {
     object.width = 50;
   }
@@ -169,15 +174,20 @@ TransformElement.updateObjectFromCorners = function(object, corners, fromCenter)
     object.height = 50;
   }
   
+  // if we're resizing with a fixed center, everything is easy
   if (fromCenter) {
     object.x = object.transform.origin.object.x;
     object.y = object.transform.origin.object.y;
   } else {
+    // if we're resizing from an anchor corner, still have work to do
+    
+    // figure out the offsets for the object centerpoint based on the new W & H vs the old
     var offsetX = (object.width - object.transform.resize.origin.width) / 2;
     var offsetY = (object.height - object.transform.resize.origin.height) / 2;
   
     var radians = TransformElement.getObjectRotationInRadians(object);
-    
+
+    // for each handle type, we have to calculate the centerpoint slightly differently    
     switch (handle) {
       case 'ul':
         var offset = TransformElement.rotatePoint(radians, object, offsetX, offsetY);
@@ -235,7 +245,7 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
       object.clicks.count++;
       break;
   }
-
+  
   object.transform = {
     handle: handle,
     anchor: anchor,
@@ -244,7 +254,9 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
         x: object.x,
         y: object.y,
         height: object.height,
-        width: object.width
+        width: object.width,
+        corners: TransformElement.getCorners(object),
+        rotation: object.rotation
       },
       mouse: {
         x: mouseX,
@@ -252,38 +264,57 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
       }
     }
   };
-  
+
   return object.clicks.count;
-    
+
 };
 
-TransformElement.offsetCorners = function(corners, offsetX, offsetY) {
-  var top = corners.top + offsetY;
-  var left = corners.left + offsetX;
-  var bottom = corners.bottom + offsetY;
-  var right = corners.right + offsetX;
-  var corners = {
-    top: top,
-    left: left,
-    bottom: bottom,
-    right: right,
-    ul: {x: left, y: top},
-    ur: {x: right, y: top},
-    ll: {x: left, y: bottom},
-    lr: {x: right, y: bottom}
+TransformElement.snapObject = function(environment, object) {
+  var corners = TransformElement.getCorners(object);
+  var sides = [
+    {name: 'top', snap: 0, axis: 'y', derotate: true},
+    {name: 'right', snap: environment.canvas.width, axis: 'x', derotate: true},
+    {name: 'bottom', snap: environment.canvas.height, axis: 'y', derotate: true},
+    {name: 'left', snap: 0, axis: 'x', derotate: true},
+    {name: 'center', snap: environment.canvas.width / 2, axis: 'x', derotate: false},
+    {name: 'middle', snap: environment.canvas.height / 2, axis: 'y', derotate: false},
+  ];
+  var snapped = false;
+  var rotation = (typeof object.rotation !== 'undefined') ? object.rotation : 0;
+  var canDerotate = (rotation < 20 || rotation > 340); // maybe allow near-90 degree values?
+  var axisSnapped = {};
+  for (var i = 0; i < sides.length; i++) {
+    var side = sides[i];
+    if (axisSnapped[side.axis]) { // don't attempt to snap two things to an 'x' axis, for example
+      continue;
+    }
+    if (!side.derotate || (side.derotate && canDerotate)) {
+      var delta = side.snap - corners[side.name];
+      if (Math.abs(delta) < 20) {
+        axisSnapped[side.axis] = true;
+        snapped = true;
+        if (side.derotate) {
+          object.rotation = 0;
+        }
+        object[side.axis] += delta;
+      }
+    }
   }
-  return corners;
+  if (!snapped) {
+    object.rotation = object.transform.origin.object.rotation;
+  }
 };
 
 TransformElement.transformMoveObject = function(environment, object, mouseX, mouseY, event) {
-  if (event.shiftKey) {
-    mouseX = Math.round(mouseX / 100) * 100;
-    mouseY = Math.round(mouseY / 100) * 100;
-  }
   var deltaX = mouseX - object.transform.origin.mouse.x;
   var deltaY = mouseY - object.transform.origin.mouse.y;
   object.x = object.transform.origin.object.x + deltaX;
   object.y = object.transform.origin.object.y + deltaY;
+
+  var rotation = (typeof object.rotation !== 'undefined') ? object.rotation : 0;
+  if (event.altKey) {
+    TransformElement.snapObject(environment, object);
+  }
 };
 
 TransformElement.getObjectRotationInRadians = function(object) {
@@ -311,7 +342,7 @@ TransformElement.transformRotateObject = function(environment, object, mouseX, m
   var theta = Math.atan2(mouseY, mouseX) * (180/Math.PI);
   if (theta < 0) theta = 360 + theta;
   theta = (theta + 90) % 360;
-  if (event.shiftKey) {
+  if (event.altKey) {
     theta = Math.round(theta / 45) * 45;
   }
   object.rotation = theta;
@@ -345,7 +376,7 @@ TransformElement.transformResizeObject = function(environment, object, mouseX, m
   var mouse = TransformElement.rotatePoint(-radians, object, mouseX, mouseY);
 
   // find all the corners of the unrotated object
-  var corners = TransformElement.getCorners(0, object);
+  var corners = TransformElement.getCorners(object);
   
   // move the handle to match the rotated mouse coordinates
   corners[object.transform.handle] = {x: mouse.x, y: mouse.y};

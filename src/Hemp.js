@@ -27,14 +27,11 @@ var Hemp = function(width, height, objects, interactive, selector) {
   }
 
   if (this._interactive) {
-    if (this._element) {
-      this._element.addEventListener('mouseout', this._onMouseUp.bind(this));
-    }
     this._environment.canvas.setAttribute('tabIndex', '1');
     this._environment.canvas.addEventListener('keydown', this._onKeyDown.bind(this));
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
-    this._environment.canvas.addEventListener('mousemove', this._onMouseMove.bind(this));
-    this._environment.canvas.addEventListener('mouseup', this._onMouseUp.bind(this));
+    window.addEventListener('mousemove', this._onMouseMove.bind(this));
+    window.addEventListener('mouseup', this._onMouseUp.bind(this));
   }
 
   this._setupObserver();
@@ -171,6 +168,8 @@ Hemp.prototype._onMouseDown = function(event) {
   var coordinates = this._windowToCanvas(event.offsetX, event.offsetY);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
+  event.preventDefault();
+
   // if there's already a selected object, transform it if possible
   if (this._setupTransformingObject(coordinates.x, coordinates.y, event, hitObjects)) {
     return;
@@ -184,6 +183,7 @@ Hemp.prototype._onMouseDown = function(event) {
     this._selectObject(hitObjects[hitObjects.length - 1]);
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
+  return;
 };
 
 Hemp.prototype._maximizeObject = function(object) {
@@ -232,6 +232,8 @@ Hemp.prototype._onMouseMove = function(event) {
 };
 
 Hemp.prototype._onMouseUp = function(event) {
+console.log('_onMouseUp', event);
+  event.preventDefault();
   if (this._transformingObject) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
     this._reportObjectTransform(this._transformingObject);
