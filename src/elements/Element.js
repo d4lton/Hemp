@@ -60,6 +60,12 @@ Element.prototype.resolveColor = function(color) {
   }
 };
 
+// TODO
+// make these class functions
+// only need one function
+// return an array of types this Element can draw
+// each element in array should be an object with name, displayName, properties
+
 Element.prototype.getTypes = function() {
   console.warn('override me');
 };
