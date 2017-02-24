@@ -26,6 +26,9 @@ Element.prototype.setupCanvas = function() {
   this._canvas.height = this._object.height;
   if (this._object.backgroundColor) {
     this._context.save();
+    if (typeof this._object.opacity !== 'undefined') {
+      this._context.globalAlpha = this._object.opacity;
+    }
     this._context.fillStyle = this.resolveColor(this._environment, this._object.backgroundColor);
     this._context.fillRect(0, 0, this._object.width, this._object.height);
     this._context.restore();

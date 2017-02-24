@@ -17,13 +17,27 @@ TransformElement.prototype.constructor = TransformElement;
 
 /************************************************************************************/
 
+TransformElement.prototype.setupCanvas = function() {
+  // this special element uses the main context to draw
+};
+
 TransformElement.prototype.renderElement = function() {
+  // this special element uses the main context to draw
+};
+
+TransformElement.prototype.renderCanvas = function() {
+  this._environment.context.save();
   this._environment.context.translate(this._object.x, this._object.y);
   if (typeof this._object.rotation !== 'undefined') {
     this._environment.context.rotate(this._object.rotation * Math.PI / 180);
   }
+  if (typeof this._object.opacity !== 'undefined') {
+    this._environment.context.globalAlpha = this._object.opacity;
+  }
+
   this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+
   // body
   this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
   // ul
@@ -38,7 +52,10 @@ TransformElement.prototype.renderElement = function() {
   this._environment.context.strokeRect(-10, -(this._object.height / 2) - 40, 20, 20);
   // rotate connector
   this._environment.context.strokeRect(0, -(this._object.height / 2) - 20, 1, 20);
+
+  this._environment.context.restore();
 };
+
 
 TransformElement.findTransformHandle = function(environment, mouseX, mouseY, object) {
   var handles = ['ul', 'ur', 'll', 'lr', 'body', 'rotate'];
@@ -224,8 +241,10 @@ TransformElement.transformMoveObject = function(environment, object, mouseX, mou
     mouseX = Math.round(mouseX / 100) * 100;
     mouseY = Math.round(mouseY / 100) * 100;
   }
-  object.x = mouseX;
-  object.y = mouseY;
+  var deltaX = mouseX - object.transform.origin.mouse.x;
+  var deltaY = mouseY - object.transform.origin.mouse.y;
+  object.x = object.transform.origin.object.x + deltaX;
+  object.y = object.transform.origin.object.y + deltaY;
 };
 
 TransformElement.getObjectRotationInRadians = function(object) {

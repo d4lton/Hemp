@@ -32,6 +32,9 @@ Element.prototype.setupCanvas = function () {
   this._canvas.height = this._object.height;
   if (this._object.backgroundColor) {
     this._context.save();
+    if (typeof this._object.opacity !== 'undefined') {
+      this._context.globalAlpha = this._object.opacity;
+    }
     this._context.fillStyle = this.resolveColor(this._environment, this._object.backgroundColor);
     this._context.fillRect(0, 0, this._object.width, this._object.height);
     this._context.restore();
@@ -547,13 +550,27 @@ TransformElement.prototype.constructor = TransformElement;
 
 /************************************************************************************/
 
+TransformElement.prototype.setupCanvas = function () {
+  // this special element uses the main context to draw
+};
+
 TransformElement.prototype.renderElement = function () {
+  // this special element uses the main context to draw
+};
+
+TransformElement.prototype.renderCanvas = function () {
+  this._environment.context.save();
   this._environment.context.translate(this._object.x, this._object.y);
   if (typeof this._object.rotation !== 'undefined') {
     this._environment.context.rotate(this._object.rotation * Math.PI / 180);
   }
+  if (typeof this._object.opacity !== 'undefined') {
+    this._environment.context.globalAlpha = this._object.opacity;
+  }
+
   this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+
   // body
   this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
   // ul
@@ -568,6 +585,8 @@ TransformElement.prototype.renderElement = function () {
   this._environment.context.strokeRect(-10, -(this._object.height / 2) - 40, 20, 20);
   // rotate connector
   this._environment.context.strokeRect(0, -(this._object.height / 2) - 20, 1, 20);
+
+  this._environment.context.restore();
 };
 
 TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
@@ -756,8 +775,10 @@ TransformElement.transformMoveObject = function (environment, object, mouseX, mo
     mouseX = Math.round(mouseX / 100) * 100;
     mouseY = Math.round(mouseY / 100) * 100;
   }
-  object.x = mouseX;
-  object.y = mouseY;
+  var deltaX = mouseX - object.transform.origin.mouse.x;
+  var deltaY = mouseY - object.transform.origin.mouse.y;
+  object.x = object.transform.origin.object.x + deltaX;
+  object.y = object.transform.origin.object.y + deltaY;
 };
 
 TransformElement.getObjectRotationInRadians = function (object) {
@@ -886,6 +907,8 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
+  this._stickyTransform = false;
+
   this._environment = this._setupRenderEnvironment({
     width: this._width,
     height: this._height
@@ -919,6 +942,7 @@ Hemp.prototype.getEnvironment = function () {
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
+  this._deselectAllObjects();
   if (Array.isArray(objects)) {
     // create an array of promises for all image objects
     var promises = objects.filter(function (object) {
@@ -959,6 +983,12 @@ Hemp.prototype.render = function () {
   this._renderObjects(this._environment);
 };
 
+Hemp.prototype.setStickyTransform = function (value) {
+  if (typeof value !== 'undefined') {
+    this._stickyTransform = value;
+  }
+};
+
 Hemp.prototype._createCanvas = function (width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
@@ -992,18 +1022,23 @@ Hemp.prototype._handleElementResize = function () {
 };
 
 Hemp.prototype._findElement = function (selector) {
-  if (selector.indexOf('#') === 0) {
-    selector = selector.slice(1);
-    return document.getElementById(selector);
-  }
-  if (selector.indexOf('.') === 0) {
-    selector = selector.slice(1);
-    var elements = document.getElementsByClassName(selector);
-    if (elements.length === 1) {
-      return elements[0];
-    } else {
-      throw new Error('Ambiguous selector: ' + selector);
+  if (typeof selector === 'string') {
+    if (selector.indexOf('#') === 0) {
+      selector = selector.slice(1);
+      return document.getElementById(selector);
     }
+    if (selector.indexOf('.') === 0) {
+      selector = selector.slice(1);
+      var elements = document.getElementsByClassName(selector);
+      if (elements.length === 1) {
+        return elements[0];
+      } else {
+        throw new Error('Ambiguous selector: ' + selector);
+      }
+    }
+  }
+  if (selector instanceof jQuery) {
+    return selector.get(0);
   }
   throw new Error('Could not find selector: ' + selector);
 };
@@ -1024,7 +1059,7 @@ Hemp.prototype._onMouseDown = function (event) {
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   // if there's already a selected object, transform it if possible
-  if (this._setupTransformingObject(coordinates.x, coordinates.y, event)) {
+  if (this._setupTransformingObject(coordinates.x, coordinates.y, event, hitObjects)) {
     return;
   }
 
@@ -1047,11 +1082,15 @@ Hemp.prototype._maximizeObject = function (object) {
   this._renderObjects(this._environment);
 };
 
-Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event) {
-  var selectedObjects = this._getObjects({ name: 'selected', value: true, op: '==' });
+Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event, hitObjects) {
+  var selectedObjects = this._getObjects({ name: 'selected', value: true, op: 'eq' });
   if (selectedObjects.length > 0) {
     var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
+      // if we don't want sticky transforms, then if the body handle was clicked, return false if there are other objects
+      if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 0) {
+        return false;
+      }
       this._transformingObject = selectedObjects[0];
       var clicks = TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY, event);
       if (clicks > 1) {
@@ -1117,7 +1156,7 @@ Hemp.prototype._getObjects = function (filter) {
     if (filter) {
       return this._objects.filter(function (object) {
         switch (filter.op) {
-          case '==':
+          case 'eq':
             return object[filter.name] == filter.value;
             break;
           default:
@@ -1174,12 +1213,9 @@ Hemp.prototype._renderObjects = function (environment) {
 };
 
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
-  environment.context.save();
   var transformObject = JSON.parse(JSON.stringify(object));
   transformObject.type = 'transform';
-  var element = ElementFactory.getElement(environment, transformObject);
-  element.render();
-  environment.context.restore();
+  this._renderObject(environment, transformObject);
 };
 
 Hemp.prototype._renderObject = function (environment, object) {
@@ -1192,12 +1228,6 @@ Hemp.prototype._renderObject = function (environment, object) {
 Hemp.prototype._setupRenderEnvironment = function (object, options) {
   var canvas = this._createCanvas(object.width, object.height);
   var context = this._setupContext(canvas);
-  if (object.backgroundColor) {
-    context.save();
-    context.fillStyle = object.backgroundColor;
-    context.fillRect(0, 0, object.width, object.height);
-    context.restore();
-  }
   return {
     options: options ? options : {},
     canvas: canvas,

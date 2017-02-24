@@ -13,6 +13,8 @@ var Hemp = function(width, height, objects, interactive, selector) {
   this._height = height;
   this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = (typeof interactive !== 'undefined') ? interactive : false;
+  
+  this._stickyTransform = false;
 
   this._environment = this._setupRenderEnvironment({
     width: this._width,
@@ -48,6 +50,7 @@ Hemp.prototype.getEnvironment = function() {
 };
 
 Hemp.prototype.setObjects = function(objects, callback) {
+  this._deselectAllObjects();
   if (Array.isArray(objects)) {
     // create an array of promises for all image objects
     var promises = objects.filter(function(object) {
@@ -88,6 +91,12 @@ Hemp.prototype.render = function() {
   this._renderObjects(this._environment);
 };
 
+Hemp.prototype.setStickyTransform = function(value) {
+  if (typeof value !== 'undefined') {
+    this._stickyTransform = value;
+  }
+};
+
 Hemp.prototype._createCanvas = function(width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
@@ -120,19 +129,24 @@ Hemp.prototype._handleElementResize = function() {
   };
 };
 
-Hemp.prototype._findElement = function(selector) {
-  if (selector.indexOf('#') === 0) {
-    selector = selector.slice(1);
-    return document.getElementById(selector);
-  }
-  if (selector.indexOf('.') === 0) {
-    selector = selector.slice(1);
-    var elements = document.getElementsByClassName(selector);
-    if (elements.length === 1) {
-      return elements[0];
-    } else {
-      throw new Error('Ambiguous selector: ' + selector);
+Hemp.prototype._findElement = function (selector) {
+  if (typeof selector === 'string') {
+    if (selector.indexOf('#') === 0) {
+      selector = selector.slice(1);
+      return document.getElementById(selector);
     }
+    if (selector.indexOf('.') === 0) {
+      selector = selector.slice(1);
+      var elements = document.getElementsByClassName(selector);
+      if (elements.length === 1) {
+        return elements[0];
+      } else {
+        throw new Error('Ambiguous selector: ' + selector);
+      }
+    }
+  }
+  if (selector instanceof jQuery) {
+    return selector.get(0);
   }
   throw new Error('Could not find selector: ' + selector);
 };
@@ -153,7 +167,7 @@ Hemp.prototype._onMouseDown = function(event) {
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   // if there's already a selected object, transform it if possible
-  if (this._setupTransformingObject(coordinates.x, coordinates.y, event)) {
+  if (this._setupTransformingObject(coordinates.x, coordinates.y, event, hitObjects)) {
     return;
   }
 
@@ -176,11 +190,15 @@ Hemp.prototype._maximizeObject = function(object) {
   this._renderObjects(this._environment);
 };
 
-Hemp.prototype._setupTransformingObject = function(mouseX, mouseY, event) {
-  var selectedObjects = this._getObjects({name: 'selected', value: true, op: '=='});
+Hemp.prototype._setupTransformingObject = function(mouseX, mouseY, event, hitObjects) {
+  var selectedObjects = this._getObjects({name: 'selected', value: true, op: 'eq'});
   if (selectedObjects.length > 0) {
     var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
+      // if we don't want sticky transforms, then if the body handle was clicked, return false if there are other objects
+      if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 0) {
+        return false;
+      }
       this._transformingObject = selectedObjects[0];
       var clicks = TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY, event);
       if (clicks > 1) {
@@ -246,7 +264,7 @@ Hemp.prototype._getObjects = function(filter) {
     if (filter) {
       return this._objects.filter(function(object) {
         switch (filter.op) {
-          case '==':
+          case 'eq':
             return object[filter.name] == filter.value;
             break;
           default:
@@ -302,12 +320,9 @@ Hemp.prototype._renderObjects = function(environment) {
 };
 
 Hemp.prototype._renderTransformBoxForObject = function(environment, object) {
-  environment.context.save();
   var transformObject = JSON.parse(JSON.stringify(object));
   transformObject.type = 'transform';
-  var element = ElementFactory.getElement(environment, transformObject);
-  element.render();
-  environment.context.restore();
+  this._renderObject(environment, transformObject);
 }
 
 Hemp.prototype._renderObject = function(environment, object) {
@@ -320,12 +335,6 @@ Hemp.prototype._renderObject = function(environment, object) {
 Hemp.prototype._setupRenderEnvironment = function(object, options) {
   var canvas = this._createCanvas(object.width, object.height);
   var context = this._setupContext(canvas);
-  if (object.backgroundColor) {
-    context.save();
-    context.fillStyle = object.backgroundColor;
-    context.fillRect(0, 0, object.width, object.height);
-    context.restore();
-  }
   return {
     options: options ? options : {},
     canvas: canvas,
