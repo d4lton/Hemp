@@ -37,7 +37,7 @@ TransformElement.prototype.renderCanvas = function() {
 
   this._environment.context.lineWidth = 4;
   this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-
+  
   // body
   this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
   // ul
@@ -127,12 +127,11 @@ TransformElement.getCorners = function(radians, object) {
   return corners;
 };
 
-
-TransformElement.updateObjectFromCorners = function(object, corners) {
+TransformElement.updateObjectFromCorners = function(object, corners, fromCenter) {
   var handle = object.transform.handle;
   var anchor = object.transform.anchor;
   var top, left, bottom, right;
-  
+
   switch (handle) {
     case 'ul':
       top = corners[handle].y;
@@ -159,12 +158,50 @@ TransformElement.updateObjectFromCorners = function(object, corners) {
       right = corners[anchor].x;
       break;
   }
-
+  
   object.width = right - left;
   object.height = bottom - top;
-
-  object.x = object.transform.origin.object.x;
-  object.y = object.transform.origin.object.y;
+  
+  if (object.width < 50) {
+    object.width = 50;
+  }
+  if (object.height < 50) {
+    object.height = 50;
+  }
+  
+  if (fromCenter) {
+    object.x = object.transform.origin.object.x;
+    object.y = object.transform.origin.object.y;
+  } else {
+    var offsetX = (object.width - object.transform.resize.origin.width) / 2;
+    var offsetY = (object.height - object.transform.resize.origin.height) / 2;
+  
+    var radians = TransformElement.getObjectRotationInRadians(object);
+    
+    switch (handle) {
+      case 'ul':
+        var offset = TransformElement.rotatePoint(radians, object, offsetX, offsetY);
+        object.x = object.transform.resize.origin.x - offset.x;
+        object.y = object.transform.resize.origin.y - offset.y;
+        break;
+      case 'ur':
+        var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
+        object.x = object.transform.resize.origin.x + offset.x;
+        object.y = object.transform.resize.origin.y - offset.y;
+        break;
+      case 'lr':
+        var offset = TransformElement.rotatePoint(radians, object, offsetX, offsetY);
+        object.x = object.transform.resize.origin.x + offset.x;
+        object.y = object.transform.resize.origin.y + offset.y;
+        break;
+      case 'll':
+        var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
+        object.x = object.transform.resize.origin.x - offset.x;
+        object.y = object.transform.resize.origin.y + offset.y;
+        break;
+    }
+  }
+  
 };
 
 TransformElement.transformBegin = function(environment, object, handle, mouseX, mouseY, begin) {
@@ -205,7 +242,9 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
     origin: {
       object: {
         x: object.x,
-        y: object.y
+        y: object.y,
+        height: object.height,
+        width: object.width
       },
       mouse: {
         x: mouseX,
@@ -289,6 +328,16 @@ TransformElement.transformResizeObject = function(environment, object, mouseX, m
   mouseY -= object.y;
 
   // move the object to 0, 0
+
+  object.transform.resize = {
+    origin: {
+      x: object.x,
+      y: object.y,
+      height: object.height,
+      width: object.width
+    }
+  };
+
   object.x = 0;
   object.y = 0;
 
@@ -302,7 +351,7 @@ TransformElement.transformResizeObject = function(environment, object, mouseX, m
   corners[object.transform.handle] = {x: mouse.x, y: mouse.y};
 
   // rebuild the object from the modified corners
-  TransformElement.updateObjectFromCorners(object, corners);
+  TransformElement.updateObjectFromCorners(object, corners, event.shiftKey);
 };
 
 TransformElement.transformMove = function(environment, object, mouseX, mouseY, event) {
