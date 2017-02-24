@@ -166,10 +166,12 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
 };
 
 ImageElement.prototype.renderElement = function () {
-  if (this._object.image) {
-    var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
-    this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
-  }
+  try {
+    if (this._object.image) {
+      var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
+      this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
+    }
+  } catch (e) {}
 };
 
 ImageElement.prototype.getTypes = function () {
