@@ -6,54 +6,49 @@
  *
  */
 
-function Element(environment, object) {
-  this._environment = environment;
-  this._object = object;
+function Element() {
 };
 
 /************************************************************************************/
 
-Element.prototype.render = function() {
-  this.setupCanvas();
-  this.renderElement();
-  this.renderCanvas();
+Element.prototype.render = function(environment, object) {
+  this.setupCanvas(environment, object);
+  this.renderElement(environment, object);
+  this.renderCanvas(environment, object);
 };
 
-Element.prototype.setupCanvas = function() {
+Element.prototype.setupCanvas = function(environment, object) {
   this._canvas = document.createElement('canvas');
   this._context = this._canvas.getContext('2d');
-  this._canvas.width = this._object.width;
-  this._canvas.height = this._object.height;
-  if (this._object.backgroundColor) {
+  this._canvas.width = object.width;
+  this._canvas.height = object.height;
+  if (object.backgroundColor) {
     this._context.save();
-    if (typeof this._object.opacity !== 'undefined') {
-      this._context.globalAlpha = this._object.opacity;
-    }
-    this._context.fillStyle = this.resolveColor(this._environment, this._object.backgroundColor);
-    this._context.fillRect(0, 0, this._object.width, this._object.height);
+    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
+    this._context.fillRect(0, 0, object.width, object.height);
     this._context.restore();
   }
 };
 
-Element.prototype.renderElement = function() {
+Element.prototype.renderElement = function(environment, object) {
   console.warn('override me');
 };
 
-Element.prototype.renderCanvas = function() {
-  this._environment.context.save();
-  this._environment.context.translate(this._object.x, this._object.y);
-  if (typeof this._object.rotation !== 'undefined') {
-    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+Element.prototype.renderCanvas = function(environment, object) {
+  environment.context.save();
+  environment.context.translate(object.x, object.y);
+  if (typeof object.rotation !== 'undefined' && object.rotation != 0) {
+    environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof this._object.opacity !== 'undefined') {
-    this._environment.context.globalAlpha = this._object.opacity;
+  if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
+    environment.context.globalAlpha = object.opacity;
   }
-  this._environment.context.drawImage(this._canvas, -this._object.width / 2, -this._object.height / 2);
-  this._environment.context.restore();
+  environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
+  environment.context.restore();
 };
 
-Element.prototype.resolveColor = function(color) {
-  if (this._environment.options && this._environment.options.selectionRender) {
+Element.prototype.resolveColor = function(environment, color) {
+  if (environment.options && environment.options.selectionRender) {
     return 'black';
   } else {
     return color;

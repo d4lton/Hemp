@@ -8,8 +8,8 @@
 
 import Element from './Element.js';
 
-function ImageElement(environment, object) {
-  Element.call(this, environment, object);
+function ImageElement() {
+  Element.call(this);
 };
 
 ImageElement.prototype = Object.create(Element.prototype);
@@ -28,7 +28,6 @@ ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
     sourceWidth = src.height * (dst.width / dst.height);
     sourceHeight = src.height;
   }
-
   var offsetX = Math.max(0, src.width - sourceWidth) / 2;
   var offsetY = Math.max(0, src.height - sourceHeight) / 2;
   return {
@@ -43,41 +42,85 @@ ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
   };
 };
 
-ImageElement.prototype.renderElement = function() {
+ImageElement.prototype.renderElement = function(environment, object) {
   try {
-    if (this._object.image) {
-      var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
-      this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
+    if (object.image) {
+      var sourceAndOffset = this._getFillSourceAndOffset(object.image, object);
+      this._context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
     }
   } catch (e) {
   }
 };
 
-ImageElement.prototype.getTypes = function() {
+ImageElement.getTypes = function() {
   return [
     {
       type: 'image',
-      displayName: 'Static Image'
+      displayName: 'Static Image',
+      properties: [
+        {
+          name: 'url',
+          displayName: 'URL',
+          type: 'url',
+          default: ''
+        },
+        {
+          name: 'position',
+          displayName: 'Position',
+          type: 'integers',
+          properties: [
+            {
+              name: 'x',
+              displayName: 'X',
+              default: 0
+            },
+            {
+              name: 'y',
+              displayName: 'Y',
+              default: 0
+            }
+          ]
+        },
+        {
+          name: 'size',
+          displayName: 'Size',
+          type: 'integers',
+          properties: [
+            {
+              name: 'width',
+              displayName: 'W',
+              default: 200
+            },
+            {
+              name: 'height',
+              displayName: 'H',
+              default: 200
+            }
+          ]
+        },
+        {
+          name: 'rotation',
+          displayName: 'Rotation',
+          type: 'slider',
+          min: -180,
+          max: 180,
+          step: 1,
+          scale: 1,
+          default: 0
+        },
+        {
+          name: 'opacity',
+          displayName: 'Opacity',
+          type: 'slider',
+          min: 0,
+          max: 100,
+          step: 1,
+          scale: 100,
+          default: 1
+        }
+      ]
     }
   ];
-};
-
-ImageElement.prototype.getProperties = function() {
-  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
-  var properties = {
-    'image': [
-      {
-        name: 'url',
-        displayName: 'URL',
-        type: 'url',
-        default: ''
-      }
-    ]
-  };
-  Object.keys(properties).forEach(function(type) {
-    properties[type] = properties[type].concat(common.common);
-  });
-  return properties;
 };
 
 export default ImageElement;

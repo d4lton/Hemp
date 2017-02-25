@@ -8,8 +8,8 @@
 
 import Element from './Element.js';
 
-function TransformElement(environment, object) {
-  Element.call(this, environment, object);
+function TransformElement() {
+  Element.call(this);
 };
 
 TransformElement.prototype = Object.create(Element.prototype);
@@ -17,43 +17,43 @@ TransformElement.prototype.constructor = TransformElement;
 
 /************************************************************************************/
 
-TransformElement.prototype.setupCanvas = function() {
+TransformElement.prototype.setupCanvas = function(environment, object) {
   // this special element uses the main context to draw
 };
 
-TransformElement.prototype.renderElement = function() {
+TransformElement.prototype.renderElement = function(environment, object) {
   // this special element uses the main context to draw
 };
 
-TransformElement.prototype.renderCanvas = function() {
-  this._environment.context.save();
-  this._environment.context.translate(this._object.x, this._object.y);
-  if (typeof this._object.rotation !== 'undefined') {
-    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+TransformElement.prototype.renderCanvas = function(environment, object) {
+  environment.context.save();
+  environment.context.translate(object.x, object.y);
+  if (typeof object.rotation !== 'undefined') {
+    environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof this._object.opacity !== 'undefined') {
-    this._environment.context.globalAlpha = this._object.opacity;
+  if (typeof object.opacity !== 'undefined') {
+    environment.context.globalAlpha = object.opacity;
   }
 
-  this._environment.context.lineWidth = 4;
-  this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  environment.context.lineWidth = 4;
+  environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
   
   // body
-  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
+  environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
   // ul
-  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, 20, 20);
+  environment.context.strokeRect(-object.width / 2, -object.height / 2, 20, 20);
   // ur
-  this._environment.context.strokeRect((this._object.width / 2) - 20, -this._object.height / 2, 20, 20);
+  environment.context.strokeRect((object.width / 2) - 20, -object.height / 2, 20, 20);
   // lr
-  this._environment.context.strokeRect((this._object.width / 2) - 20, (this._object.height / 2) - 20, 20, 20);
+  environment.context.strokeRect((object.width / 2) - 20, (object.height / 2) - 20, 20, 20);
   // ll
-  this._environment.context.strokeRect(-this._object.width / 2, (this._object.height / 2) - 20, 20, 20);
+  environment.context.strokeRect(-object.width / 2, (object.height / 2) - 20, 20, 20);
   // rotate handle
-  this._environment.context.strokeRect(-10, -(this._object.height / 2) - 40, 20, 20);
+  environment.context.strokeRect(-10, -(object.height / 2) - 40, 20, 20);
   // rotate connector
-  this._environment.context.strokeRect(0, -(this._object.height / 2) - 20, 1, 20);
+  environment.context.strokeRect(0, -(object.height / 2) - 20, 1, 20);
 
-  this._environment.context.restore();
+  environment.context.restore();
 };
 
 

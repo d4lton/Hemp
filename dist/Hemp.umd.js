@@ -12,54 +12,48 @@
  *
  */
 
-function Element(environment, object) {
-  this._environment = environment;
-  this._object = object;
-}
+function Element() {}
 
 /************************************************************************************/
 
-Element.prototype.render = function () {
-  this.setupCanvas();
-  this.renderElement();
-  this.renderCanvas();
+Element.prototype.render = function (environment, object) {
+  this.setupCanvas(environment, object);
+  this.renderElement(environment, object);
+  this.renderCanvas(environment, object);
 };
 
-Element.prototype.setupCanvas = function () {
+Element.prototype.setupCanvas = function (environment, object) {
   this._canvas = document.createElement('canvas');
   this._context = this._canvas.getContext('2d');
-  this._canvas.width = this._object.width;
-  this._canvas.height = this._object.height;
-  if (this._object.backgroundColor) {
+  this._canvas.width = object.width;
+  this._canvas.height = object.height;
+  if (object.backgroundColor) {
     this._context.save();
-    if (typeof this._object.opacity !== 'undefined') {
-      this._context.globalAlpha = this._object.opacity;
-    }
-    this._context.fillStyle = this.resolveColor(this._environment, this._object.backgroundColor);
-    this._context.fillRect(0, 0, this._object.width, this._object.height);
+    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
+    this._context.fillRect(0, 0, object.width, object.height);
     this._context.restore();
   }
 };
 
-Element.prototype.renderElement = function () {
+Element.prototype.renderElement = function (environment, object) {
   console.warn('override me');
 };
 
-Element.prototype.renderCanvas = function () {
-  this._environment.context.save();
-  this._environment.context.translate(this._object.x, this._object.y);
-  if (typeof this._object.rotation !== 'undefined') {
-    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+Element.prototype.renderCanvas = function (environment, object) {
+  environment.context.save();
+  environment.context.translate(object.x, object.y);
+  if (typeof object.rotation !== 'undefined' && object.rotation != 0) {
+    environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof this._object.opacity !== 'undefined') {
-    this._environment.context.globalAlpha = this._object.opacity;
+  if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
+    environment.context.globalAlpha = object.opacity;
   }
-  this._environment.context.drawImage(this._canvas, -this._object.width / 2, -this._object.height / 2);
-  this._environment.context.restore();
+  environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
+  environment.context.restore();
 };
 
-Element.prototype.resolveColor = function (color) {
-  if (this._environment.options && this._environment.options.selectionRender) {
+Element.prototype.resolveColor = function (environment, color) {
+  if (environment.options && environment.options.selectionRender) {
     return 'black';
   } else {
     return color;
@@ -134,8 +128,8 @@ Element.prototype.getProperties = function () {
  *
  */
 
-function ImageElement(environment, object) {
-  Element.call(this, environment, object);
+function ImageElement() {
+  Element.call(this);
 }
 
 ImageElement.prototype = Object.create(Element.prototype);
@@ -154,7 +148,6 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
     sourceWidth = src.height * (dst.width / dst.height);
     sourceHeight = src.height;
   }
-
   var offsetX = Math.max(0, src.width - sourceWidth) / 2;
   var offsetY = Math.max(0, src.height - sourceHeight) / 2;
   return {
@@ -169,36 +162,70 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
   };
 };
 
-ImageElement.prototype.renderElement = function () {
+ImageElement.prototype.renderElement = function (environment, object) {
   try {
-    if (this._object.image) {
-      var sourceAndOffset = this._getFillSourceAndOffset(this._object.image, this._object);
-      this._context.drawImage(this._object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, this._object.width, this._object.height);
+    if (object.image) {
+      var sourceAndOffset = this._getFillSourceAndOffset(object.image, object);
+      this._context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
     }
   } catch (e) {}
 };
 
-ImageElement.prototype.getTypes = function () {
+ImageElement.getTypes = function () {
   return [{
     type: 'image',
-    displayName: 'Static Image'
-  }];
-};
-
-ImageElement.prototype.getProperties = function () {
-  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
-  var properties = {
-    'image': [{
+    displayName: 'Static Image',
+    properties: [{
       name: 'url',
       displayName: 'URL',
       type: 'url',
       default: ''
+    }, {
+      name: 'position',
+      displayName: 'Position',
+      type: 'integers',
+      properties: [{
+        name: 'x',
+        displayName: 'X',
+        default: 0
+      }, {
+        name: 'y',
+        displayName: 'Y',
+        default: 0
+      }]
+    }, {
+      name: 'size',
+      displayName: 'Size',
+      type: 'integers',
+      properties: [{
+        name: 'width',
+        displayName: 'W',
+        default: 200
+      }, {
+        name: 'height',
+        displayName: 'H',
+        default: 200
+      }]
+    }, {
+      name: 'rotation',
+      displayName: 'Rotation',
+      type: 'slider',
+      min: -180,
+      max: 180,
+      step: 1,
+      scale: 1,
+      default: 0
+    }, {
+      name: 'opacity',
+      displayName: 'Opacity',
+      type: 'slider',
+      min: 0,
+      max: 100,
+      step: 1,
+      scale: 100,
+      default: 1
     }]
-  };
-  Object.keys(properties).forEach(function (type) {
-    properties[type] = properties[type].concat(common.common);
-  });
-  return properties;
+  }];
 };
 
 /**
@@ -409,8 +436,8 @@ var CanvasText = {
  *
  */
 
-function TextElement(environment, object) {
-  Element.call(this, environment, object);
+function TextElement() {
+  Element.call(this);
 }
 
 TextElement.prototype = Object.create(Element.prototype);
@@ -418,8 +445,8 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function () {
-  CanvasText.drawText(this._context, this._object);
+TextElement.prototype.renderElement = function (environment, object) {
+  CanvasText.drawText(this._context, object);
 };
 
 TextElement.prototype.getTypes = function () {
@@ -469,8 +496,8 @@ TextElement.prototype.getProperties = function () {
  *
  */
 
-function ShapeElement(environment, object) {
-  Element.call(this, environment, object);
+function ShapeElement() {
+  Element.call(this);
 }
 
 ShapeElement.prototype = Object.create(Element.prototype);
@@ -478,36 +505,36 @@ ShapeElement.prototype.constructor = ShapeElement;
 
 /************************************************************************************/
 
-ShapeElement.prototype.renderElement = function () {
-  switch (this._object.type) {
+ShapeElement.prototype.renderElement = function (environment, object) {
+  switch (object.type) {
     case 'rectangle':
-      this.renderRectangle();
+      this.renderRectangle(environment, object);
       break;
     case 'ellipse':
-      this.renderEllipse();
+      this.renderEllipse(environment, object);
       break;
     default:
-      throw new Error('Unknown shape type: ' + this._object.type);
+      throw new Error('Unknown shape type: ' + object.type);
   }
 };
 
-ShapeElement.prototype.renderRectangle = function () {
+ShapeElement.prototype.renderRectangle = function (environment, object) {
   this._context.save();
-  this._context.fillStyle = this.resolveColor(this._object.color);
-  this._context.fillRect(0, 0, this._object.width, this._object.height);
+  this._context.fillStyle = this.resolveColor(environment, object.color);
+  this._context.fillRect(0, 0, object.width, object.height);
   this._context.restore();
 };
 
-ShapeElement.prototype.renderEllipse = function () {
+ShapeElement.prototype.renderEllipse = function (environment, object) {
   this._context.save();
 
   this._context.save();
   this._context.beginPath();
-  this._context.scale(this._object.width / 2, this._object.height / 2);
+  this._context.scale(object.width / 2, object.height / 2);
   this._context.arc(1, 1, 1, 0, 2 * Math.PI, false);
   this._context.restore();
 
-  this._context.fillStyle = this.resolveColor(this._object.color);
+  this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fill();
 
   this._context.restore();
@@ -551,8 +578,8 @@ ShapeElement.prototype.getProperties = function () {
  *
  */
 
-function TransformElement(environment, object) {
-  Element.call(this, environment, object);
+function TransformElement() {
+  Element.call(this);
 }
 
 TransformElement.prototype = Object.create(Element.prototype);
@@ -560,43 +587,43 @@ TransformElement.prototype.constructor = TransformElement;
 
 /************************************************************************************/
 
-TransformElement.prototype.setupCanvas = function () {
+TransformElement.prototype.setupCanvas = function (environment, object) {
   // this special element uses the main context to draw
 };
 
-TransformElement.prototype.renderElement = function () {
+TransformElement.prototype.renderElement = function (environment, object) {
   // this special element uses the main context to draw
 };
 
-TransformElement.prototype.renderCanvas = function () {
-  this._environment.context.save();
-  this._environment.context.translate(this._object.x, this._object.y);
-  if (typeof this._object.rotation !== 'undefined') {
-    this._environment.context.rotate(this._object.rotation * Math.PI / 180);
+TransformElement.prototype.renderCanvas = function (environment, object) {
+  environment.context.save();
+  environment.context.translate(object.x, object.y);
+  if (typeof object.rotation !== 'undefined') {
+    environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof this._object.opacity !== 'undefined') {
-    this._environment.context.globalAlpha = this._object.opacity;
+  if (typeof object.opacity !== 'undefined') {
+    environment.context.globalAlpha = object.opacity;
   }
 
-  this._environment.context.lineWidth = 4;
-  this._environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  environment.context.lineWidth = 4;
+  environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
 
   // body
-  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, this._object.width, this._object.height);
+  environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
   // ul
-  this._environment.context.strokeRect(-this._object.width / 2, -this._object.height / 2, 20, 20);
+  environment.context.strokeRect(-object.width / 2, -object.height / 2, 20, 20);
   // ur
-  this._environment.context.strokeRect(this._object.width / 2 - 20, -this._object.height / 2, 20, 20);
+  environment.context.strokeRect(object.width / 2 - 20, -object.height / 2, 20, 20);
   // lr
-  this._environment.context.strokeRect(this._object.width / 2 - 20, this._object.height / 2 - 20, 20, 20);
+  environment.context.strokeRect(object.width / 2 - 20, object.height / 2 - 20, 20, 20);
   // ll
-  this._environment.context.strokeRect(-this._object.width / 2, this._object.height / 2 - 20, 20, 20);
+  environment.context.strokeRect(-object.width / 2, object.height / 2 - 20, 20, 20);
   // rotate handle
-  this._environment.context.strokeRect(-10, -(this._object.height / 2) - 40, 20, 20);
+  environment.context.strokeRect(-10, -(object.height / 2) - 40, 20, 20);
   // rotate connector
-  this._environment.context.strokeRect(0, -(this._object.height / 2) - 20, 1, 20);
+  environment.context.strokeRect(0, -(object.height / 2) - 20, 1, 20);
 
-  this._environment.context.restore();
+  environment.context.restore();
 };
 
 TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
@@ -951,27 +978,32 @@ TransformElement.transformEnd = function (environment, object, event) {
 
 var ElementFactory = {};
 
-ElementFactory.getElement = function (environment, object) {
+ElementFactory._elementTypeCache = {};
+
+ElementFactory.getElement = function (object) {
   var element;
-  switch (object.type) {
-    case 'image':
-      element = new ImageElement(environment, object);
-      break;
-    case 'text':
-      element = new TextElement(environment, object);
-      break;
-    case 'rectangle':
-    case 'ellipse':
-      element = new ShapeElement(environment, object);
-      break;
-    case 'transform':
-      element = new TransformElement(environment, object);
-      break;
-    default:
-      throw new Error('Element ' + type + ' is not supported');
-      break;
+  if (!ElementFactory._elementTypeCache[object.type]) {
+    switch (object.type) {
+      case 'image':
+        element = new ImageElement();
+        break;
+      case 'text':
+        element = new TextElement();
+        break;
+      case 'rectangle':
+      case 'ellipse':
+        element = new ShapeElement();
+        break;
+      case 'transform':
+        element = new TransformElement();
+        break;
+      default:
+        throw new Error('Element ' + type + ' is not supported');
+        break;
+    }
+    ElementFactory._elementTypeCache[object.type] = element;
   }
-  return element;
+  return ElementFactory._elementTypeCache[object.type];
 };
 
 ElementFactory.getElements = function () {
@@ -986,40 +1018,75 @@ ElementFactory.getElements = function () {
  */
 
 var Hemp = function Hemp(width, height, objects, interactive, selector) {
-  this._width = width;
-  this._height = height;
   this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
   this._stickyTransform = false;
 
-  this._environment = this._setupRenderEnvironment({
-    width: this._width,
-    height: this._height
-  });
-
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
-    this._element.append(this._environment.canvas);
   }
 
   if (this._interactive) {
-    this._environment.canvas.setAttribute('tabIndex', '1');
-    this._environment.canvas.addEventListener('keydown', this._onKeyDown.bind(this));
-    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+    window.addEventListener('keydown', this._onKeyDown.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
   }
 
-  this._setupObserver();
-  this._handleElementResize();
-
-  this._renderObjects(this._environment);
+  this.setSize(width, height);
 };
 Hemp.prototype.constructor = Hemp;
 
 Hemp.prototype.getEnvironment = function () {
   return this._environment;
+};
+
+Hemp.prototype.setSize = function (width, height) {
+  this._width = width;
+  this._height = height;
+
+  // remove the existing mousedown listener, if any
+  if (this._environment) {
+    if (this._element) {
+      this._element.removeChild(this._environment.canvas);
+    }
+    if (this._interactive) {
+      this._environment.canvas.removeEventListener('mousedown', this._onMouseDown.bind(this));
+    }
+  }
+
+  // create a new base environment
+  this._environment = this._setupRenderEnvironment({
+    width: this._width,
+    height: this._height
+  });
+
+  // if we have an element, attach to it
+  if (this._element) {
+    this._element.appendChild(this._environment.canvas);
+  }
+
+  // if we have user interaction, setup for canvas mousedowns
+  if (this._interactive) {
+    this._environment.canvas.setAttribute('tabIndex', '1');
+    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+  }
+
+  // watch for changes in the canvas
+  this._setupObserver();
+
+  // setup the _windowToCanvas function for the current canvas size
+  this._handleElementResize();
+
+  this._renderObjects(this._environment);
+};
+
+Hemp.prototype.toImage = function (callback) {
+  var image = new Image();
+  image.onload = function () {
+    callback(image);
+  };
+  image.src = this._environment.canvas.toDataURL("image/png");
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
@@ -1074,6 +1141,13 @@ Hemp.prototype.setStickyTransform = function (value) {
   }
 };
 
+Hemp.prototype.select = function (object) {
+  this._deselectAllObjects();
+  if (typeof object !== 'undefined') {
+    this._selectObject(object);
+  }
+};
+
 Hemp.prototype._createCanvas = function (width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
@@ -1087,17 +1161,23 @@ Hemp.prototype._setupContext = function (canvas) {
 
 Hemp.prototype._setupObserver = function () {
   if (this._element) {
-    var observer = new MutationObserver(function (mutations) {
+    if (this._observer) {
+      this._observer.disconnect();
+    }
+    this._observer = new MutationObserver(function (mutations) {
       this._handleElementResize();
     }.bind(this));
-    observer.observe(this._element, {
+    this._observer.observe(this._element, {
       attributes: true, childList: true, characterData: true
     });
   }
 };
 
 Hemp.prototype._handleElementResize = function () {
-  var rect = this._environment.canvas.getBoundingClientRect();
+  var rect = { left: 0, top: 0, width: 1, height: 1 };
+  if (this._environment) {
+    rect = this._environment.canvas.getBoundingClientRect();
+  }
   this._windowToCanvas = function (x, y) {
     return {
       x: (x - rect.left) * (this._width / rect.width),
@@ -1272,15 +1352,17 @@ Hemp.prototype._findObjectsAt = function (x, y) {
     });
   }
   this._getObjects().forEach(function (object) {
-    this._clearEnvironment(this._hitEnvironment);
-    this._renderObject(this._hitEnvironment, object);
-    var hitboxSize = 10; // make this configurable
-    var p = this._hitEnvironment.context.getImageData(x - hitboxSize / 2, y - hitboxSize / 2, hitboxSize, hitboxSize).data;
-    for (var i = 0; i < p.length; i += 4) {
-      if (p[i + 3] !== 0) {
-        // looking only at alpha channel
-        results.push(object);
-        break;
+    if (object.locked !== true) {
+      this._clearEnvironment(this._hitEnvironment);
+      this._renderObject(this._hitEnvironment, object);
+      var hitboxSize = 10; // make this configurable
+      var p = this._hitEnvironment.context.getImageData(x - hitboxSize / 2, y - hitboxSize / 2, hitboxSize, hitboxSize).data;
+      for (var i = 0; i < p.length; i += 4) {
+        if (p[i + 3] !== 0) {
+          // looking only at alpha channel
+          results.push(object);
+          break;
+        }
       }
     }
   }.bind(this));
@@ -1309,8 +1391,8 @@ Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
 
 Hemp.prototype._renderObject = function (environment, object) {
   environment.context.save();
-  var element = ElementFactory.getElement(environment, object);
-  element.render();
+  var element = ElementFactory.getElement(object);
+  element.render(environment, object);
   environment.context.restore();
 };
 

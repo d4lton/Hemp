@@ -9,35 +9,22 @@ import ElementFactory from './elements/ElementFactory.js';
 import TransformElement from './elements/TransformElement.js';
 
 var Hemp = function(width, height, objects, interactive, selector) {
-  this._width = width;
-  this._height = height;
   this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = (typeof interactive !== 'undefined') ? interactive : false;
   
   this._stickyTransform = false;
-
-  this._environment = this._setupRenderEnvironment({
-    width: this._width,
-    height: this._height
-  });
-
+  
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
-    this._element.append(this._environment.canvas);
   }
 
   if (this._interactive) {
-    this._environment.canvas.setAttribute('tabIndex', '1');
-    this._environment.canvas.addEventListener('keydown', this._onKeyDown.bind(this));
-    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+    window.addEventListener('keydown', this._onKeyDown.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
   }
 
-  this._setupObserver();
-  this._handleElementResize();
-
-  this._renderObjects(this._environment);
+  this.setSize(width, height);
 
 }
 Hemp.prototype.constructor = Hemp;
@@ -45,6 +32,55 @@ Hemp.prototype.constructor = Hemp;
 Hemp.prototype.getEnvironment = function() {
   return this._environment;
 };
+
+Hemp.prototype.setSize = function(width, height) {
+  this._width = width;
+  this._height = height;
+
+  // remove the existing mousedown listener, if any
+  if (this._environment) {
+    if (this._element) {
+      this._element.removeChild(this._environment.canvas);
+    }
+    if (this._interactive) {
+      this._environment.canvas.removeEventListener('mousedown', this._onMouseDown.bind(this));
+    }
+  }
+
+  // create a new base environment
+  this._environment = this._setupRenderEnvironment({
+    width: this._width,
+    height: this._height
+  });
+
+  // if we have an element, attach to it
+  if (this._element) {
+    this._element.appendChild(this._environment.canvas);
+  }
+
+  // if we have user interaction, setup for canvas mousedowns
+  if (this._interactive) {
+    this._environment.canvas.setAttribute('tabIndex', '1');
+    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+  }
+
+  // watch for changes in the canvas
+  this._setupObserver();
+
+  // setup the _windowToCanvas function for the current canvas size
+  this._handleElementResize();
+
+  this._renderObjects(this._environment);
+
+};
+
+Hemp.prototype.toImage = function(callback) {
+	var image = new Image();
+	image.onload = function() {
+  	callback(image);
+	}
+	image.src = this._environment.canvas.toDataURL("image/png");
+}
 
 Hemp.prototype.setObjects = function(objects, callback) {
   this._deselectAllObjects();
@@ -99,6 +135,13 @@ Hemp.prototype.setStickyTransform = function(value) {
   }
 };
 
+Hemp.prototype.select = function(object) {
+  this._deselectAllObjects();
+  if (typeof object !== 'undefined') {
+    this._selectObject(object);
+  }
+};
+
 Hemp.prototype._createCanvas = function(width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
@@ -112,17 +155,23 @@ Hemp.prototype._setupContext = function(canvas) {
 
 Hemp.prototype._setupObserver = function() {
   if (this._element) {
-    var observer = new MutationObserver(function(mutations) {
+    if (this._observer) {
+      this._observer.disconnect();
+    }
+    this._observer = new MutationObserver(function(mutations) {
       this._handleElementResize();
     }.bind(this));
-    observer.observe(this._element, {
+    this._observer.observe(this._element, {
       attributes: true, childList: true, characterData: true
     });
   }
 };
 
 Hemp.prototype._handleElementResize = function() {
-  var rect = this._environment.canvas.getBoundingClientRect();
+  var rect = {left: 0, top: 0, width: 1, height: 1};
+  if (this._environment) {
+    rect = this._environment.canvas.getBoundingClientRect();
+  }
   this._windowToCanvas = function(x, y) {
     return {
       x: (x - rect.left) * (this._width / rect.width),
@@ -298,14 +347,16 @@ Hemp.prototype._findObjectsAt = function(x, y) {
     });
   }
   this._getObjects().forEach(function(object) {
-    this._clearEnvironment(this._hitEnvironment);
-    this._renderObject(this._hitEnvironment, object);
-    var hitboxSize = 10; // make this configurable
-    var p = this._hitEnvironment.context.getImageData(x - (hitboxSize / 2), y - (hitboxSize / 2), hitboxSize, hitboxSize).data;
-    for (var i = 0; i < p.length; i += 4) {
-      if (p[i + 3] !== 0) { // looking only at alpha channel
-        results.push(object);
-        break;
+    if (object.locked !== true) {
+      this._clearEnvironment(this._hitEnvironment);
+      this._renderObject(this._hitEnvironment, object);
+      var hitboxSize = 10; // make this configurable
+      var p = this._hitEnvironment.context.getImageData(x - (hitboxSize / 2), y - (hitboxSize / 2), hitboxSize, hitboxSize).data;
+      for (var i = 0; i < p.length; i += 4) {
+        if (p[i + 3] !== 0) { // looking only at alpha channel
+          results.push(object);
+          break;
+        }
       }
     }
   }.bind(this));
@@ -334,8 +385,8 @@ Hemp.prototype._renderTransformBoxForObject = function(environment, object) {
 
 Hemp.prototype._renderObject = function(environment, object) {
   environment.context.save();
-  var element = ElementFactory.getElement(environment, object);
-  element.render();
+  var element = ElementFactory.getElement(object);
+  element.render(environment, object);
   environment.context.restore();
 };
 

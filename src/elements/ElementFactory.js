@@ -13,27 +13,32 @@ import TransformElement from './TransformElement.js';
 
 var ElementFactory = {};
 
-ElementFactory.getElement = function(environment, object) {
+ElementFactory._elementTypeCache = {};
+
+ElementFactory.getElement = function(object) {
   var element;
-  switch (object.type) {
-    case 'image':
-      element = new ImageElement(environment, object);
-      break;
-    case 'text':
-      element = new TextElement(environment, object);
-      break;
-    case 'rectangle':
-    case 'ellipse':
-      element = new ShapeElement(environment, object);
-      break;
-    case 'transform':
-      element = new TransformElement(environment, object);
-      break;
-    default:
-      throw new Error('Element ' + type + ' is not supported');
-      break;
+  if (!ElementFactory._elementTypeCache[object.type]) {
+    switch (object.type) {
+      case 'image':
+        element = new ImageElement();
+        break;
+      case 'text':
+        element = new TextElement();
+        break;
+      case 'rectangle':
+      case 'ellipse':
+        element = new ShapeElement();
+        break;
+      case 'transform':
+        element = new TransformElement();
+        break;
+      default:
+        throw new Error('Element ' + type + ' is not supported');
+        break;
+    }
+    ElementFactory._elementTypeCache[object.type] = element;
   }
-  return element;
+  return ElementFactory._elementTypeCache[object.type];
 };
 
 ElementFactory.getElements = function() {

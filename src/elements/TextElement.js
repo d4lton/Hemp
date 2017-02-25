@@ -9,8 +9,8 @@
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
 
-function TextElement(environment, object) {
-  Element.call(this, environment, object);
+function TextElement() {
+  Element.call(this);
 };
 
 TextElement.prototype = Object.create(Element.prototype);
@@ -18,8 +18,8 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function() {
-  CanvasText.drawText(this._context, this._object);
+TextElement.prototype.renderElement = function(environment, object) {
+  CanvasText.drawText(this._context, object);
 };
 
 TextElement.prototype.getTypes = function() {
