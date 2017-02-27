@@ -1010,7 +1010,6 @@ ElementFactory.getElements = function () {
  */
 
 var Hemp = function Hemp(width, height, objects, interactive, selector) {
-  this._objects = Array.isArray(objects) ? objects : [];
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
   this._stickyTransform = false;
@@ -1026,6 +1025,8 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   }
 
   this.setSize(width, height);
+
+  this.setObjects(objects);
 };
 Hemp.prototype.constructor = Hemp;
 
@@ -1083,7 +1084,7 @@ Hemp.prototype.toImage = function (callback) {
 
 Hemp.prototype.setObjects = function (objects, callback) {
   this._deselectAllObjects();
-  if (Array.isArray(objects)) {
+  if (objects && Array.isArray(objects)) {
 
     // create an array of promises for all image objects
     var promises = objects.filter(function (object) {
@@ -1116,7 +1117,9 @@ Hemp.prototype.setObjects = function (objects, callback) {
 };
 
 Hemp.prototype.getObjects = function () {
-  return this._objects;
+  return this._objects.map(function (object) {
+    return this._cloneObject(object);
+  }.bind(this));
 };
 
 Hemp.prototype.getElement = function () {
@@ -1365,7 +1368,7 @@ Hemp.prototype._renderObjects = function (environment) {
   var selectedObject;
   this._clearEnvironment(environment);
   this._getObjects().forEach(function (object) {
-    if (object.selected) {
+    if (this._interactive && object.selected) {
       selectedObject = object;
     }
     this._renderObject(environment, object);
@@ -1375,17 +1378,29 @@ Hemp.prototype._renderObjects = function (environment) {
   }
 };
 
+Hemp.prototype._cloneObject = function (object) {
+  var clonedObject = JSON.parse(JSON.stringify(object));
+  delete clonedObject.element;
+  delete clonedObject.image;
+  delete clonedObject.clicks;
+  delete clonedObject.selected;
+  return clonedObject;
+};
+
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
-  var transformObject = JSON.parse(JSON.stringify(object));
+  var transformObject = this._cloneObject(object);
   transformObject.type = 'transform';
   this._renderObject(environment, transformObject);
 };
 
 Hemp.prototype._renderObject = function (environment, object) {
-  environment.context.save();
-  var element = ElementFactory.getElement(object);
-  element.render(environment, object);
-  environment.context.restore();
+  if (!object.element) {
+    object.element = ElementFactory.getElement(object);
+  }
+  if (!object.element || !object.element.render) {
+    console.warn(object);
+  }
+  object.element.render(environment, object);
 };
 
 Hemp.prototype._setupRenderEnvironment = function (object, options) {
