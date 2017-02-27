@@ -18,10 +18,13 @@ Element.prototype.render = function(environment, object) {
 };
 
 Element.prototype.setupCanvas = function(environment, object) {
-  this._canvas = document.createElement('canvas');
-  this._context = this._canvas.getContext('2d');
+  if (!this._canvas) {
+    this._canvas = document.createElement('canvas');
+    this._context = this._canvas.getContext('2d');
+  }
   this._canvas.width = object.width;
   this._canvas.height = object.height;
+  this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
   if (object.backgroundColor) {
     this._context.save();
     this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);

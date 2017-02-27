@@ -17,10 +17,13 @@ Element.prototype.render = function (environment, object) {
 };
 
 Element.prototype.setupCanvas = function (environment, object) {
-  this._canvas = document.createElement('canvas');
-  this._context = this._canvas.getContext('2d');
+  if (!this._canvas) {
+    this._canvas = document.createElement('canvas');
+    this._context = this._canvas.getContext('2d');
+  }
   this._canvas.width = object.width;
   this._canvas.height = object.height;
+  this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
   if (object.backgroundColor) {
     this._context.save();
     this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
@@ -579,6 +582,8 @@ TransformElement.prototype.constructor = TransformElement;
 
 /************************************************************************************/
 
+TransformElement.handleSize = 20;
+
 TransformElement.prototype.setupCanvas = function (environment, object) {
   // this special element uses the main context to draw
 };
@@ -593,9 +598,6 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
   if (typeof object.rotation !== 'undefined') {
     environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof object.opacity !== 'undefined') {
-    environment.context.globalAlpha = object.opacity;
-  }
 
   environment.context.lineWidth = 4;
   environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
@@ -603,17 +605,17 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
   // body
   environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
   // ul
-  environment.context.strokeRect(-object.width / 2, -object.height / 2, 20, 20);
+  environment.context.strokeRect(-object.width / 2, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
   // ur
-  environment.context.strokeRect(object.width / 2 - 20, -object.height / 2, 20, 20);
+  environment.context.strokeRect(object.width / 2 - TransformElement.handleSize, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
   // lr
-  environment.context.strokeRect(object.width / 2 - 20, object.height / 2 - 20, 20, 20);
+  environment.context.strokeRect(object.width / 2 - TransformElement.handleSize, object.height / 2 - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
   // ll
-  environment.context.strokeRect(-object.width / 2, object.height / 2 - 20, 20, 20);
+  environment.context.strokeRect(-object.width / 2, object.height / 2 - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
   // rotate handle
-  environment.context.strokeRect(-10, -(object.height / 2) - 40, 20, 20);
+  environment.context.strokeRect(-10, -(object.height / 2) - TransformElement.handleSize * 2, TransformElement.handleSize, TransformElement.handleSize);
   // rotate connector
-  environment.context.strokeRect(0, -(object.height / 2) - 20, 1, 20);
+  environment.context.strokeRect(0, -(object.height / 2) - TransformElement.handleSize, 1, TransformElement.handleSize);
 
   environment.context.restore();
 };
@@ -631,34 +633,32 @@ TransformElement.findTransformHandle = function (environment, mouseX, mouseY, ob
     environment.context.rotate(radians);
 
     environment.context.beginPath();
-    var handleSize = 20; // TODO: make this configurable
-    var handleX = object.width / 2 - handleSize;
-    var handleY = object.height / 2 - handleSize;
+    var handleX = object.width / 2;
+    var handleY = object.height / 2;
     switch (handle) {
       case 'ul':
         // upper-left
-        environment.context.arc(-handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
+        environment.context.rect(-handleX, -handleY, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'ur':
         // upper-right
-        environment.context.arc(handleX, -handleY, handleSize, 0, 2 * Math.PI, false);
+        environment.context.rect(handleX - TransformElement.handleSize, -handleY, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'll':
         // upper-right
-        environment.context.arc(-handleX, handleY, handleSize, 0, 2 * Math.PI, false);
+        environment.context.rect(-handleX, handleY - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'lr':
         // upper-right
-        environment.context.arc(handleX, handleY, handleSize, 0, 2 * Math.PI, false);
+        environment.context.rect(handleX - TransformElement.handleSize, handleY - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'rotate':
-        environment.context.arc(0, -handleY - handleSize * 2, handleSize, 0, 2 * Math.PI, false);
+        environment.context.rect(-TransformElement.handleSize / 2, -handleY - 40, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'body':
         environment.context.rect(-object.width / 2, -object.height / 2, object.width, object.height);
         break;
     }
-    //environment.context.fill();
     var hit = environment.context.isPointInPath(mouseX, mouseY);
     environment.context.restore();
     if (hit) {
