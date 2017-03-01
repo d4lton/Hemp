@@ -1117,6 +1117,10 @@ Hemp.prototype.setObjects = function (objects, callback) {
   this._deselectAllObjects();
   this._objects = this._cleanObjects(objects);
 
+  this._objects.forEach(function (object, index) {
+    object._index = index;
+  });
+
   // create an array of promises for all image objects
   var promises = this._getImagePromises(this._objects);
 
@@ -1150,7 +1154,10 @@ Hemp.prototype._getImagePromises = function (objects) {
 };
 
 Hemp.prototype.getObjects = function () {
-  return this._cleanObjects(this._objects);
+  return this._cleanObjects(this._objects).map(function (object) {
+    delete object._index;
+    return object;
+  });
 };
 
 Hemp.prototype.getElement = function () {
@@ -1300,7 +1307,7 @@ Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event, hitOb
 
 Hemp.prototype._reportObjectTransform = function (object) {
   if (this._element) {
-    this._element.dispatchEvent(new CustomEvent('transform', { detail: object }));
+    this._element.dispatchEvent(new CustomEvent('transform', { detail: this._cleanObject(object) }));
   }
 };
 
