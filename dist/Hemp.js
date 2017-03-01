@@ -163,9 +163,9 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
 
 ImageElement.prototype.renderElement = function (environment, object, options) {
   try {
-    if (object.image) {
-      var sourceAndOffset = this._getFillSourceAndOffset(object.image, object);
-      this._context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    if (object._image) {
+      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
+      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
     }
   } catch (e) {}
 };
@@ -726,8 +726,8 @@ TransformElement.getCorners = function (object) {
 };
 
 TransformElement.updateObjectFromCorners = function (object, corners, fromCenter) {
-  var handle = object.transform.handle;
-  var anchor = object.transform.anchor;
+  var handle = object._transform.handle;
+  var anchor = object._transform.anchor;
   var top, left, bottom, right;
 
   // position the TRBL based on the handle and anchor
@@ -772,14 +772,14 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
 
   // if we're resizing with a fixed center, everything is easy
   if (fromCenter) {
-    object.x = object.transform.origin.object.x;
-    object.y = object.transform.origin.object.y;
+    object.x = object._transform.origin.object.x;
+    object.y = object._transform.origin.object.y;
   } else {
     // if we're resizing from an anchor corner, still have work to do
 
     // figure out the offsets for the object centerpoint based on the new W & H vs the old
-    var offsetX = (object.width - object.transform.resize.origin.width) / 2;
-    var offsetY = (object.height - object.transform.resize.origin.height) / 2;
+    var offsetX = (object.width - object._transform.resize.origin.width) / 2;
+    var offsetY = (object.height - object._transform.resize.origin.height) / 2;
 
     var radians = TransformElement.getObjectRotationInRadians(object);
 
@@ -787,23 +787,23 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
     switch (handle) {
       case 'ul':
         var offset = TransformElement.rotatePoint(radians, object, offsetX, offsetY);
-        object.x = object.transform.resize.origin.x - offset.x;
-        object.y = object.transform.resize.origin.y - offset.y;
+        object.x = object._transform.resize.origin.x - offset.x;
+        object.y = object._transform.resize.origin.y - offset.y;
         break;
       case 'ur':
         var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
-        object.x = object.transform.resize.origin.x + offset.x;
-        object.y = object.transform.resize.origin.y - offset.y;
+        object.x = object._transform.resize.origin.x + offset.x;
+        object.y = object._transform.resize.origin.y - offset.y;
         break;
       case 'lr':
         var offset = TransformElement.rotatePoint(radians, object, offsetX, offsetY);
-        object.x = object.transform.resize.origin.x + offset.x;
-        object.y = object.transform.resize.origin.y + offset.y;
+        object.x = object._transform.resize.origin.x + offset.x;
+        object.y = object._transform.resize.origin.y + offset.y;
         break;
       case 'll':
         var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
-        object.x = object.transform.resize.origin.x - offset.x;
-        object.y = object.transform.resize.origin.y + offset.y;
+        object.x = object._transform.resize.origin.x - offset.x;
+        object.y = object._transform.resize.origin.y + offset.y;
         break;
     }
   }
@@ -812,15 +812,13 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
 TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY, begin) {
   var anchor;
 
-  if (!object.clicks) {
-    object.clicks = {
-      count: 0
-    };
+  if (!object._clicks) {
+    Object.defineProperty(object, '_clicks', { enumerable: false, configurable: true, writable: true, value: { count: 0 } });
   }
 
-  clearTimeout(object.clicks.timeout);
-  object.clicks.timeout = setTimeout(function () {
-    object.clicks.count = 0;
+  clearTimeout(object._clicks.timeout);
+  object._clicks.timeout = setTimeout(function () {
+    object._clicks.count = 0;
   }, 200);
 
   switch (handle) {
@@ -837,11 +835,12 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
       anchor = 'ul';
       break;
     case 'body':
-      object.clicks.count++;
+      object._clicks.count++;
       break;
   }
 
-  object.transform = {
+  Object.defineProperty(object, '_transform', { enumerable: false, configurable: true, writable: true });
+  object._transform = {
     handle: handle,
     anchor: anchor,
     origin: {
@@ -860,7 +859,7 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
     }
   };
 
-  return object.clicks.count;
+  return object._clicks.count;
 };
 
 TransformElement.snapObject = function (environment, object) {
@@ -889,15 +888,15 @@ TransformElement.snapObject = function (environment, object) {
     }
   }
   if (!snapped) {
-    object.rotation = object.transform.origin.object.rotation;
+    object.rotation = object._transform.origin.object.rotation;
   }
 };
 
 TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event) {
-  var deltaX = mouseX - object.transform.origin.mouse.x;
-  var deltaY = mouseY - object.transform.origin.mouse.y;
-  object.x = object.transform.origin.object.x + deltaX;
-  object.y = object.transform.origin.object.y + deltaY;
+  var deltaX = mouseX - object._transform.origin.mouse.x;
+  var deltaY = mouseY - object._transform.origin.mouse.y;
+  object.x = object._transform.origin.object.x + deltaX;
+  object.y = object._transform.origin.object.y + deltaY;
 
   var rotation = typeof object.rotation !== 'undefined' ? object.rotation : 0;
   if (event.altKey) {
@@ -935,8 +934,8 @@ TransformElement.transformRotateObject = function (environment, object, mouseX, 
   }
   object.rotation = theta;
 
-  object.x = object.transform.origin.object.x;
-  object.y = object.transform.origin.object.y;
+  object.x = object._transform.origin.object.x;
+  object.y = object._transform.origin.object.y;
 };
 
 TransformElement.transformResizeObject = function (environment, object, mouseX, mouseY, event) {
@@ -948,7 +947,7 @@ TransformElement.transformResizeObject = function (environment, object, mouseX, 
 
   // move the object to 0, 0
 
-  object.transform.resize = {
+  object._transform.resize = {
     origin: {
       x: object.x,
       y: object.y,
@@ -967,14 +966,14 @@ TransformElement.transformResizeObject = function (environment, object, mouseX, 
   var corners = TransformElement.getCorners(object);
 
   // move the handle to match the rotated mouse coordinates
-  corners[object.transform.handle] = { x: mouse.x, y: mouse.y };
+  corners[object._transform.handle] = { x: mouse.x, y: mouse.y };
 
   // rebuild the object from the modified corners
   TransformElement.updateObjectFromCorners(object, corners, event.shiftKey);
 };
 
 TransformElement.transformMove = function (environment, object, mouseX, mouseY, event) {
-  switch (object.transform.handle) {
+  switch (object._transform.handle) {
     case 'body':
       TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event);
       break;
@@ -988,7 +987,7 @@ TransformElement.transformMove = function (environment, object, mouseX, mouseY, 
 };
 
 TransformElement.transformEnd = function (environment, object, event) {
-  delete object.transform;
+  delete object._transform;
 };
 
 /**
@@ -1115,15 +1114,16 @@ Hemp.prototype.toImage = function (callback) {
 
 Hemp.prototype.setObjects = function (objects, callback) {
   objects = objects && Array.isArray(objects) ? objects : [];
+
+  // deselect any existing objects, then update the internal list of objects
   this._deselectAllObjects();
+  this._objects = this._cleanObjects(objects);
+
   // create an array of promises for all image objects
-  var promises = this._getImagePromises(objects);
+  var promises = this._getImagePromises(this._objects);
 
   // once all images are loaded, set the internal list of objects and render
   Promise.all(promises).then(function (images) {
-    this._objects = objects.map(function (object) {
-      return this._cloneObject(object);
-    }.bind(this));
     this.render();
     if (typeof callback === 'function') {
       callback();
@@ -1138,29 +1138,21 @@ Hemp.prototype._getImagePromises = function (objects) {
     return object.type === 'image';
   }).map(function (object) {
     return new Promise(function (resolve, reject) {
-      object.image = new Image();
-      object.image.setAttribute('crossOrigin', 'anonymous');
-      object.image.onload = function () {
+      this._createPrivateProperty(object, '_image', new Image());
+      object._image.setAttribute('crossOrigin', 'anonymous');
+      object._image.onload = function () {
         resolve();
       };
-      object.image.onerror = function (reason) {
+      object._image.onerror = function (reason) {
         resolve();
       };
-      var url = object.url;
-      if (this._replacementTokens) {
-        Object.keys(this._replacementTokens).forEach(function (token) {
-          url = url.replace('{{' + token + '}}', this._replacementTokens[token]);
-        }.bind(this));
-      }
-      object.image.src = url;
+      object._image.src = object.url;
     }.bind(this));
   }.bind(this));
 };
 
 Hemp.prototype.getObjects = function () {
-  return this._objects.map(function (object) {
-    return this._cloneObject(object);
-  }.bind(this));
+  return this._cleanObjects(this._objects);
 };
 
 Hemp.prototype.getElement = function () {
@@ -1183,25 +1175,6 @@ Hemp.prototype.select = function (object) {
   this._deselectAllObjects();
   if (typeof object !== 'undefined') {
     this._selectObject(object);
-  }
-};
-
-Hemp.prototype.setReplacementTokens = function (tokens, callback) {
-  this._replacementTokens = tokens;
-  if (this._objects) {
-    var promises = this._getImagePromises(this._objects);
-    Promise.all(promises).then(function (images) {
-      this.render();
-      if (typeof callback === 'function') {
-        callback();
-      }
-    }.bind(this), function (reason) {
-      console.error(reason);
-    });
-  } else {
-    if (typeof callback === 'function') {
-      callback();
-    }
   }
 };
 
@@ -1308,7 +1281,7 @@ Hemp.prototype._maximizeObject = function (object) {
 };
 
 Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event, hitObjects) {
-  var selectedObjects = this._getObjects({ name: 'selected', value: true, op: 'eq' });
+  var selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
   if (selectedObjects.length > 0) {
     var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
@@ -1355,25 +1328,25 @@ Hemp.prototype._onMouseUp = function (event) {
 Hemp.prototype._deselectAllObjects = function () {
   var deselectedObjects = [];
   this._getObjects().forEach(function (object) {
-    if (object.selected) {
+    if (object._selected) {
       deselectedObjects.push(object);
     }
-    object.selected = false;
+    delete object._selected;
   });
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
     if (this._element) {
-      this._element.dispatchEvent(new CustomEvent('deselect', { detail: deselectedObjects }));
+      this._element.dispatchEvent(new CustomEvent('deselect', { detail: this._cleanObjects(deselectedObjects) }));
     }
   }
 };
 
 Hemp.prototype._selectObject = function (object) {
   this._deselectAllObjects();
-  object.selected = true;
+  this._createPrivateProperty(object, '_selected', true);
   this._renderObjects(this._environment);
   if (this._element) {
-    this._element.dispatchEvent(new CustomEvent('select', { detail: object }));
+    this._element.dispatchEvent(new CustomEvent('select', { detail: this._cleanObject(object) }));
   }
 };
 
@@ -1430,7 +1403,7 @@ Hemp.prototype._renderObjects = function (environment) {
   var selectedObject;
   this._clearEnvironment(environment);
   this._getObjects().forEach(function (object) {
-    if (this._interactive && object.selected) {
+    if (this._interactive && object._selected) {
       selectedObject = object;
     }
     this._renderObject(environment, object);
@@ -1440,30 +1413,32 @@ Hemp.prototype._renderObjects = function (environment) {
   }
 };
 
-Hemp.prototype._cloneObject = function (object) {
-  var clonedObject = JSON.parse(JSON.stringify(object));
-  delete clonedObject.element;
-  delete clonedObject.image;
-  delete clonedObject.clicks;
-  delete clonedObject.selected;
-  return clonedObject;
+Hemp.prototype._cleanObjects = function (objects) {
+  return objects.map(function (object) {
+    return this._cleanObject(object);
+  }.bind(this));
+};
+
+Hemp.prototype._cleanObject = function (object) {
+  return JSON.parse(JSON.stringify(object));
 };
 
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
-  var transformObject = this._cloneObject(object);
+  var transformObject = this._cleanObject(object);
   transformObject.type = 'transform';
   this._renderObject(environment, transformObject);
 };
 
+Hemp.prototype._createPrivateProperty = function (object, property, value) {
+  Object.defineProperty(object, property, { enumerable: false, configurable: true, writable: true, value: value });
+};
+
 Hemp.prototype._renderObject = function (environment, object) {
-  if (!object.element) {
-    object.element = ElementFactory.getElement(object);
+  if (!object._element) {
+    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
   }
   var options = {};
-  if (this._replacementTokens) {
-    options.tokens = this._replacementTokens;
-  }
-  object.element.render(environment, object, options);
+  object._element.render(environment, object, options);
 };
 
 Hemp.prototype._setupRenderEnvironment = function (object, options) {

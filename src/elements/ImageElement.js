@@ -44,9 +44,9 @@ ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
 
 ImageElement.prototype.renderElement = function(environment, object, options) {
   try {
-    if (object.image) {
-      var sourceAndOffset = this._getFillSourceAndOffset(object.image, object);
-      this._context.drawImage(object.image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    if (object._image) {
+      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
+      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
     }
   } catch (e) {
   }
