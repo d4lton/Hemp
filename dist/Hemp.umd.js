@@ -1125,7 +1125,9 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
   // once all images are loaded, set the internal list of objects and render
   Promise.all(promises).then(function (images) {
-    this._objects = objects;
+    this._objects = objects.map(function (object) {
+      return this._cloneObject(object);
+    }.bind(this));
     this.render();
     if (typeof callback === 'function') {
       callback();
