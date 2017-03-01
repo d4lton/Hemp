@@ -19,7 +19,11 @@ TextElement.prototype.constructor = TextElement;
 /************************************************************************************/
 
 TextElement.prototype.renderElement = function(environment, object) {
-  CanvasText.drawText(this._context, object);
+  var options = {};
+  if (environment.options && environment.options.selectionRender) {
+    options.block = true;
+  }
+  CanvasText.drawText(this._context, object, options);
 };
 
 TextElement.prototype.getTypes = function() {

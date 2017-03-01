@@ -11,7 +11,7 @@ import TransformElement from './elements/TransformElement.js';
 var Hemp = function(width, height, objects, interactive, selector) {
   this._interactive = (typeof interactive !== 'undefined') ? interactive : false;
   
-  this._stickyTransform = false;
+  this._stickyTransform = true;
   
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
