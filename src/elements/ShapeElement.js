@@ -17,7 +17,7 @@ ShapeElement.prototype.constructor = ShapeElement;
 
 /************************************************************************************/
 
-ShapeElement.prototype.renderElement = function(environment, object) {
+ShapeElement.prototype.renderElement = function(environment, object, options) {
   switch (object.type) {
     case 'rectangle':
       this.renderRectangle(environment, object);

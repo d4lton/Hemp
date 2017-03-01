@@ -18,12 +18,22 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function(environment, object) {
-  var options = {};
+TextElement.prototype.renderElement = function(environment, object, options) {
+  options = (typeof options === 'object') ? options : {};
   if (environment.options && environment.options.selectionRender) {
     options.block = true;
   }
+  var text;
+  if (options.tokens) {
+    text = object.text;
+    Object.keys(options.tokens).forEach(function(token) {
+      object.text = object.text.replace('{{' + token + '}}', options.tokens[token]);
+    });
+  }
   CanvasText.drawText(this._context, object, options);
+  if (options.tokens) {
+    object.text = text;
+  }
 };
 
 TextElement.prototype.getTypes = function() {

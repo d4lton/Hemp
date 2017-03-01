@@ -84,38 +84,45 @@ Hemp.prototype.toImage = function(callback) {
 }
 
 Hemp.prototype.setObjects = function(objects, callback) {
+  objects = (objects && Array.isArray(objects)) ? objects : [];
   this._deselectAllObjects();
-  if (objects && Array.isArray(objects)) {
+  // create an array of promises for all image objects
+  var promises = this._getImagePromises(objects);
 
-    // create an array of promises for all image objects
-    var promises = objects.filter(function(object) {
-      return object.type === 'image';
-    }).map(function(object) {
-      return new Promise(function(resolve, reject) {
-        object.image = new Image();
-        object.image.setAttribute('crossOrigin', 'anonymous');
-        object.image.onload = function() {
-          resolve();
-        };
-        object.image.onerror = function(reason) {
-          resolve();
-        };
-        object.image.src = object.url;
-      });
-    });
+  // once all images are loaded, set the internal list of objects and render
+  Promise.all(promises).then(function(images) {
+    this._objects = objects;
+    this.render();
+    if (typeof callback === 'function') {
+      callback();
+    }
+  }.bind(this), function(reason) {
+    console.error(reason);
+  });
+};
 
-    // once all images are loaded, set the internal list of objects and render
-    Promise.all(promises).then(function(images) {
-      this._objects = objects;
-      this._renderObjects(this._environment);
-      if (typeof callback === 'function') {
-        callback();
+Hemp.prototype._getImagePromises = function(objects) {
+  return objects.filter(function(object) {
+    return object.type === 'image';
+  }).map(function(object) {
+    return new Promise(function(resolve, reject) {
+      object.image = new Image();
+      object.image.setAttribute('crossOrigin', 'anonymous');
+      object.image.onload = function() {
+        resolve();
+      };
+      object.image.onerror = function(reason) {
+        resolve();
+      };
+      var url = object.url
+      if (this._replacementTokens) {
+        Object.keys(this._replacementTokens).forEach(function(token) {
+          url = url.replace('{{' + token + '}}', this._replacementTokens[token]);
+        }.bind(this));
       }
-    }.bind(this), function(reason) {
-      console.error(reason);
-    });
-
-  }
+      object.image.src = url;
+    }.bind(this));
+  }.bind(this));
 };
 
 Hemp.prototype.getObjects = function() {
@@ -129,7 +136,9 @@ Hemp.prototype.getElement = function() {
 };
 
 Hemp.prototype.render = function() {
-  this._renderObjects(this._environment);
+  if (this._environment) {
+    this._renderObjects(this._environment);
+  }
 };
 
 Hemp.prototype.setStickyTransform = function(value) {
@@ -143,6 +152,26 @@ Hemp.prototype.select = function(object) {
   if (typeof object !== 'undefined') {
     this._selectObject(object);
   }
+};
+
+Hemp.prototype.setReplacementTokens = function(tokens, callback) {
+  this._replacementTokens = tokens;
+  if (this._objects) {
+    var promises = this._getImagePromises(this._objects);
+    Promise.all(promises).then(function(images) {
+      this.render();
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }.bind(this), function(reason) {
+      console.error(reason);
+    });
+  } else {
+    if (typeof callback === 'function') {
+      callback();
+    }
+  }
+
 };
 
 Hemp.prototype._createCanvas = function(width, height) {
@@ -399,10 +428,11 @@ Hemp.prototype._renderObject = function(environment, object) {
   if (!object.element) {
     object.element = ElementFactory.getElement(object);
   }
-  if (!object.element || !object.element.render) {
-    console.warn(object);
+  var options = {};
+  if (this._replacementTokens) {
+    options.tokens = this._replacementTokens;
   }
-  object.element.render(environment, object);
+  object.element.render(environment, object, options);
 };
 
 Hemp.prototype._setupRenderEnvironment = function(object, options) {
