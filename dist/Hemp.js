@@ -520,15 +520,11 @@ ShapeElement.prototype.renderElement = function (environment, object) {
 };
 
 ShapeElement.prototype.renderRectangle = function (environment, object) {
-  //this._context.save();
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fillRect(0, 0, object.width, object.height);
-  //this._context.restore();
 };
 
 ShapeElement.prototype.renderEllipse = function (environment, object) {
-  //this._context.save();
-
   this._context.save();
   this._context.beginPath();
   this._context.scale(object.width / 2, object.height / 2);
@@ -537,8 +533,6 @@ ShapeElement.prototype.renderEllipse = function (environment, object) {
 
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fill();
-
-  //this._context.restore();
 };
 
 ShapeElement.prototype.getTypes = function () {
@@ -914,17 +908,8 @@ TransformElement.snapObject = function (environment, object) {
   }
 };
 
-TransformElement.windowToCanvas = function (environment, x, y) {
-  var rect = environment.canvas.getBoundingClientRect();
-  return {
-    x: (x - rect.left) * (environment.canvas.width / rect.width),
-    y: (y - rect.top) * (environment.canvas.height / rect.height)
-  };
-};
-
 TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
-  var mouse = TransformElement.windowToCanvas(environment, mouseX, mouseY);
-  if (mouse.y < 0) {
+  if (mouseY < 0) {
     if (!object._transform.maximizing) {
       object._transform.maximizing = true;
       object._transform.maximize = {
@@ -1104,6 +1089,8 @@ ElementFactory.getElements = function () {
  *
  */
 
+// -----------------------------------------------------------------------------
+
 var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
@@ -1125,6 +1112,8 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this.setObjects(objects);
 };
 Hemp.prototype.constructor = Hemp;
+
+// -----------------------------------------------------------------------------
 
 Hemp.prototype.getEnvironment = function () {
   return this._environment;
@@ -1256,17 +1245,6 @@ Hemp.prototype._setupContext = function (canvas) {
   return canvas.getContext('2d');
 };
 
-Hemp.prototype._windowToCanvas = function (x, y) {
-  var rect = { left: 0, top: 0, width: 1, height: 1 };
-  if (this._environment) {
-    rect = this._environment.canvas.getBoundingClientRect();
-  }
-  return {
-    x: (x - rect.left) * (this._width / rect.width),
-    y: (y - rect.top) * (this._height / rect.height)
-  };
-};
-
 Hemp.prototype._findElement = function (selector) {
   if (typeof selector === 'string') {
     if (selector.indexOf('#') === 0) {
@@ -1301,7 +1279,7 @@ Hemp.prototype._onKeyDown = function (event) {
 };
 
 Hemp.prototype._onMouseDown = function (event) {
-  var coordinates = this._windowToCanvas(event.clientX, event.clientY);
+  var coordinates = Hemp.windowToCanvas(this._environment, event);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   event.preventDefault();
@@ -1323,7 +1301,7 @@ Hemp.prototype._onMouseDown = function (event) {
 };
 
 Hemp.prototype._onWindowMouseDown = function (event) {
-  var coordinates = this._windowToCanvas(event.clientX, event.clientY);
+  var coordinates = Hemp.windowToCanvas(this._environment, event);
   if (coordinates.x < 0 || coordinates.y < 0 || coordinates.x > this._environment.canvas.width || coordinates.y > this._environment.canvas.height) {
     this._deselectAllObjects();
   }
@@ -1367,7 +1345,7 @@ Hemp.prototype._reportObjectTransform = function (object) {
 Hemp.prototype._onMouseMove = function (event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject) {
-    var coordinates = this._windowToCanvas(event.clientX, event.clientY);
+    var coordinates = Hemp.windowToCanvas(this._environment, event);
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
@@ -1511,6 +1489,21 @@ Hemp.prototype._setupRenderEnvironment = function (object, options) {
 
 Hemp.prototype._clearEnvironment = function (environment) {
   environment.context.clearRect(0, 0, environment.canvas.width, environment.canvas.height);
+};
+
+// -----------------------------------------------------------------------------
+
+Hemp.windowToCanvas = function (environment, event) {
+  var x = event.clientX;
+  var y = event.clientY;
+  var rect = { left: 0, top: 0, width: 1, height: 1 };
+  if (environment) {
+    rect = environment.canvas.getBoundingClientRect();
+  }
+  return {
+    x: (x - rect.left) * (environment.canvas.width / rect.width),
+    y: (y - rect.top) * (environment.canvas.height / rect.height)
+  };
 };
 
 module.exports = Hemp;

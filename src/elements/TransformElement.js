@@ -345,17 +345,8 @@ TransformElement.snapObject = function(environment, object) {
   }
 };
 
-TransformElement.windowToCanvas = function(environment, x, y) {
-  var rect = environment.canvas.getBoundingClientRect();
-  return {
-    x: (x - rect.left) * (environment.canvas.width / rect.width),
-    y: (y - rect.top) * (environment.canvas.height / rect.height)
-  }
-};
-
 TransformElement.snapMaximize = function(environment, object, mouseX, mouseY) {
-  var mouse = TransformElement.windowToCanvas(environment, mouseX, mouseY);
-  if (mouse.y < 0) {
+  if (mouseY < 0) {
     if (!object._transform.maximizing) {
       object._transform.maximizing = true;
       object._transform.maximize = {
