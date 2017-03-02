@@ -112,15 +112,22 @@ Hemp.prototype._getImagePromises = function(objects) {
     return object.type === 'image';
   }).map(function(object) {
     return new Promise(function(resolve, reject) {
-      this._createPrivateProperty(object, '_image', new Image());
-      object._image.setAttribute('crossOrigin', 'anonymous');
-      object._image.onload = function() {
+      var image = Hemp.ImageCache.get(object.url);
+      if (image) {
+        this._createPrivateProperty(object, '_image', image);
         resolve();
-      };
-      object._image.onerror = function(reason) {
-        resolve();
-      };
-      object._image.src = object.url;
+      } else {
+        this._createPrivateProperty(object, '_image', new Image());
+        object._image.setAttribute('crossOrigin', 'anonymous');
+        object._image.onload = function() {
+          Hemp.ImageCache.set(object.url, object._image);
+          resolve();
+        };
+        object._image.onerror = function(reason) {
+          resolve();
+        };
+        object._image.src = object.url;
+      }
     }.bind(this));
   }.bind(this));
 };
@@ -426,6 +433,34 @@ Hemp.windowToCanvas = function(environment, event) {
   return {
     x: (x - rect.left) * (environment.canvas.width / rect.width),
     y: (y - rect.top) * (environment.canvas.height / rect.height)
+  }
+};
+
+Hemp.ImageCache = {
+  _images: {},
+  _maxAgeMs: 300000,
+  get: function(key) {
+    this._age();
+    var entry = this._images[key];
+    if (entry) {
+      entry.hitMs = Date.now();
+      return entry.image;
+    }
+  },
+  set: function(key, image) {
+    this._images[key] = {
+      hitMs: Date.now(),
+      image: image
+    };
+    this._age();
+  },
+  _age: function() {
+    var cutoffMs = Date.now() - this._maxAgeMs;
+    Object.keys(this._images).forEach(function(key) {
+      if (this._images[key].hitMs < cutoffMs) {
+        delete this._images[key];
+      }
+    }.bind(this));
   }
 };
 
