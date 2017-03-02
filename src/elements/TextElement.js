@@ -18,22 +18,13 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function(environment, object, options) {
-  options = (typeof options === 'object') ? options : {};
+TextElement.prototype.renderElement = function(environment, object) {
   if (environment.options && environment.options.selectionRender) {
-    options.block = true;
+    this._context.fillStyle = this.resolveColor(environment, object.color);
+    this._context.fillRect(0, 0, object.width, object.height);
+    return;
   }
-  var text;
-  if (options.tokens) {
-    text = object.text;
-    Object.keys(options.tokens).forEach(function(token) {
-      object.text = object.text.replace('{{' + token + '}}', options.tokens[token]);
-    });
-  }
-  CanvasText.drawText(this._context, object, options);
-  if (options.tokens) {
-    object.text = text;
-  }
+  CanvasText.drawText(this._context, object);
 };
 
 TextElement.prototype.getTypes = function() {

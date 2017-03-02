@@ -11,7 +11,7 @@ import TransformElement from './elements/TransformElement.js';
 var Hemp = function(width, height, objects, interactive, selector) {
   this._interactive = (typeof interactive !== 'undefined') ? interactive : false;
   
-  this._stickyTransform = true;
+  this._stickyTransform = false;
   
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
@@ -19,6 +19,7 @@ var Hemp = function(width, height, objects, interactive, selector) {
 
   if (this._interactive) {
     window.addEventListener('keydown', this._onKeyDown.bind(this));
+    window.addEventListener('mousedown', this._onWindowMouseDown.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
   }
@@ -64,12 +65,6 @@ Hemp.prototype.setSize = function(width, height) {
     this._environment.canvas.setAttribute('tabIndex', '1');
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
   }
-
-  // watch for changes in the canvas
-  this._setupObserver();
-
-  // setup the _windowToCanvas function for the current canvas size
-  this._handleElementResize();
 
   this._renderObjects(this._environment);
 
@@ -167,32 +162,15 @@ Hemp.prototype._setupContext = function(canvas) {
   return canvas.getContext('2d');
 };
 
-Hemp.prototype._setupObserver = function() {
-  if (this._element) {
-    if (this._observer) {
-      this._observer.disconnect();
-    }
-    this._observer = new MutationObserver(function(mutations) {
-      this._handleElementResize();
-    }.bind(this));
-    this._observer.observe(this._element, {
-      attributes: true, childList: true, characterData: true
-    });
-  }
-};
-
-Hemp.prototype._handleElementResize = function() {
+Hemp.prototype._windowToCanvas = function(x, y) {
   var rect = {left: 0, top: 0, width: 1, height: 1};
   if (this._environment) {
     rect = this._environment.canvas.getBoundingClientRect();
   }
-  this._windowToCanvas = function(x, y) {
-    return {
-      x: (x - rect.left) * (this._width / rect.width),
-      y: (y - rect.top) * (this._height / rect.height)
-    }
-  };
-
+  return {
+    x: (x - rect.left) * (this._width / rect.width),
+    y: (y - rect.top) * (this._height / rect.height)
+  }
 };
 
 Hemp.prototype._findElement = function (selector) {
@@ -248,6 +226,16 @@ Hemp.prototype._onMouseDown = function(event) {
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
   return;
+};
+
+Hemp.prototype._onWindowMouseDown = function(event) {
+  var coordinates = this._windowToCanvas(event.clientX, event.clientY);
+  if (coordinates.x < 0 ||
+      coordinates.y < 0 ||
+      coordinates.x > this._environment.canvas.width ||
+      coordinates.y > this._environment.canvas.height) {
+    this._deselectAllObjects();
+  }
 };
 
 Hemp.prototype._maximizeObject = function(object) {

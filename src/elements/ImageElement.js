@@ -42,7 +42,7 @@ ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
   };
 };
 
-ImageElement.prototype.renderElement = function(environment, object, options) {
+ImageElement.prototype.renderElement = function(environment, object) {
   try {
     if (object._image) {
       var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);

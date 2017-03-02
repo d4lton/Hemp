@@ -11,9 +11,9 @@ function Element() {
 
 /************************************************************************************/
 
-Element.prototype.render = function(environment, object, options) {
+Element.prototype.render = function(environment, object) {
   this.setupCanvas(environment, object);
-  this.renderElement(environment, object, options);
+  this.renderElement(environment, object);
   this.renderCanvas(environment, object);
 };
 
@@ -33,7 +33,7 @@ Element.prototype.setupCanvas = function(environment, object) {
   }
 };
 
-Element.prototype.renderElement = function(environment, object, options) {
+Element.prototype.renderElement = function(environment, object) {
   console.warn('override me');
 };
 

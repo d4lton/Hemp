@@ -17,7 +17,7 @@ ShapeElement.prototype.constructor = ShapeElement;
 
 /************************************************************************************/
 
-ShapeElement.prototype.renderElement = function(environment, object, options) {
+ShapeElement.prototype.renderElement = function(environment, object) {
   switch (object.type) {
     case 'rectangle':
       this.renderRectangle(environment, object);
@@ -31,15 +31,11 @@ ShapeElement.prototype.renderElement = function(environment, object, options) {
 };
 
 ShapeElement.prototype.renderRectangle = function(environment, object) {
-  this._context.save();
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fillRect(0, 0, object.width, object.height);
-  this._context.restore();
 };
 
 ShapeElement.prototype.renderEllipse = function(environment, object) {
-  this._context.save();
-
   this._context.save();
   this._context.beginPath();
   this._context.scale(object.width / 2, object.height / 2);
@@ -48,8 +44,6 @@ ShapeElement.prototype.renderEllipse = function(environment, object) {
 
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fill();
-
-  this._context.restore();
 };
 
 ShapeElement.prototype.getTypes = function() {

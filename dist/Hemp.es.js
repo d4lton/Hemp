@@ -10,9 +10,9 @@ function Element() {}
 
 /************************************************************************************/
 
-Element.prototype.render = function (environment, object, options) {
+Element.prototype.render = function (environment, object) {
   this.setupCanvas(environment, object);
-  this.renderElement(environment, object, options);
+  this.renderElement(environment, object);
   this.renderCanvas(environment, object);
 };
 
@@ -32,7 +32,7 @@ Element.prototype.setupCanvas = function (environment, object) {
   }
 };
 
-Element.prototype.renderElement = function (environment, object, options) {
+Element.prototype.renderElement = function (environment, object) {
   console.warn('override me');
 };
 
@@ -159,7 +159,7 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
   };
 };
 
-ImageElement.prototype.renderElement = function (environment, object, options) {
+ImageElement.prototype.renderElement = function (environment, object) {
   try {
     if (object._image) {
       var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
@@ -225,8 +225,6 @@ ImageElement.getTypes = function () {
   }];
 };
 
-var _typeof$1 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 /**
 * Canvas Text
 *
@@ -250,7 +248,6 @@ var CanvasText = {
    *
    * @param context {CanvasRenderingContext2D} The canvas context to render text into
    * @param object {Object} The text object
-   * @param options {Object}
    *
    * Text Object has at least these properties:
    *
@@ -269,25 +266,19 @@ var CanvasText = {
    *
    * The canvas context you pass to drawText should have a width and height assigned.
    */
-  drawText: function drawText(context, object, options) {
+  drawText: function drawText(context, object) {
     var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
     var fontFamily = object.fontFamily ? object.fontFamily : CanvasText.DEFAULT_FONT_FAMILY;
-
-    options = (typeof options === 'undefined' ? 'undefined' : _typeof$1(options)) === 'object' ? options : {};
 
     context.save();
 
     context.font = fontSize + "pt '" + fontFamily + "'";
     context.textBaseline = 'hanging';
-    if (options.block) {
-      context.fillStyle = 'black';
-    } else {
-      context.fillStyle = object.color ? object.color : CanvasText.DEFAULT_FONT_COLOR;
-    }
+    context.fillStyle = object.color ? object.color : CanvasText.DEFAULT_FONT_COLOR;
 
     this._padding = CanvasText.resolvePadding(object);
 
-    CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object), options);
+    CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
 
     context.restore();
   },
@@ -324,7 +315,7 @@ var CanvasText = {
     return context.measureText(text).width + this._padding.left + this._padding.right;
   },
 
-  renderWordWrapRows: function renderWordWrapRows(context, object, rows, options) {
+  renderWordWrapRows: function renderWordWrapRows(context, object, rows) {
     var lineHeight = object.lineHeight ? object.lineHeight : 1;
     var rowHeight = CanvasText.fontHeight(context, object) * lineHeight;
 
@@ -345,29 +336,24 @@ var CanvasText = {
     }
 
     rows.forEach(function (row) {
-      var rowCanvas = CanvasText.makeWordWrapCanvas(context, object, rowX, rowHeight, row, options);
+      var rowCanvas = CanvasText.makeWordWrapCanvas(context, object, rowX, rowHeight, row);
       context.drawImage(rowCanvas, 0, rowY);
       rowY += rowCanvas.height;
     });
   },
 
-  makeWordWrapCanvas: function makeWordWrapCanvas(context, object, xPos, height, text, options) {
+  makeWordWrapCanvas: function makeWordWrapCanvas(context, object, xPos, height, text) {
     var canvas = document.createElement('canvas');
     var rowContext = canvas.getContext('2d');
 
     canvas.width = context.canvas.width;
     canvas.height = height;
 
-    if (options.block) {
-      rowContext.fillStyle = context.fillStyle;
-      rowContext.fillRect(0, 0, canvas.width, canvas.height);
-    } else {
-      rowContext.font = context.font;
-      rowContext.fillStyle = context.fillStyle;
-      rowContext.textBaseline = context.textBaseline;
-      rowContext.textAlign = object.align;
-      rowContext.fillText(text, xPos, 0);
-    }
+    rowContext.font = context.font;
+    rowContext.fillStyle = context.fillStyle;
+    rowContext.textBaseline = context.textBaseline;
+    rowContext.textAlign = object.align;
+    rowContext.fillText(text, xPos, 0);
 
     return canvas;
   },
@@ -436,8 +422,6 @@ var CanvasText = {
 
 };
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 /**
  * Hemp
  * Text Element
@@ -455,22 +439,13 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
-TextElement.prototype.renderElement = function (environment, object, options) {
-  options = (typeof options === 'undefined' ? 'undefined' : _typeof(options)) === 'object' ? options : {};
+TextElement.prototype.renderElement = function (environment, object) {
   if (environment.options && environment.options.selectionRender) {
-    options.block = true;
+    this._context.fillStyle = this.resolveColor(environment, object.color);
+    this._context.fillRect(0, 0, object.width, object.height);
+    return;
   }
-  var text;
-  if (options.tokens) {
-    text = object.text;
-    Object.keys(options.tokens).forEach(function (token) {
-      object.text = object.text.replace('{{' + token + '}}', options.tokens[token]);
-    });
-  }
-  CanvasText.drawText(this._context, object, options);
-  if (options.tokens) {
-    object.text = text;
-  }
+  CanvasText.drawText(this._context, object);
 };
 
 TextElement.prototype.getTypes = function () {
@@ -529,7 +504,7 @@ ShapeElement.prototype.constructor = ShapeElement;
 
 /************************************************************************************/
 
-ShapeElement.prototype.renderElement = function (environment, object, options) {
+ShapeElement.prototype.renderElement = function (environment, object) {
   switch (object.type) {
     case 'rectangle':
       this.renderRectangle(environment, object);
@@ -543,14 +518,14 @@ ShapeElement.prototype.renderElement = function (environment, object, options) {
 };
 
 ShapeElement.prototype.renderRectangle = function (environment, object) {
-  this._context.save();
+  //this._context.save();
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fillRect(0, 0, object.width, object.height);
-  this._context.restore();
+  //this._context.restore();
 };
 
 ShapeElement.prototype.renderEllipse = function (environment, object) {
-  this._context.save();
+  //this._context.save();
 
   this._context.save();
   this._context.beginPath();
@@ -561,7 +536,7 @@ ShapeElement.prototype.renderEllipse = function (environment, object) {
   this._context.fillStyle = this.resolveColor(environment, object.color);
   this._context.fill();
 
-  this._context.restore();
+  //this._context.restore();
 };
 
 ShapeElement.prototype.getTypes = function () {
@@ -629,6 +604,8 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
   }
 
   environment.context.lineWidth = 4;
+  environment.context.globalCompositeOperation = 'xor';
+
   environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
 
   // body
@@ -641,6 +618,16 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
   environment.context.strokeRect(object.width / 2 - TransformElement.handleSize, object.height / 2 - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
   // ll
   environment.context.strokeRect(-object.width / 2, object.height / 2 - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
+
+  // top
+  environment.context.strokeRect(-10, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
+  // right
+  environment.context.strokeRect(object.width / 2 - TransformElement.handleSize, -10, TransformElement.handleSize, TransformElement.handleSize);
+  // bottom
+  environment.context.strokeRect(-10, object.height / 2 - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
+  // left
+  environment.context.strokeRect(-object.width / 2, -10, TransformElement.handleSize, TransformElement.handleSize);
+
   // rotate handle
   environment.context.strokeRect(-10, -(object.height / 2) - TransformElement.handleSize * 2, TransformElement.handleSize, TransformElement.handleSize);
   // rotate connector
@@ -650,7 +637,7 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
 };
 
 TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
-  var handles = ['ul', 'ur', 'll', 'lr', 'body', 'rotate'];
+  var handles = ['ul', 'ur', 'll', 'lr', 'top', 'right', 'bottom', 'left', 'body', 'rotate'];
   for (var i = 0; i < handles.length; i++) {
     var handle = handles[i];
 
@@ -680,6 +667,18 @@ TransformElement.findTransformHandle = function (environment, mouseX, mouseY, ob
       case 'lr':
         // upper-right
         environment.context.rect(handleX - TransformElement.handleSize, handleY - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
+        break;
+      case 'top':
+        environment.context.rect(-10, -handleY, TransformElement.handleSize, TransformElement.handleSize);
+        break;
+      case 'right':
+        environment.context.rect(handleX - TransformElement.handleSize, -10, TransformElement.handleSize, TransformElement.handleSize);
+        break;
+      case 'bottom':
+        environment.context.rect(-10, handleY - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
+        break;
+      case 'left':
+        environment.context.rect(-handleX, -10, TransformElement.handleSize, TransformElement.handleSize);
         break;
       case 'rotate':
         environment.context.rect(-TransformElement.handleSize / 2, -handleY - 40, TransformElement.handleSize, TransformElement.handleSize);
@@ -726,33 +725,40 @@ TransformElement.getCorners = function (object) {
 TransformElement.updateObjectFromCorners = function (object, corners, fromCenter) {
   var handle = object._transform.handle;
   var anchor = object._transform.anchor;
-  var top, left, bottom, right;
+  var top = corners.top,
+      left = corners.left,
+      bottom = corners.bottom,
+      right = corners.right;
 
   // position the TRBL based on the handle and anchor
   switch (handle) {
     case 'ul':
       top = corners[handle].y;
       left = corners[handle].x;
-      bottom = corners[anchor].y;
-      right = corners[anchor].x;
       break;
     case 'lr':
-      top = corners[anchor].y;
-      left = corners[anchor].x;
       bottom = corners[handle].y;
       right = corners[handle].x;
       break;
     case 'ur':
       top = corners[handle].y;
-      left = corners[anchor].x;
-      bottom = corners[anchor].y;
       right = corners[handle].x;
       break;
     case 'll':
-      top = corners[anchor].y;
       left = corners[handle].x;
       bottom = corners[handle].y;
-      right = corners[anchor].x;
+      break;
+    case 'top':
+      top = corners.top.y;
+      break;
+    case 'right':
+      right = corners.right.x;
+      break;
+    case 'bottom':
+      bottom = corners.bottom.y;
+      break;
+    case 'left':
+      left = corners.left.x;
       break;
   }
 
@@ -789,6 +795,8 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
         object.y = object._transform.resize.origin.y - offset.y;
         break;
       case 'ur':
+      case 'top':
+      case 'right':
         var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
         object.x = object._transform.resize.origin.x + offset.x;
         object.y = object._transform.resize.origin.y - offset.y;
@@ -799,6 +807,8 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
         object.y = object._transform.resize.origin.y + offset.y;
         break;
       case 'll':
+      case 'bottom':
+      case 'left':
         var offset = TransformElement.rotatePoint(-radians, object, offsetX, offsetY);
         object.x = object._transform.resize.origin.x - offset.x;
         object.y = object._transform.resize.origin.y + offset.y;
@@ -831,6 +841,18 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
       break;
     case 'lr':
       anchor = 'ul';
+      break;
+    case 'top':
+      anchor = 'bottom';
+      break;
+    case 'right':
+      anchor = 'left';
+      break;
+    case 'bottom':
+      anchor = 'top';
+      break;
+    case 'left':
+      anchor = 'right';
       break;
     case 'body':
       object._clicks.count++;
@@ -890,13 +912,56 @@ TransformElement.snapObject = function (environment, object) {
   }
 };
 
+TransformElement.windowToCanvas = function (environment, x, y) {
+  var rect = environment.canvas.getBoundingClientRect();
+  return {
+    x: (x - rect.left) * (environment.canvas.width / rect.width),
+    y: (y - rect.top) * (environment.canvas.height / rect.height)
+  };
+};
+
+TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
+  var mouse = TransformElement.windowToCanvas(environment, mouseX, mouseY);
+  if (mouse.y < 0) {
+    if (!object._transform.maximizing) {
+      object._transform.maximizing = true;
+      object._transform.maximize = {
+        width: object.width,
+        height: object.height,
+        x: object.x,
+        y: object.y,
+        rotation: object.rotation
+      };
+      object.x = environment.canvas.width / 2;
+      object.y = environment.canvas.height / 2;
+      object.width = environment.canvas.width;
+      object.height = environment.canvas.height;
+      object.rotation = 0;
+    }
+  } else {
+    if (object._transform.maximizing) {
+      object._transform.maximizing = false;
+      object.width = object._transform.maximize.width;
+      object.height = object._transform.maximize.height;
+      object.x = object._transform.maximize.x;
+      object.y = object._transform.maximize.y;
+      object.rotation = object._transform.maximize.rotation;
+      delete object._transform.maximize;
+    }
+  }
+};
+
 TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event) {
   var deltaX = mouseX - object._transform.origin.mouse.x;
   var deltaY = mouseY - object._transform.origin.mouse.y;
-  object.x = object._transform.origin.object.x + deltaX;
-  object.y = object._transform.origin.object.y + deltaY;
 
-  var rotation = typeof object.rotation !== 'undefined' ? object.rotation : 0;
+  if (!object._transform.maximizing) {
+    object.x = object._transform.origin.object.x + deltaX;
+    object.y = object._transform.origin.object.y + deltaY;
+  }
+
+  TransformElement.snapMaximize(environment, object, mouseX, mouseY);
+
   if (event.altKey) {
     TransformElement.snapObject(environment, object);
   }
@@ -1040,7 +1105,7 @@ ElementFactory.getElements = function () {
 var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
-  this._stickyTransform = true;
+  this._stickyTransform = false;
 
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
@@ -1048,6 +1113,7 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
 
   if (this._interactive) {
     window.addEventListener('keydown', this._onKeyDown.bind(this));
+    window.addEventListener('mousedown', this._onWindowMouseDown.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
   }
@@ -1092,12 +1158,6 @@ Hemp.prototype.setSize = function (width, height) {
     this._environment.canvas.setAttribute('tabIndex', '1');
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
   }
-
-  // watch for changes in the canvas
-  this._setupObserver();
-
-  // setup the _windowToCanvas function for the current canvas size
-  this._handleElementResize();
 
   this._renderObjects(this._environment);
 };
@@ -1194,30 +1254,14 @@ Hemp.prototype._setupContext = function (canvas) {
   return canvas.getContext('2d');
 };
 
-Hemp.prototype._setupObserver = function () {
-  if (this._element) {
-    if (this._observer) {
-      this._observer.disconnect();
-    }
-    this._observer = new MutationObserver(function (mutations) {
-      this._handleElementResize();
-    }.bind(this));
-    this._observer.observe(this._element, {
-      attributes: true, childList: true, characterData: true
-    });
-  }
-};
-
-Hemp.prototype._handleElementResize = function () {
+Hemp.prototype._windowToCanvas = function (x, y) {
   var rect = { left: 0, top: 0, width: 1, height: 1 };
   if (this._environment) {
     rect = this._environment.canvas.getBoundingClientRect();
   }
-  this._windowToCanvas = function (x, y) {
-    return {
-      x: (x - rect.left) * (this._width / rect.width),
-      y: (y - rect.top) * (this._height / rect.height)
-    };
+  return {
+    x: (x - rect.left) * (this._width / rect.width),
+    y: (y - rect.top) * (this._height / rect.height)
   };
 };
 
@@ -1274,6 +1318,13 @@ Hemp.prototype._onMouseDown = function (event) {
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
   return;
+};
+
+Hemp.prototype._onWindowMouseDown = function (event) {
+  var coordinates = this._windowToCanvas(event.clientX, event.clientY);
+  if (coordinates.x < 0 || coordinates.y < 0 || coordinates.x > this._environment.canvas.width || coordinates.y > this._environment.canvas.height) {
+    this._deselectAllObjects();
+  }
 };
 
 Hemp.prototype._maximizeObject = function (object) {
