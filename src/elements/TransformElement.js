@@ -245,7 +245,7 @@ TransformElement.updateObjectFromCorners = function(object, corners, fromCenter)
   
 };
 
-TransformElement.transformBegin = function(environment, object, handle, mouseX, mouseY, begin) {
+TransformElement.transformBegin = function(environment, object, handle, mouseX, mouseY, event) {
   var anchor;
 
   if (!object._clicks) {
@@ -313,6 +313,7 @@ TransformElement.transformBegin = function(environment, object, handle, mouseX, 
 
 TransformElement.snapObject = function(environment, object) {
   var corners = TransformElement.getCorners(object);
+  // TODO: this doesn't work for rotated objects very well
   var sides = [
     {name: 'top', snap: 0, axis: 'y', derotate: true},
     {name: 'right', snap: environment.canvas.width, axis: 'x', derotate: true},
@@ -323,23 +324,21 @@ TransformElement.snapObject = function(environment, object) {
   ];
   var snapped = false;
   var rotation = (typeof object.rotation !== 'undefined') ? object.rotation : 0;
-  var canDerotate = (rotation < 20 || rotation > 340); // maybe allow near-90 degree values?
+  var snappedRotation = Math.floor(((rotation + 45) % 360) / 90) * 90;
   var axisSnapped = {};
   for (var i = 0; i < sides.length; i++) {
     var side = sides[i];
     if (axisSnapped[side.axis]) { // don't attempt to snap two things to an 'x' axis, for example
       continue;
     }
-    if (!side.derotate || (side.derotate && canDerotate)) {
-      var delta = side.snap - corners[side.name];
-      if (Math.abs(delta) < 20) {
-        axisSnapped[side.axis] = true;
-        snapped = true;
-        if (side.derotate) {
-          object.rotation = 0;
-        }
-        object[side.axis] += delta;
+    var delta = side.snap - corners[side.name];
+    if (Math.abs(delta) < 20) {
+      axisSnapped[side.axis] = true;
+      snapped = true;
+      if (side.derotate) {
+        object.rotation = 0; //snappedRotation;
       }
+      object[side.axis] += delta;
     }
   }
   if (!snapped) {
@@ -478,6 +477,11 @@ TransformElement.transformMove = function(environment, object, mouseX, mouseY, e
 };
 
 TransformElement.transformEnd = function(environment, object, event) {
+  object.x = Math.floor(object.x);
+  object.y = Math.floor(object.y);
+  object.height = Math.floor(object.height);
+  object.width = Math.floor(object.width);
+  object.rotation = Math.floor(object.rotation);
   delete object._transform;
 };
 

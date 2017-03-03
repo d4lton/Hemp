@@ -196,13 +196,56 @@ Hemp.prototype._findElement = function (selector) {
 };
 
 Hemp.prototype._onKeyDown = function(event) {
+  var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
+  var offset = event.altKey ? 10 : 1;
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
       break;
+    case 'ArrowLeft':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], -offset, 0, event);
+      }
+      break;
+    case 'ArrowRight':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], offset, 0, event);
+      }
+      break;
+    case 'ArrowUp':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], 0, -offset, event);
+      }
+      break;
+    case 'ArrowDown':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], 0, offset, event);
+      }
+      break;
     default:
       console.log('_onKeyDown event.code:', event.code);
       break;
+  }
+};
+
+Hemp.prototype._nudgeObject = function(object, offsetX, offsetY, event) {
+  if (object.locked !== true) {
+    object.x = Math.floor(object.x + offsetX);
+    object.y = Math.floor(object.y + offsetY);
+    if (object.x < 0) {
+      object.x = 0;
+    }
+    if (object.x > this._environment.canvas.width) {
+      object.x = this._environment.canvas.width;
+    }
+    if (object.y < 0) {
+      object.y = 0;
+    }
+    if (object.y > this._environment.canvas.height) {
+      object.y = this._environment.canvas.height;
+    }
+    this._renderObjects(this._environment);
+    this._reportObjectTransform(object);
   }
 };
 
@@ -286,6 +329,7 @@ Hemp.prototype._onMouseUp = function(event) {
   event.preventDefault();
   if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
+    this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }
 };

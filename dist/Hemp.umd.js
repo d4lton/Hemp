@@ -825,7 +825,7 @@ TransformElement.updateObjectFromCorners = function (object, corners, fromCenter
   }
 };
 
-TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY, begin) {
+TransformElement.transformBegin = function (environment, object, handle, mouseX, mouseY, event) {
   var anchor;
 
   if (!object._clicks) {
@@ -892,10 +892,11 @@ TransformElement.transformBegin = function (environment, object, handle, mouseX,
 
 TransformElement.snapObject = function (environment, object) {
   var corners = TransformElement.getCorners(object);
+  // TODO: this doesn't work for rotated objects very well
   var sides = [{ name: 'top', snap: 0, axis: 'y', derotate: true }, { name: 'right', snap: environment.canvas.width, axis: 'x', derotate: true }, { name: 'bottom', snap: environment.canvas.height, axis: 'y', derotate: true }, { name: 'left', snap: 0, axis: 'x', derotate: true }, { name: 'center', snap: environment.canvas.width / 2, axis: 'x', derotate: false }, { name: 'middle', snap: environment.canvas.height / 2, axis: 'y', derotate: false }];
   var snapped = false;
   var rotation = typeof object.rotation !== 'undefined' ? object.rotation : 0;
-  var canDerotate = rotation < 20 || rotation > 340; // maybe allow near-90 degree values?
+  var snappedRotation = Math.floor((rotation + 45) % 360 / 90) * 90;
   var axisSnapped = {};
   for (var i = 0; i < sides.length; i++) {
     var side = sides[i];
@@ -903,16 +904,14 @@ TransformElement.snapObject = function (environment, object) {
       // don't attempt to snap two things to an 'x' axis, for example
       continue;
     }
-    if (!side.derotate || side.derotate && canDerotate) {
-      var delta = side.snap - corners[side.name];
-      if (Math.abs(delta) < 20) {
-        axisSnapped[side.axis] = true;
-        snapped = true;
-        if (side.derotate) {
-          object.rotation = 0;
-        }
-        object[side.axis] += delta;
+    var delta = side.snap - corners[side.name];
+    if (Math.abs(delta) < 20) {
+      axisSnapped[side.axis] = true;
+      snapped = true;
+      if (side.derotate) {
+        object.rotation = 0; //snappedRotation;
       }
+      object[side.axis] += delta;
     }
   }
   if (!snapped) {
@@ -1049,6 +1048,11 @@ TransformElement.transformMove = function (environment, object, mouseX, mouseY, 
 };
 
 TransformElement.transformEnd = function (environment, object, event) {
+  object.x = Math.floor(object.x);
+  object.y = Math.floor(object.y);
+  object.height = Math.floor(object.height);
+  object.width = Math.floor(object.width);
+  object.rotation = Math.floor(object.rotation);
   delete object._transform;
 };
 
@@ -1287,13 +1291,56 @@ Hemp.prototype._findElement = function (selector) {
 };
 
 Hemp.prototype._onKeyDown = function (event) {
+  var selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
+  var offset = event.altKey ? 10 : 1;
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
       break;
+    case 'ArrowLeft':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], -offset, 0, event);
+      }
+      break;
+    case 'ArrowRight':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], offset, 0, event);
+      }
+      break;
+    case 'ArrowUp':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], 0, -offset, event);
+      }
+      break;
+    case 'ArrowDown':
+      if (selectedObjects.length > 0) {
+        this._nudgeObject(selectedObjects[0], 0, offset, event);
+      }
+      break;
     default:
       console.log('_onKeyDown event.code:', event.code);
       break;
+  }
+};
+
+Hemp.prototype._nudgeObject = function (object, offsetX, offsetY, event) {
+  if (object.locked !== true) {
+    object.x = Math.floor(object.x + offsetX);
+    object.y = Math.floor(object.y + offsetY);
+    if (object.x < 0) {
+      object.x = 0;
+    }
+    if (object.x > this._environment.canvas.width) {
+      object.x = this._environment.canvas.width;
+    }
+    if (object.y < 0) {
+      object.y = 0;
+    }
+    if (object.y > this._environment.canvas.height) {
+      object.y = this._environment.canvas.height;
+    }
+    this._renderObjects(this._environment);
+    this._reportObjectTransform(object);
   }
 };
 
@@ -1374,6 +1421,7 @@ Hemp.prototype._onMouseUp = function (event) {
   event.preventDefault();
   if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
+    this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }
 };
