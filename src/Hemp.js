@@ -253,13 +253,12 @@ Hemp.prototype._setupTransformingObject = function(mouseX, mouseY, event, hitObj
     var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
       // if we don't want sticky transforms, then if the body handle was clicked, return false if there are other objects
-      if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 0) {
+      if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 1) {
         return false;
       }
       this._transformingObject = selectedObjects[0];
-      var clicks = TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY, event);
-      if (clicks > 1) {
-        this._maximizeObject(this._transformingObject);
+      if (this._transformingObject.locked !== true) {
+        var clicks = TransformElement.transformBegin(this._environment, this._transformingObject, handle, mouseX, mouseY, event);
       }
       return true;
     }
@@ -275,7 +274,7 @@ Hemp.prototype._reportObjectTransform = function(object) {
 
 Hemp.prototype._onMouseMove = function(event) {
   // if we're in the middle of a transform, update the selected object and render the canvas
-  if (this._transformingObject) {
+  if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
     this._renderObjects(this._environment);
@@ -285,9 +284,8 @@ Hemp.prototype._onMouseMove = function(event) {
 
 Hemp.prototype._onMouseUp = function(event) {
   event.preventDefault();
-  if (this._transformingObject) {
+  if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
-    this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }
 };
@@ -349,16 +347,14 @@ Hemp.prototype._findObjectsAt = function(x, y) {
     });
   }
   this._getObjects().forEach(function(object) {
-    if (object.locked !== true) {
-      this._clearEnvironment(this._hitEnvironment);
-      this._renderObject(this._hitEnvironment, object);
-      var hitboxSize = 10; // make this configurable
-      var p = this._hitEnvironment.context.getImageData(x - (hitboxSize / 2), y - (hitboxSize / 2), hitboxSize, hitboxSize).data;
-      for (var i = 0; i < p.length; i += 4) {
-        if (p[i + 3] !== 0) { // looking only at alpha channel
-          results.push(object);
-          break;
-        }
+    this._clearEnvironment(this._hitEnvironment);
+    this._renderObject(this._hitEnvironment, object);
+    var hitboxSize = 10; // make this configurable
+    var p = this._hitEnvironment.context.getImageData(x - (hitboxSize / 2), y - (hitboxSize / 2), hitboxSize, hitboxSize).data;
+    for (var i = 0; i < p.length; i += 4) {
+      if (p[i + 3] !== 0) { // looking only at alpha channel
+        results.push(object);
+        break;
       }
     }
   }.bind(this));
