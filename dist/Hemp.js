@@ -1107,6 +1107,7 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this._interactive = typeof interactive !== 'undefined' ? interactive : false;
 
   this._stickyTransform = false;
+  this._allowWindowDeselect = false;
 
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
@@ -1114,9 +1115,11 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
 
   if (this._interactive) {
     window.addEventListener('keydown', this._onKeyDown.bind(this));
-    window.addEventListener('mousedown', this._onWindowMouseDown.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
+    if (this._allowWindowDeselect) {
+      window.addEventListener('mousedown', this._onWindowMouseDown.bind(this));
+    }
   }
 
   this.setSize(width, height);
