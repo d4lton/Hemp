@@ -1254,6 +1254,10 @@ Hemp.prototype.select = function (object) {
   }
 };
 
+Hemp.prototype.deselect = function (object) {
+  this._deselectAllObjects(true);
+};
+
 Hemp.prototype._createCanvas = function (width, height) {
   var canvas = document.createElement('canvas');
   canvas.width = width;
