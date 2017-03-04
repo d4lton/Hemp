@@ -156,9 +156,9 @@ Hemp.prototype.setStickyTransform = function(value) {
 };
 
 Hemp.prototype.select = function(object) {
-  this._deselectAllObjects();
+  this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    this._selectObject(this._objects[object._index]);
+    this._selectObject(this._objects[object._index], true);
   }
 };
 
@@ -334,7 +334,7 @@ Hemp.prototype._onMouseUp = function(event) {
   }
 };
 
-Hemp.prototype._deselectAllObjects = function() {
+Hemp.prototype._deselectAllObjects = function(skipEvent) {
   var deselectedObjects = [];
   this._getObjects().forEach(function(object) {
     if (object._selected) {
@@ -344,17 +344,17 @@ Hemp.prototype._deselectAllObjects = function() {
   });
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
-    if (this._element) {
+    if (this._element && skipEvent !== true) {
       this._element.dispatchEvent(new CustomEvent('deselect', {detail: this._cleanObjects(deselectedObjects)}));
     }
   }
 };
 
-Hemp.prototype._selectObject = function(object) {
-  this._deselectAllObjects();
+Hemp.prototype._selectObject = function(object, skipEvent) {
+  this._deselectAllObjects(skipEvent);
   this._createPrivateProperty(object, '_selected', true);
   this._renderObjects(this._environment);
-  if (this._element) {
+  if (this._element && skipEvent !== true) {
     this._element.dispatchEvent(new CustomEvent('select', {detail: this._cleanObject(object)}));
   }
 };
