@@ -1184,12 +1184,24 @@ Hemp.prototype.setObjects = function (objects, callback) {
   objects = objects && Array.isArray(objects) ? objects : [];
 
   // deselect any existing objects, then update the internal list of objects
-  this._deselectAllObjects();
+  var selectedObjects;
+  if (this._objects && objects.length === this._objects.length) {
+    selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
+  } else {
+    this._deselectAllObjects(true);
+  }
+
   this._objects = this._cleanObjects(objects);
 
   this._objects.forEach(function (object, index) {
     object._index = index;
   });
+
+  if (selectedObjects) {
+    selectedObjects.forEach(function (object) {
+      this._selectObject(this._objects[object._index], true);
+    }.bind(this));
+  }
 
   // create an array of promises for all image objects
   var promises = this._getImagePromises(this._objects);
