@@ -923,13 +923,8 @@ TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
   if (mouseY < 0) {
     if (!object._transform.maximizing) {
       object._transform.maximizing = true;
-      object._transform.maximize = {
-        width: object.width,
-        height: object.height,
-        x: object.x,
-        y: object.y,
-        rotation: object.rotation
-      };
+      object._transform.maximize = {};
+      TransformElement.setObjectGeometry(object, object._transform.maximize);
       object.x = environment.canvas.width / 2;
       object.y = environment.canvas.height / 2;
       object.width = environment.canvas.width;
@@ -939,17 +934,52 @@ TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
   } else {
     if (object._transform.maximizing) {
       object._transform.maximizing = false;
-      object.width = object._transform.maximize.width;
-      object.height = object._transform.maximize.height;
-      object.x = object._transform.maximize.x;
-      object.y = object._transform.maximize.y;
-      object.rotation = object._transform.maximize.rotation;
+      TransformElement.setObjectGeometry(object._transform.maximize, object);
       delete object._transform.maximize;
     }
   }
 };
 
-TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event) {
+TransformElement.setObjectGeometry = function (src, dst) {
+  dst.x = src.x;
+  dst.y = src.y;
+  dst.width = src.width;
+  dst.height = src.height;
+  dst.rotation = src.rotation;
+};
+
+TransformElement.snapToObject = function (object, hitObjects, event) {
+  var hitObject;
+
+  if (event.metaKey) {
+    if (hitObjects.length > 0) {
+      for (var i = hitObjects.length - 1; i >= 0; i--) {
+        if (hitObjects[i] !== object) {
+          hitObject = hitObjects[i];
+          break;
+        }
+      }
+    }
+  }
+
+  if (hitObject) {
+    // if we haven't saved the original size, do so
+    if (!object._transform.snapped) {
+      object._transform.snapped = {};
+      TransformElement.setObjectGeometry(object, object._transform.snapped);
+    }
+    // set the height/width and x, y of object to hitObject
+    TransformElement.setObjectGeometry(hitObject, object);
+  } else {
+    // if we saved the orignal size, restore
+    if (object._transform.snapped) {
+      TransformElement.setObjectGeometry(object._transform.snapped, object);
+      delete object._transform.snapped;
+    }
+  }
+};
+
+TransformElement.transformMoveObject = function (environment, object, mouseX, mouseY, event, hitObjects) {
   var deltaX = mouseX - object._transform.origin.mouse.x;
   var deltaY = mouseY - object._transform.origin.mouse.y;
 
@@ -959,6 +989,7 @@ TransformElement.transformMoveObject = function (environment, object, mouseX, mo
   }
 
   TransformElement.snapMaximize(environment, object, mouseX, mouseY);
+  TransformElement.snapToObject(object, hitObjects, event);
 
   if (event.altKey) {
     TransformElement.snapObject(environment, object);
@@ -1033,10 +1064,10 @@ TransformElement.transformResizeObject = function (environment, object, mouseX, 
   TransformElement.updateObjectFromCorners(object, corners, event.shiftKey);
 };
 
-TransformElement.transformMove = function (environment, object, mouseX, mouseY, event) {
+TransformElement.transformMove = function (environment, object, mouseX, mouseY, event, hitObjects) {
   switch (object._transform.handle) {
     case 'body':
-      TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event);
+      TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event, hitObjects);
       break;
     case 'rotate':
       TransformElement.transformRotateObject(environment, object, mouseX, mouseY, event);
@@ -1119,6 +1150,7 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
 
   if (this._interactive) {
     window.addEventListener('keydown', this._onKeyDown.bind(this));
+    window.addEventListener('keyup', this._onKeyUp.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));
     if (this._allowWindowDeselect) {
@@ -1310,34 +1342,55 @@ Hemp.prototype._findElement = function (selector) {
 };
 
 Hemp.prototype._onKeyDown = function (event) {
-  var selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
-  var offset = event.altKey ? 10 : 1;
+  //var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
+  //var offset = event.altKey ? 10 : 1;
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
       break;
+    /*
     case 'ArrowLeft':
-      if (selectedObjects.length > 0) {
-        this._nudgeObject(selectedObjects[0], -offset, 0, event);
-      }
-      break;
+    if (selectedObjects.length > 0) {
+      this._nudgeObject(selectedObjects[0], -offset, 0, event);
+    }
+    break;
     case 'ArrowRight':
-      if (selectedObjects.length > 0) {
-        this._nudgeObject(selectedObjects[0], offset, 0, event);
-      }
-      break;
+    if (selectedObjects.length > 0) {
+      this._nudgeObject(selectedObjects[0], offset, 0, event);
+    }
+    break;
     case 'ArrowUp':
-      if (selectedObjects.length > 0) {
-        this._nudgeObject(selectedObjects[0], 0, -offset, event);
-      }
-      break;
+    if (selectedObjects.length > 0) {
+      this._nudgeObject(selectedObjects[0], 0, -offset, event);
+    }
+    break;
     case 'ArrowDown':
-      if (selectedObjects.length > 0) {
-        this._nudgeObject(selectedObjects[0], 0, offset, event);
-      }
+    if (selectedObjects.length > 0) {
+      this._nudgeObject(selectedObjects[0], 0, offset, event);
+    }
+    break;
+    */
+    case 'MetaLeft':
+    case 'MetaRight':
+      event.clientX = this._mouse.x;
+      event.clientY = this._mouse.y;
+      this._onMouseMove(event);
       break;
     default:
       console.log('_onKeyDown event.code:', event.code);
+      break;
+  }
+};
+
+Hemp.prototype._onKeyUp = function (event) {
+  switch (event.code) {
+    case 'MetaLeft':
+    case 'MetaRight':
+      event.clientX = this._mouse.x;
+      event.clientY = this._mouse.y;
+      this._onMouseMove(event);
+      break;
+    default:
       break;
   }
 };
@@ -1427,10 +1480,16 @@ Hemp.prototype._reportObjectTransform = function (object) {
 };
 
 Hemp.prototype._onMouseMove = function (event) {
+  // hold on to the mouse position for other nefarious purposes
+  this._mouse = {
+    x: event.clientX,
+    y: event.clientY
+  };
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
-    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
+    var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event, hitObjects);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
   }

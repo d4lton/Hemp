@@ -22,6 +22,7 @@ var Hemp = function(width, height, objects, interactive, selector) {
 
   if (this._interactive) {
     window.addEventListener('keydown', this._onKeyDown.bind(this));
+    window.addEventListener('keyup', this._onKeyUp.bind(this));
     window.addEventListener('mousemove', this._onMouseMove.bind(this));
     window.addEventListener('mouseup', this._onMouseUp.bind(this));      
     if (this._allowWindowDeselect) {
@@ -215,12 +216,13 @@ Hemp.prototype._findElement = function (selector) {
 };
 
 Hemp.prototype._onKeyDown = function(event) {
-  var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
-  var offset = event.altKey ? 10 : 1;
+  //var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
+  //var offset = event.altKey ? 10 : 1;
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
       break;
+      /*
     case 'ArrowLeft':
       if (selectedObjects.length > 0) {
         this._nudgeObject(selectedObjects[0], -offset, 0, event);
@@ -241,8 +243,28 @@ Hemp.prototype._onKeyDown = function(event) {
         this._nudgeObject(selectedObjects[0], 0, offset, event);
       }
       break;
+      */
+    case 'MetaLeft':
+    case 'MetaRight':
+      event.clientX = this._mouse.x;
+      event.clientY = this._mouse.y;
+      this._onMouseMove(event);
+      break;
     default:
       console.log('_onKeyDown event.code:', event.code);
+      break;
+  }
+};
+
+Hemp.prototype._onKeyUp = function(event) {
+  switch (event.code) {
+    case 'MetaLeft':
+    case 'MetaRight':
+      event.clientX = this._mouse.x;
+      event.clientY = this._mouse.y;
+      this._onMouseMove(event);
+      break;
+    default:
       break;
   }
 };
@@ -335,10 +357,16 @@ Hemp.prototype._reportObjectTransform = function(object) {
 };
 
 Hemp.prototype._onMouseMove = function(event) {
+  // hold on to the mouse position for other nefarious purposes
+  this._mouse = {
+    x: event.clientX,
+    y: event.clientY
+  };
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
-    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event);
+    var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event, hitObjects);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
   }

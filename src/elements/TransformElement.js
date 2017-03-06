@@ -350,13 +350,8 @@ TransformElement.snapMaximize = function(environment, object, mouseX, mouseY) {
   if (mouseY < 0) {
     if (!object._transform.maximizing) {
       object._transform.maximizing = true;
-      object._transform.maximize = {
-        width: object.width,
-        height: object.height,
-        x: object.x,
-        y: object.y,
-        rotation: object.rotation
-      }
+      object._transform.maximize = {};
+      TransformElement.setObjectGeometry(object, object._transform.maximize);
       object.x = environment.canvas.width / 2;
       object.y = environment.canvas.height / 2;
       object.width = environment.canvas.width;
@@ -366,18 +361,53 @@ TransformElement.snapMaximize = function(environment, object, mouseX, mouseY) {
   } else {
     if (object._transform.maximizing) {
       object._transform.maximizing = false;
-      object.width = object._transform.maximize.width;
-      object.height = object._transform.maximize.height;
-      object.x = object._transform.maximize.x;
-      object.y = object._transform.maximize.y;
-      object.rotation = object._transform.maximize.rotation;
+      TransformElement.setObjectGeometry(object._transform.maximize, object);
       delete object._transform.maximize
     }
   }
-
 };
 
-TransformElement.transformMoveObject = function(environment, object, mouseX, mouseY, event) {
+TransformElement.setObjectGeometry = function(src, dst) {
+  dst.x = src.x;
+  dst.y = src.y;
+  dst.width = src.width;
+  dst.height = src.height;
+  dst.rotation = src.rotation;
+};
+
+TransformElement.snapToObject = function(object, hitObjects, event) {
+  var hitObject;
+
+  if (event.metaKey) {
+    if (hitObjects.length > 0) {
+      for (var i = hitObjects.length-1; i >= 0; i--) {
+        if (hitObjects[i] !== object) {
+          hitObject = hitObjects[i];
+          break;
+        }
+      }
+    }
+  }
+  
+  if (hitObject) {
+    // if we haven't saved the original size, do so
+    if (!object._transform.snapped) {
+      object._transform.snapped = {};
+      TransformElement.setObjectGeometry(object, object._transform.snapped);
+    }
+    // set the height/width and x, y of object to hitObject
+    TransformElement.setObjectGeometry(hitObject, object);
+  } else {
+    // if we saved the orignal size, restore
+    if (object._transform.snapped) {
+      TransformElement.setObjectGeometry(object._transform.snapped, object);
+      delete object._transform.snapped;
+    }
+  }
+  
+};
+
+TransformElement.transformMoveObject = function(environment, object, mouseX, mouseY, event, hitObjects) {
   var deltaX = mouseX - object._transform.origin.mouse.x;
   var deltaY = mouseY - object._transform.origin.mouse.y;
   
@@ -387,6 +417,7 @@ TransformElement.transformMoveObject = function(environment, object, mouseX, mou
   }
   
   TransformElement.snapMaximize(environment, object, mouseX, mouseY);
+  TransformElement.snapToObject(object, hitObjects, event);
 
   if (event.altKey) {
     TransformElement.snapObject(environment, object);
@@ -462,10 +493,10 @@ TransformElement.transformResizeObject = function(environment, object, mouseX, m
   TransformElement.updateObjectFromCorners(object, corners, event.shiftKey);
 };
 
-TransformElement.transformMove = function(environment, object, mouseX, mouseY, event) {
+TransformElement.transformMove = function(environment, object, mouseX, mouseY, event, hitObjects) {
   switch (object._transform.handle) {
     case 'body':
-      TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event);
+      TransformElement.transformMoveObject(environment, object, mouseX, mouseY, event, hitObjects);
       break;
     case 'rotate':
       TransformElement.transformRotateObject(environment, object, mouseX, mouseY, event);
