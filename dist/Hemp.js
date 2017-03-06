@@ -59,64 +59,8 @@ Element.prototype.resolveColor = function (environment, color) {
   }
 };
 
-// TODO
-// make these class functions
-// only need one function
-// return an array of types this Element can draw
-// each element in array should be an object with name, displayName, properties
-
-Element.prototype.getTypes = function () {
+Element.getTypes = function () {
   console.warn('override me');
-};
-
-Element.prototype.getProperties = function () {
-  return {
-    'common': [{
-      name: 'position',
-      displayName: 'Position',
-      type: 'integers',
-      properties: [{
-        name: 'x',
-        displayName: 'X',
-        default: 0
-      }, {
-        name: 'y',
-        displayName: 'Y',
-        default: 0
-      }]
-    }, {
-      name: 'size',
-      displayName: 'Size',
-      type: 'integers',
-      properties: [{
-        name: 'width',
-        displayName: 'W',
-        default: 200
-      }, {
-        name: 'height',
-        displayName: 'H',
-        default: 200
-      }]
-    }, {
-      name: 'rotation',
-      displayName: 'Rotation',
-      type: 'slider',
-      min: -180,
-      max: 180,
-      step: 1,
-      scale: 1,
-      default: 0
-    }, {
-      name: 'opacity',
-      displayName: 'Opacity',
-      type: 'slider',
-      min: 0,
-      max: 100,
-      step: 1,
-      scale: 100,
-      default: 1
-    }]
-  };
 };
 
 /**
@@ -171,60 +115,74 @@ ImageElement.prototype.renderElement = function (environment, object) {
 };
 
 ImageElement.getTypes = function () {
-  return [{
-    type: 'image',
-    displayName: 'Static Image',
-    properties: [{
-      name: 'url',
-      displayName: 'URL',
-      type: 'url',
-      default: ''
-    }, {
-      name: 'position',
-      displayName: 'Position',
-      type: 'integers',
+  return {
+    image: {
+      displayName: 'Image',
       properties: [{
-        name: 'x',
-        displayName: 'X',
-        default: 0
+        name: 'url',
+        displayName: 'URL',
+        type: 'url',
+        default: '{{image_link}}'
       }, {
-        name: 'y',
-        displayName: 'Y',
-        default: 0
-      }]
-    }, {
-      name: 'size',
-      displayName: 'Size',
-      type: 'integers',
-      properties: [{
-        name: 'width',
-        displayName: 'W',
-        default: 200
+        name: 'position',
+        displayName: 'Position',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'x',
+          displayName: 'X',
+          default: 120
+        }, {
+          type: 'integer',
+          name: 'y',
+          displayName: 'Y',
+          default: 120
+        }]
       }, {
-        name: 'height',
-        displayName: 'H',
-        default: 200
+        name: 'size',
+        displayName: 'Size',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'width',
+          displayName: 'W',
+          default: 200
+        }, {
+          type: 'integer',
+          name: 'height',
+          displayName: 'H',
+          default: 200
+        }]
+      }, {
+        displayName: 'Rotation',
+        type: 'group',
+        properties: [{
+          name: 'rotation',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 360,
+          step: 1,
+          default: 0,
+          width: 60
+        }, {
+          name: 'rotation',
+          displayName: '',
+          type: 'integer',
+          default: 0,
+          width: 32
+        }]
+      }, {
+        name: 'opacity',
+        displayName: 'Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 1
       }]
-    }, {
-      name: 'rotation',
-      displayName: 'Rotation',
-      type: 'slider',
-      min: -180,
-      max: 180,
-      step: 1,
-      scale: 1,
-      default: 0
-    }, {
-      name: 'opacity',
-      displayName: 'Opacity',
-      type: 'slider',
-      min: 0,
-      max: 100,
-      step: 1,
-      scale: 100,
-      default: 1
-    }]
-  }];
+    }
+  };
 };
 
 /**
@@ -456,43 +414,129 @@ TextElement.prototype.renderElement = function (environment, object) {
   CanvasText.drawText(this._context, object);
 };
 
-TextElement.prototype.getTypes = function () {
-  return [{
-    type: 'text',
-    displayName: 'Text'
-  }];
-};
-
-TextElement.prototype.getProperties = function () {
-  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
-  var properties = {
-    'text': [{
-      name: 'text',
+TextElement.getTypes = function () {
+  return {
+    text: {
       displayName: 'Text',
-      type: 'string',
-      default: ''
-    }, {
-      name: 'fontFamily',
-      displayName: 'Font',
-      type: 'dropdown',
-      default: 'serif',
-      values: [{ name: 'Serif', value: 'serif' }]
-    }, {
-      name: 'fontSize',
-      displayName: 'Font Size',
-      type: 'dropdown',
-      default: '50',
-      values: [{ name: '50', value: '50' }]
-    }, {
-      name: 'color',
-      displayName: 'Color',
-      type: 'string'
-    }]
+      properties: [{
+        name: 'text',
+        displayName: 'Text',
+        type: 'string',
+        default: 'Text'
+      }, {
+        name: 'fontFamily',
+        displayName: 'Font',
+        type: 'dropdown',
+        default: 'serif',
+        values: [{ name: 'Serif', value: 'serif' }]
+      }, {
+        name: 'fontSize',
+        displayName: 'Font Size',
+        type: 'dropdown',
+        default: '50',
+        values: [{ name: '50', value: '50' }]
+      }, {
+        name: 'color',
+        displayName: 'Color',
+        type: 'color',
+        default: '#000000'
+      }, {
+        name: 'align',
+        displayName: 'Alignment',
+        type: 'string',
+        default: 'center'
+      }, {
+        name: 'padding',
+        displayName: 'Padding',
+        type: 'integer',
+        default: 2
+      }, {
+        name: 'shadowColor',
+        displayName: 'Shadow Color',
+        type: 'color',
+        default: '#000000'
+      }, {
+        displayName: 'Shadow',
+        type: 'group',
+        properties: [{
+          name: 'shadowOffsetX',
+          displayName: 'X',
+          type: 'integer',
+          default: '2',
+          width: 20
+        }, {
+          name: 'shadowOffsetY',
+          displayName: 'Y',
+          type: 'integer',
+          default: '2',
+          width: 20
+        }, {
+          name: 'shadowBlur',
+          displayName: 'Blur',
+          type: 'integer',
+          default: '5',
+          width: 20
+        }]
+      }, {
+        name: 'position',
+        displayName: 'Position',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'x',
+          displayName: 'X',
+          default: 120
+        }, {
+          type: 'integer',
+          name: 'y',
+          displayName: 'Y',
+          default: 120
+        }]
+      }, {
+        name: 'size',
+        displayName: 'Size',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'width',
+          displayName: 'W',
+          default: 200
+        }, {
+          type: 'integer',
+          name: 'height',
+          displayName: 'H',
+          default: 200
+        }]
+      }, {
+        displayName: 'Rotation',
+        type: 'group',
+        properties: [{
+          name: 'rotation',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 360,
+          step: 1,
+          default: 0,
+          width: 60
+        }, {
+          name: 'rotation',
+          displayName: '',
+          type: 'integer',
+          default: 0,
+          width: 32
+        }]
+      }, {
+        name: 'opacity',
+        displayName: 'Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 1
+      }]
+    }
   };
-  Object.keys(properties).forEach(function (type) {
-    properties[type] = properties[type].concat(common.common);
-  });
-  return properties;
 };
 
 /**
@@ -541,34 +585,141 @@ ShapeElement.prototype.renderEllipse = function (environment, object) {
   this._context.fill();
 };
 
-ShapeElement.prototype.getTypes = function () {
-  return [{
-    type: 'rectangle',
-    displayName: 'Rectangle'
-  }, {
-    type: 'ellipse',
-    displayName: 'Ellipse'
-  }];
-};
-
-ShapeElement.prototype.getProperties = function () {
-  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
-  var properties = {
-    'rectangle': [{
-      name: 'color',
-      displayName: 'Color',
-      type: 'string'
-    }],
-    'ellipse': [{
-      name: 'color',
-      displayName: 'Color',
-      type: 'string'
-    }]
+ShapeElement.getTypes = function () {
+  return {
+    rectangle: {
+      displayName: 'Rectangle',
+      properties: [{
+        name: 'color',
+        displayName: 'Color',
+        type: 'color',
+        default: '#000000'
+      }, {
+        name: 'position',
+        displayName: 'Position',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'x',
+          displayName: 'X',
+          default: 120
+        }, {
+          type: 'integer',
+          name: 'y',
+          displayName: 'Y',
+          default: 120
+        }]
+      }, {
+        name: 'size',
+        displayName: 'Size',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'width',
+          displayName: 'W',
+          default: 200
+        }, {
+          type: 'integer',
+          name: 'height',
+          displayName: 'H',
+          default: 200
+        }]
+      }, {
+        displayName: 'Rotation',
+        type: 'group',
+        properties: [{
+          name: 'rotation',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 360,
+          step: 1,
+          default: 0,
+          width: 60
+        }, {
+          name: 'rotation',
+          displayName: '',
+          type: 'integer',
+          default: 0,
+          width: 32
+        }]
+      }, {
+        name: 'opacity',
+        displayName: 'Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 1
+      }]
+    },
+    ellipse: {
+      displayName: 'Ellipse',
+      properties: [{
+        name: 'color',
+        displayName: 'Color',
+        type: 'color',
+        default: '#000000'
+      }, {
+        name: 'position',
+        displayName: 'Position',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'x',
+          displayName: 'X',
+          default: 120
+        }, {
+          type: 'integer',
+          name: 'y',
+          displayName: 'Y',
+          default: 120
+        }]
+      }, {
+        name: 'size',
+        displayName: 'Size',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'width',
+          displayName: 'W',
+          default: 200
+        }, {
+          type: 'integer',
+          name: 'height',
+          displayName: 'H',
+          default: 200
+        }]
+      }, {
+        displayName: 'Rotation',
+        type: 'group',
+        properties: [{
+          name: 'rotation',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 360,
+          step: 1,
+          default: 0,
+          width: 60
+        }, {
+          name: 'rotation',
+          displayName: '',
+          type: 'integer',
+          default: 0,
+          width: 32
+        }]
+      }, {
+        name: 'opacity',
+        displayName: 'Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 1
+      }]
+    }
   };
-  Object.keys(properties).forEach(function (type) {
-    properties[type] = properties[type].concat(common.common);
-  });
-  return properties;
 };
 
 /**
@@ -1159,6 +1310,7 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   this.setObjects(objects);
 };
 Hemp.prototype.constructor = Hemp;
+Hemp.ElementFactory = ElementFactory;
 
 // -----------------------------------------------------------------------------
 

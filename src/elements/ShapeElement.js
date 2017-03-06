@@ -46,41 +46,171 @@ ShapeElement.prototype.renderEllipse = function(environment, object) {
   this._context.fill();
 };
 
-ShapeElement.prototype.getTypes = function() {
-  return [
-    {
-      type: 'rectangle',
-      displayName: 'Rectangle'
+ShapeElement.getTypes = function() {
+  return {
+    rectangle: {
+      displayName: 'Rectangle',
+      properties: [
+        {
+          name: 'color',
+          displayName: 'Color',
+          type: 'color',
+          default: '#000000'
+        },
+        {
+          name: 'position',
+          displayName: 'Position',
+          type: 'group',
+          properties: [
+            {
+              type: 'integer',
+              name: 'x',
+              displayName: 'X',
+              default: 120
+            },
+            {
+              type: 'integer',
+              name: 'y',
+              displayName: 'Y',
+              default: 120
+            }
+          ]
+        },
+        {
+          name: 'size',
+          displayName: 'Size',
+          type: 'group',
+          properties: [
+            {
+              type: 'integer',
+              name: 'width',
+              displayName: 'W',
+              default: 200
+            },
+            {
+              type: 'integer',
+              name: 'height',
+              displayName: 'H',
+              default: 200
+            }
+          ]
+        },
+        {
+          displayName: 'Rotation',
+          type: 'group',
+          properties: [
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 360,
+              step: 1,
+              default: 0,
+              width: 60
+            },
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'integer',
+              default: 0,
+              width: 32
+            }
+          ]
+        },
+        {
+          name: 'opacity',
+          displayName: 'Opacity',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1
+        }
+      ]
     },
-    {
-      type: 'ellipse',
-      displayName: 'Ellipse'
+    ellipse: {
+      displayName: 'Ellipse',
+      properties: [
+        {
+          name: 'color',
+          displayName: 'Color',
+          type: 'color',
+          default: '#000000'
+        },
+        {
+          name: 'position',
+          displayName: 'Position',
+          type: 'group',
+          properties: [
+            {
+              type: 'integer',
+              name: 'x',
+              displayName: 'X',
+              default: 120
+            },
+            {
+              type: 'integer',
+              name: 'y',
+              displayName: 'Y',
+              default: 120
+            }
+          ]
+        },
+        {
+          name: 'size',
+          displayName: 'Size',
+          type: 'group',
+          properties: [
+            {
+              type: 'integer',
+              name: 'width',
+              displayName: 'W',
+              default: 200
+            },
+            {
+              type: 'integer',
+              name: 'height',
+              displayName: 'H',
+              default: 200
+            }
+          ]
+        },
+        {
+          displayName: 'Rotation',
+          type: 'group',
+          properties: [
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 360,
+              step: 1,
+              default: 0,
+              width: 60
+            },
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'integer',
+              default: 0,
+              width: 32
+            }
+          ]
+        },
+        {
+          name: 'opacity',
+          displayName: 'Opacity',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1
+        }
+      ]
     }
-  ];
-};
-
-ShapeElement.prototype.getProperties = function() {
-  var common = Object.getPrototypeOf(this.constructor.prototype).getProperties.call(this);
-  var properties = {
-    'rectangle': [
-      {
-        name: 'color',
-        displayName: 'Color',
-        type: 'string'
-      }
-    ],
-    'ellipse': [
-      {
-        name: 'color',
-        displayName: 'Color',
-        type: 'string'
-      }
-    ]
   };
-  Object.keys(properties).forEach(function(type) {
-    properties[type] = properties[type].concat(common.common);
-  });
-  return properties;
 };
 
 export default ShapeElement;

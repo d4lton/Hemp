@@ -53,45 +53,48 @@ ImageElement.prototype.renderElement = function(environment, object) {
 };
 
 ImageElement.getTypes = function() {
-  return [
-    {
-      type: 'image',
-      displayName: 'Static Image',
+  return {
+    image: {
+      displayName: 'Image',
       properties: [
         {
           name: 'url',
           displayName: 'URL',
           type: 'url',
-          default: ''
+          default: '{{image_link}}'
         },
         {
           name: 'position',
           displayName: 'Position',
-          type: 'integers',
+          type: 'group',
           properties: [
             {
+              type: 'integer',
               name: 'x',
               displayName: 'X',
-              default: 0
+              default: 120
             },
             {
+              type: 'integer',
               name: 'y',
               displayName: 'Y',
-              default: 0
+              default: 120
             }
           ]
         },
         {
           name: 'size',
           displayName: 'Size',
-          type: 'integers',
+          type: 'group',
           properties: [
             {
+              type: 'integer',
               name: 'width',
               displayName: 'W',
               default: 200
             },
             {
+              type: 'integer',
               name: 'height',
               displayName: 'H',
               default: 200
@@ -99,28 +102,40 @@ ImageElement.getTypes = function() {
           ]
         },
         {
-          name: 'rotation',
           displayName: 'Rotation',
-          type: 'slider',
-          min: -180,
-          max: 180,
-          step: 1,
-          scale: 1,
-          default: 0
+          type: 'group',
+          properties: [
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 360,
+              step: 1,
+              default: 0,
+              width: 60
+            },
+            {
+              name: 'rotation',
+              displayName: '',
+              type: 'integer',
+              default: 0,
+              width: 32
+            }
+          ]
         },
         {
           name: 'opacity',
           displayName: 'Opacity',
-          type: 'slider',
+          type: 'range',
           min: 0,
-          max: 100,
-          step: 1,
-          scale: 100,
+          max: 1,
+          step: 0.01,
           default: 1
         }
       ]
     }
-  ];
+  };
 };
 
 export default ImageElement;

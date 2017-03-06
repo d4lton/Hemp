@@ -58,75 +58,8 @@ Element.prototype.resolveColor = function(environment, color) {
   }
 };
 
-// TODO
-// make these class functions
-// only need one function
-// return an array of types this Element can draw
-// each element in array should be an object with name, displayName, properties
-
-Element.prototype.getTypes = function() {
+Element.getTypes = function() {
   console.warn('override me');
-};
-
-Element.prototype.getProperties = function() {
-  return {
-    'common': [
-      {
-        name: 'position',
-        displayName: 'Position',
-        type: 'integers',
-        properties: [
-          {
-            name: 'x',
-            displayName: 'X',
-            default: 0
-          },
-          {
-            name: 'y',
-            displayName: 'Y',
-            default: 0
-          }
-        ]
-      },
-      {
-        name: 'size',
-        displayName: 'Size',
-        type: 'integers',
-        properties: [
-          {
-            name: 'width',
-            displayName: 'W',
-            default: 200
-          },
-          {
-            name: 'height',
-            displayName: 'H',
-            default: 200
-          }
-        ]
-      },
-      {
-        name: 'rotation',
-        displayName: 'Rotation',
-        type: 'slider',
-        min: -180,
-        max: 180,
-        step: 1,
-        scale: 1,
-        default: 0
-      },
-      {
-        name: 'opacity',
-        displayName: 'Opacity',
-        type: 'slider',
-        min: 0,
-        max: 100,
-        step: 1,
-        scale: 100,
-        default: 1
-      }
-    ]
-  };
 };
 
 export default Element;

@@ -36,6 +36,7 @@ var Hemp = function(width, height, objects, interactive, selector) {
 
 }
 Hemp.prototype.constructor = Hemp;
+Hemp.ElementFactory = ElementFactory;
 
 // -----------------------------------------------------------------------------
 
