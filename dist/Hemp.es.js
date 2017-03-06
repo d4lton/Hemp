@@ -1490,7 +1490,6 @@ Hemp.prototype._onMouseMove = function (event) {
 };
 
 Hemp.prototype._onMouseUp = function (event) {
-  event.preventDefault();
   if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
     this._reportObjectTransform(this._transformingObject);
