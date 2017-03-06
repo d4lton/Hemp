@@ -1368,15 +1368,15 @@ Hemp.prototype._onMouseDown = function (event) {
     return;
   }
 
-  // deselect any selected objects
-  this._deselectAllObjects();
-
   // if we hit an object, select it and start transforming it if possible
   if (hitObjects.length > 0) {
-    this._selectObject(hitObjects[hitObjects.length - 1]);
+    var hitObject = hitObjects[hitObjects.length - 1];
+    if (hitObject._selected !== true) {
+      this._deselectAllObjects();
+      this._selectObject(hitObject);
+    }
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
-  return;
 };
 
 Hemp.prototype._onWindowMouseDown = function (event) {
