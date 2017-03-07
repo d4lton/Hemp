@@ -1382,7 +1382,7 @@ Hemp.prototype.setObjects = function (objects, callback) {
     this._deselectAllObjects(true);
   }
 
-  this._objects = this._cleanObjects(objects);
+  this._objects = objects; // this._cleanObjects(objects);
 
   this._objects.forEach(function (object, index) {
     object._index = index;
