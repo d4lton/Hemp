@@ -227,12 +227,9 @@ var CanvasText = {
    * The canvas context you pass to drawText should have a width and height assigned.
    */
   drawText: function drawText(context, object) {
-    var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
-    var fontFamily = object.fontFamily ? object.fontFamily : CanvasText.DEFAULT_FONT_FAMILY;
-
     context.save();
 
-    context.font = fontSize + "pt '" + fontFamily + "'";
+    context.font = CanvasText.resolveFont(object);
     context.textBaseline = 'hanging';
     context.fillStyle = object.color ? object.color : CanvasText.DEFAULT_FONT_COLOR;
 
@@ -241,6 +238,16 @@ var CanvasText = {
     CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
 
     context.restore();
+  },
+
+  resolveFont: function resolveFont(object) {
+    if (object.font) {
+      return object.font;
+    } else {
+      var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
+      var fontFamily = object.fontFamily ? object.fontFamily : CanvasText.DEFAULT_FONT_FAMILY;
+      return fontSize + "pt '" + fontFamily + "'";
+    }
   },
 
   resolvePadding: function resolvePadding(object) {
@@ -329,7 +336,8 @@ var CanvasText = {
     if (!CanvasText.fontHeightCache[context.font]) {
       switch (CanvasText.FONT_HEIGHT_METHOD) {
         case 'fontSize':
-          var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
+          var fontSize = parseInt(CanvasText.resolveFont(object));
+          //var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
           CanvasText.fontHeightCache[context.font] = fontSize * CanvasText.M_HEIGHT_FACTOR;
           break;
         case 'measureM':
@@ -357,7 +365,8 @@ var CanvasText = {
 
   canvasFontHeight: function canvasFontHeight(context, object) {
     var testString = 'Mjqye';
-    var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
+    var fontSize = parseInt(CanvasText.resolveFont(object));
+    //var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
     var canvas = document.createElement('canvas');
     canvas.height = fontSize * 2;
     canvas.width = context.measureText(testString).width;
@@ -424,17 +433,9 @@ TextElement.getTypes = function () {
         type: 'string',
         default: 'Text'
       }, {
-        name: 'fontFamily',
+        name: 'font',
         displayName: 'Font',
-        type: 'dropdown',
-        default: 'serif',
-        values: [{ name: 'Serif', value: 'serif' }]
-      }, {
-        name: 'fontSize',
-        displayName: 'Font Size',
-        type: 'dropdown',
-        default: '50',
-        values: [{ name: '50', value: '50' }]
+        type: 'font'
       }, {
         name: 'color',
         displayName: 'Color',

@@ -39,18 +39,9 @@ TextElement.getTypes = function() {
           default: 'Text'
         },
         {
-          name: 'fontFamily',
+          name: 'font',
           displayName: 'Font',
-          type: 'dropdown',
-          default: 'serif',
-          values: [{name: 'Serif', value: 'serif'}]
-        },
-        {
-          name: 'fontSize',
-          displayName: 'Font Size',
-          type: 'dropdown',
-          default: '50',
-          values: [{name: '50', value: '50'}]
+          type: 'font'
         },
         {
           name: 'color',
