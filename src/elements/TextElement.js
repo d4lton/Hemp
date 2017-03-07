@@ -61,7 +61,24 @@ TextElement.getTypes = function() {
         {
           name: 'align',
           displayName: 'Alignment',
-          type: 'string',
+          type: 'spiffy',
+          values: [
+            {
+              value: 'left',
+              label: '',
+              fontIcon: 'fa fa-align-left'
+            },
+            {
+              value: 'center',
+              label: '',
+              fontIcon: 'fa fa-align-center'
+            },
+            {
+              value: 'right',
+              label: '',
+              fontIcon: 'fa fa-align-right'
+            }
+          ],
           default: 'center'
         },
         {
