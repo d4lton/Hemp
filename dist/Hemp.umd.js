@@ -87,12 +87,6 @@ ImageElement.prototype.constructor = ImageElement;
 ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
   var sourceWidth = src.width;
   var sourceHeight = sourceWidth * (dst.height / dst.width);
-  /*
-  if (sourceWidth > src.width) {
-    sourceHeight = src.width * (dst.height / dst.width);
-    sourceWidth = src.width;
-  }
-  */
   if (sourceHeight > src.height) {
     sourceWidth = src.height * (dst.width / dst.height);
     sourceHeight = src.height;
@@ -113,8 +107,10 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
 
 ImageElement.prototype.renderElement = function (environment, object) {
   if (object._image) {
-    var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
-    this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    try {
+      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
+      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    } catch (e) {}
   }
 };
 
@@ -1379,6 +1375,18 @@ Hemp.prototype.setSize = function (width, height) {
   this._renderObjects(this._environment);
 };
 
+Hemp.prototype.destroy = function () {
+  if (this._interactive) {
+    window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('keyup', this._onKeyUp);
+    window.removeEventListener('mousemove', this._onMouseMove);
+    window.removeEventListener('mouseup', this._onMouseUp);
+    if (this._allowWindowDeselect) {
+      window.removeEventListener('mousedown', this._onWindowMouseDown);
+    }
+  }
+};
+
 Hemp.prototype.toImage = function (callback) {
   var image = new Image();
   image.onload = function () {
@@ -1441,12 +1449,18 @@ Hemp.prototype._getImagePromises = function (objects) {
           resolve();
         };
         object._image.onerror = function (reason) {
+          object._image = this._createFailureImage();
           resolve();
-        };
+        }.bind(this);
         object._image.src = object.url;
       }
     }.bind(this));
   }.bind(this));
+};
+
+Hemp.prototype._createFailureImage = function () {
+  // TODO: this should generate an image with some kind of helpful message
+  return new Image();
 };
 
 Hemp.prototype.getObjects = function () {

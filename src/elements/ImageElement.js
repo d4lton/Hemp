@@ -20,12 +20,6 @@ ImageElement.prototype.constructor = ImageElement;
 ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
   var sourceWidth = src.width;
   var sourceHeight = sourceWidth * (dst.height / dst.width);
-  /*
-  if (sourceWidth > src.width) {
-    sourceHeight = src.width * (dst.height / dst.width);
-    sourceWidth = src.width;
-  }
-  */
   if (sourceHeight > src.height) {
     sourceWidth = src.height * (dst.width / dst.height);
     sourceHeight = src.height;
@@ -46,8 +40,11 @@ ImageElement.prototype._getFillSourceAndOffset = function(src, dst) {
 
 ImageElement.prototype.renderElement = function(environment, object) {
   if (object._image) {
-    var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
-    this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    try {
+      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
+      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+    } catch (e) {      
+    }
   }
 };
 
