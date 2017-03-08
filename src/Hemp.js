@@ -294,6 +294,9 @@ Hemp.prototype._nudgeObject = function(object, offsetX, offsetY, event) {
 Hemp.prototype._onMouseDown = function(event) {
   var coordinates = Hemp.windowToCanvas(this._environment, event);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+  
+  this._transformStart = Date.now();
+  this._transformFrames = 0;
 
   event.preventDefault();
 
@@ -363,10 +366,14 @@ Hemp.prototype._onMouseMove = function(event) {
     x: event.clientX,
     y: event.clientY
   };
+  this._transformFrames++;
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
-    var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    var hitObjects;
+    if (event.metaKey) {
+      hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    }
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event, hitObjects);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
@@ -376,6 +383,7 @@ Hemp.prototype._onMouseMove = function(event) {
 Hemp.prototype._onMouseUp = function(event) {
   if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
+    this._fps = this._transformFrames / (Date.now() - this._transformStart) * 1000;
     this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }

@@ -87,10 +87,12 @@ ImageElement.prototype.constructor = ImageElement;
 ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
   var sourceWidth = src.width;
   var sourceHeight = sourceWidth * (dst.height / dst.width);
+  /*
   if (sourceWidth > src.width) {
     sourceHeight = src.width * (dst.height / dst.width);
     sourceWidth = src.width;
   }
+  */
   if (sourceHeight > src.height) {
     sourceWidth = src.height * (dst.width / dst.height);
     sourceHeight = src.height;
@@ -110,12 +112,10 @@ ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
 };
 
 ImageElement.prototype.renderElement = function (environment, object) {
-  try {
-    if (object._image) {
-      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
-      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
-    }
-  } catch (e) {}
+  if (object._image) {
+    var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
+    this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+  }
 };
 
 ImageElement.getTypes = function () {
@@ -1595,6 +1595,9 @@ Hemp.prototype._onMouseDown = function (event) {
   var coordinates = Hemp.windowToCanvas(this._environment, event);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
+  this._transformStart = Date.now();
+  this._transformFrames = 0;
+
   event.preventDefault();
 
   // if there's already a selected object, transform it if possible
@@ -1660,10 +1663,14 @@ Hemp.prototype._onMouseMove = function (event) {
     x: event.clientX,
     y: event.clientY
   };
+  this._transformFrames++;
   // if we're in the middle of a transform, update the selected object and render the canvas
   if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
-    var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    var hitObjects;
+    if (event.metaKey) {
+      hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
+    }
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event, hitObjects);
     this._renderObjects(this._environment);
     this._reportObjectTransform(this._transformingObject);
@@ -1673,6 +1680,7 @@ Hemp.prototype._onMouseMove = function (event) {
 Hemp.prototype._onMouseUp = function (event) {
   if (this._transformingObject && this._transformingObject.locked !== true) {
     TransformElement.transformEnd(this._environment, this._transformingObject, event);
+    this._fps = this._transformFrames / (Date.now() - this._transformStart) * 1000;
     this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
   }
