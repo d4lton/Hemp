@@ -320,13 +320,29 @@ var CanvasText = {
     rowContext.textAlign = object.align;
 
     rowContext.shadowColor = object.shadowColor;
-    rowContext.shadowOffsetX = object.shadowOffsetX;
-    rowContext.shadowOffsetY = object.shadowOffsetY;
     rowContext.shadowBlur = object.shadowBlur;
+
+    var offset = CanvasText.resolveShadowOffset(object);
+    rowContext.shadowOffsetX = offset.x;
+    rowContext.shadowOffsetY = offset.y;
 
     rowContext.fillText(text, xPos, 0);
 
     return canvas;
+  },
+
+  resolveShadowOffset: function resolveShadowOffset(object) {
+    if (object.shadowOffset) {
+      return {
+        x: object.shadowOffset,
+        y: object.shadowOffset
+      };
+    } else {
+      return {
+        x: object.shadowOffsetX,
+        y: object.shadowOffsetY
+      };
+    }
   },
 
   fontHeight: function fontHeight(context, object) {
@@ -335,7 +351,6 @@ var CanvasText = {
       switch (CanvasText.FONT_HEIGHT_METHOD) {
         case 'fontSize':
           var fontSize = parseInt(CanvasText.resolveFont(object));
-          //var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
           CanvasText.fontHeightCache[context.font] = fontSize * CanvasText.M_HEIGHT_FACTOR;
           break;
         case 'measureM':
@@ -364,7 +379,6 @@ var CanvasText = {
   canvasFontHeight: function canvasFontHeight(context, object) {
     var testString = 'Mjqye';
     var fontSize = parseInt(CanvasText.resolveFont(object));
-    //var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
     var canvas = document.createElement('canvas');
     canvas.height = fontSize * 2;
     canvas.width = context.measureText(testString).width;
