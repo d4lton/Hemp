@@ -477,22 +477,16 @@ TextElement.getTypes = function () {
         type: 'integer',
         default: 2
       }, {
-        name: 'shadowColor',
-        displayName: 'Shadow Color',
-        type: 'color',
-        default: '#000000'
-      }, {
         displayName: 'Shadow',
         type: 'group',
         properties: [{
-          name: 'shadowOffsetX',
-          displayName: 'X',
-          type: 'integer',
-          default: '2',
-          width: 20
+          name: 'shadowColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
         }, {
-          name: 'shadowOffsetY',
-          displayName: 'Y',
+          name: 'shadowOffset',
+          displayName: 'dst',
           type: 'integer',
           default: '2',
           width: 20
