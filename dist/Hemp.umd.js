@@ -492,13 +492,13 @@ TextElement.getTypes = function () {
           default: '#000000'
         }, {
           name: 'shadowOffset',
-          displayName: 'dst',
+          displayName: 'dist',
           type: 'integer',
           default: '2',
           width: 20
         }, {
           name: 'shadowBlur',
-          displayName: 'Blur',
+          displayName: 'blur',
           type: 'integer',
           default: '5',
           width: 20
