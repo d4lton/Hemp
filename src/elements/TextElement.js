@@ -41,7 +41,8 @@ TextElement.getTypes = function() {
         {
           name: 'font',
           displayName: 'Font',
-          type: 'font'
+          type: 'font',
+          default: '40px Helvetica'
         },
         {
           name: 'color',
