@@ -491,7 +491,7 @@ TextElement.getTypes = function () {
         type: 'group',
         properties: [{
           name: 'color',
-          displayName: 'Color',
+          displayName: '',
           type: 'color',
           default: '#000000'
         }, {

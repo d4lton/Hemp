@@ -51,7 +51,7 @@ TextElement.getTypes = function() {
           properties: [
             {
               name: 'color',
-              displayName: 'Color',
+              displayName: '',
               type: 'color',
               default: '#000000'
             },
