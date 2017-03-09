@@ -60,6 +60,24 @@ ImageElement.getTypes = function() {
           default: '{{image_link}}'
         },
         {
+          displayName: 'Background',
+          type: 'group',
+          properties: [
+            {
+              name: 'backgroundColor',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'backgroundRadius',
+              displayName: 'radius',
+              type: 'integer',
+              default: 0
+            },
+          ]
+        },
+        {
           name: 'position',
           displayName: 'Position',
           type: 'group',

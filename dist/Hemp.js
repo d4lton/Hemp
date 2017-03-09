@@ -29,9 +29,30 @@ Element.prototype.setupCanvas = function (environment, object) {
   if (object.backgroundColor) {
     this._context.save();
     this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
-    this._context.fillRect(0, 0, object.width, object.height);
+    this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.backgroundRadius));
     this._context.restore();
   }
+};
+
+Element.prototype.resolveRadius = function (radius) {
+  if (typeof radius !== 'undefined') {
+    return radius;
+  } else {
+    return 0;
+  }
+};
+
+Element.prototype._fillRoundRect = function (context, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+  context.fill();
 };
 
 Element.prototype.renderElement = function (environment, object) {
@@ -119,6 +140,20 @@ ImageElement.getTypes = function () {
         displayName: 'URL',
         type: 'url',
         default: '{{image_link}}'
+      }, {
+        displayName: 'Background',
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'radius',
+          type: 'integer',
+          default: 0
+        }]
       }, {
         name: 'position',
         displayName: 'Position',
@@ -435,10 +470,24 @@ TextElement.getTypes = function () {
         type: 'color',
         default: '#000000'
       }, {
-        name: 'backgroundColor',
         displayName: 'Background',
-        type: 'color',
-        default: '#000000'
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'radius',
+          type: 'integer',
+          default: 0
+        }]
+      }, {
+        name: 'backgroundRadius',
+        displayName: 'Radius',
+        type: 'integer',
+        default: 0
       }, {
         name: 'align',
         displayName: 'Alignment',
@@ -577,7 +626,7 @@ ShapeElement.prototype.renderElement = function (environment, object) {
 
 ShapeElement.prototype.renderRectangle = function (environment, object) {
   this._context.fillStyle = this.resolveColor(environment, object.color);
-  this._context.fillRect(0, 0, object.width, object.height);
+  this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.radius));
 };
 
 ShapeElement.prototype.renderEllipse = function (environment, object) {
@@ -596,10 +645,33 @@ ShapeElement.getTypes = function () {
     rectangle: {
       displayName: 'Rectangle',
       properties: [{
-        name: 'color',
         displayName: 'Color',
-        type: 'color',
-        default: '#000000'
+        type: 'group',
+        properties: [{
+          name: 'color',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'radius',
+          displayName: 'radius',
+          type: 'integer',
+          default: 0
+        }]
+      }, {
+        displayName: 'Background',
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'radius',
+          type: 'integer',
+          default: 0
+        }]
       }, {
         name: 'position',
         displayName: 'Position',
@@ -666,6 +738,20 @@ ShapeElement.getTypes = function () {
         displayName: 'Color',
         type: 'color',
         default: '#000000'
+      }, {
+        displayName: 'Background',
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'radius',
+          type: 'integer',
+          default: 0
+        }]
       }, {
         name: 'position',
         displayName: 'Position',

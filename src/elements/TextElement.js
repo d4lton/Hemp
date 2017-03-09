@@ -51,10 +51,28 @@ TextElement.getTypes = function() {
           default: '#000000'
         },
         {
-          name: 'backgroundColor',
           displayName: 'Background',
-          type: 'color',
-          default: '#000000'
+          type: 'group',
+          properties: [
+            {
+              name: 'backgroundColor',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'backgroundRadius',
+              displayName: 'radius',
+              type: 'integer',
+              default: 0
+            },
+          ]
+        },
+        {
+          name: 'backgroundRadius',
+          displayName: 'Radius',
+          type: 'integer',
+          default: 0
         },
         {
           name: 'align',

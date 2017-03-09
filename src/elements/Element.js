@@ -28,9 +28,30 @@ Element.prototype.setupCanvas = function(environment, object) {
   if (object.backgroundColor) {
     this._context.save();
     this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
-    this._context.fillRect(0, 0, object.width, object.height);
+    this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.backgroundRadius));
     this._context.restore();
   }
+};
+
+Element.prototype.resolveRadius = function(radius) {
+  if (typeof radius !== 'undefined') {
+    return radius;
+  } else {
+    return 0;
+  }
+};
+
+Element.prototype._fillRoundRect = function(context, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+  context.fill();
 };
 
 Element.prototype.renderElement = function(environment, object) {

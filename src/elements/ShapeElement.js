@@ -32,7 +32,7 @@ ShapeElement.prototype.renderElement = function(environment, object) {
 
 ShapeElement.prototype.renderRectangle = function(environment, object) {
   this._context.fillStyle = this.resolveColor(environment, object.color);
-  this._context.fillRect(0, 0, object.width, object.height);
+  this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.radius));
 };
 
 ShapeElement.prototype.renderEllipse = function(environment, object) {
@@ -52,10 +52,40 @@ ShapeElement.getTypes = function() {
       displayName: 'Rectangle',
       properties: [
         {
-          name: 'color',
           displayName: 'Color',
-          type: 'color',
-          default: '#000000'
+          type: 'group',
+          properties: [
+            {
+              name: 'color',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'radius',
+              displayName: 'radius',
+              type: 'integer',
+              default: 0
+            },
+          ]
+        },
+        {
+          displayName: 'Background',
+          type: 'group',
+          properties: [
+            {
+              name: 'backgroundColor',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'backgroundRadius',
+              displayName: 'radius',
+              type: 'integer',
+              default: 0
+            },
+          ]
         },
         {
           name: 'position',
@@ -137,6 +167,24 @@ ShapeElement.getTypes = function() {
           displayName: 'Color',
           type: 'color',
           default: '#000000'
+        },
+        {
+          displayName: 'Background',
+          type: 'group',
+          properties: [
+            {
+              name: 'backgroundColor',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'backgroundRadius',
+              displayName: 'radius',
+              type: 'integer',
+              default: 0
+            },
+          ]
         },
         {
           name: 'position',
