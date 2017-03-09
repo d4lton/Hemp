@@ -12,9 +12,11 @@ function Element() {
 /************************************************************************************/
 
 Element.prototype.render = function(environment, object) {
-  this.setupCanvas(environment, object);
-  this.renderElement(environment, object);
-  this.renderCanvas(environment, object);
+  if (object.visible !== false || (environment.options && environment.options.selectionRender)) {
+    this.setupCanvas(environment, object);
+    this.renderElement(environment, object);
+    this.renderCanvas(environment, object);
+  }
 };
 
 Element.prototype.setupCanvas = function(environment, object) {

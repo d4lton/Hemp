@@ -17,9 +17,11 @@ function Element() {}
 /************************************************************************************/
 
 Element.prototype.render = function (environment, object) {
-  this.setupCanvas(environment, object);
-  this.renderElement(environment, object);
-  this.renderCanvas(environment, object);
+  if (object.visible !== false || environment.options && environment.options.selectionRender) {
+    this.setupCanvas(environment, object);
+    this.renderElement(environment, object);
+    this.renderCanvas(environment, object);
+  }
 };
 
 Element.prototype.setupCanvas = function (environment, object) {
@@ -932,6 +934,10 @@ TransformElement.prototype.constructor = TransformElement;
 
 TransformElement.handleSize = 20;
 
+TransformElement.prototype.render = function (environment, object) {
+  this.renderCanvas(environment, object);
+};
+
 TransformElement.prototype.setupCanvas = function (environment, object) {
   // this special element uses the main context to draw
 };
@@ -1729,9 +1735,11 @@ Hemp.prototype._onKeyDown = function (event) {
     */
     case 'MetaLeft':
     case 'MetaRight':
-      event.clientX = this._mouse.x;
-      event.clientY = this._mouse.y;
-      this._onMouseMove(event);
+      if (this._mouse) {
+        event.clientX = this._mouse.x;
+        event.clientY = this._mouse.y;
+        this._onMouseMove(event);
+      }
       break;
     default:
       console.log('_onKeyDown event.code:', event.code);
@@ -1743,9 +1751,11 @@ Hemp.prototype._onKeyUp = function (event) {
   switch (event.code) {
     case 'MetaLeft':
     case 'MetaRight':
-      event.clientX = this._mouse.x;
-      event.clientY = this._mouse.y;
-      this._onMouseMove(event);
+      if (this._mouse) {
+        event.clientX = this._mouse.x;
+        event.clientY = this._mouse.y;
+        this._onMouseMove(event);
+      }
       break;
     default:
       break;
@@ -1865,6 +1875,9 @@ Hemp.prototype._onMouseUp = function (event) {
     this._fps = this._transformFrames / (Date.now() - this._transformStart) * 1000;
     this._reportObjectTransform(this._transformingObject);
     this._transformingObject = null;
+  }
+  if (this._mouse) {
+    delete this._mouse;
   }
 };
 

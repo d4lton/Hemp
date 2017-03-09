@@ -19,6 +19,10 @@ TransformElement.prototype.constructor = TransformElement;
 
 TransformElement.handleSize = 20;
 
+TransformElement.prototype.render = function(environment, object) {
+    this.renderCanvas(environment, object);
+}
+
 TransformElement.prototype.setupCanvas = function(environment, object) {
   // this special element uses the main context to draw
 };
