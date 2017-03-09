@@ -69,27 +69,56 @@ TextElement.getTypes = function() {
           ]
         },
         {
-          name: 'align',
           displayName: 'Alignment',
-          type: 'spiffy',
-          values: [
+          type: 'group',
+          properties: [
             {
-              value: 'left',
-              label: '',
-              fontIcon: 'fa fa-align-left'
+              name: 'align',
+              displayName: '',
+              type: 'spiffy',
+              values: [
+                {
+                  value: 'left',
+                  label: '',
+                  fontIcon: 'fa fa-align-left'
+                },
+                {
+                  value: 'center',
+                  label: '',
+                  fontIcon: 'fa fa-align-center'
+                },
+                {
+                  value: 'right',
+                  label: '',
+                  fontIcon: 'fa fa-align-right'
+                }
+              ],
+              default: 'center'
             },
             {
-              value: 'center',
-              label: '',
-              fontIcon: 'fa fa-align-center'
+              name: 'valign',
+              displayName: '',
+              type: 'spiffy',
+              values: [
+                {
+                  value: 'top',
+                  label: '',
+                  fontIcon: 'fa fa-align-left'
+                },
+                {
+                  value: 'middle',
+                  label: '',
+                  fontIcon: 'fa fa-align-center'
+                },
+                {
+                  value: 'bottom',
+                  label: '',
+                  fontIcon: 'fa fa-align-right'
+                }
+              ],
+              default: 'middle'
             },
-            {
-              value: 'right',
-              label: '',
-              fontIcon: 'fa fa-align-right'
-            }
-          ],
-          default: 'center'
+          ]
         },
         {
           name: 'padding',
