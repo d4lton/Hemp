@@ -164,7 +164,8 @@ ImageElement.getTypes = function () {
           name: 'backgroundRadius',
           displayName: 'radius',
           type: 'integer',
-          default: 0
+          default: 0,
+          width: 35
         }]
       }, {
         name: 'position',
@@ -704,7 +705,8 @@ ShapeElement.getTypes = function () {
           name: 'radius',
           displayName: 'rad',
           type: 'integer',
-          default: 0
+          default: 0,
+          width: 35
         }]
       }, {
         name: 'position',
@@ -755,14 +757,6 @@ ShapeElement.getTypes = function () {
           default: 0,
           width: 32
         }]
-      }, {
-        name: 'opacity',
-        displayName: 'Opacity',
-        type: 'range',
-        min: 0,
-        max: 1,
-        step: 0.01,
-        default: 1
       }]
     },
     ellipse: {
@@ -800,13 +794,14 @@ ShapeElement.getTypes = function () {
           min: 0,
           max: 1,
           step: 0.01,
-          default: 1,
+          default: 0,
           width: 50
         }, {
           name: 'backgroundRadius',
           displayName: 'rad',
           type: 'integer',
-          default: 0
+          default: 0,
+          width: 35
         }]
       }, {
         name: 'position',

@@ -83,7 +83,8 @@ ImageElement.getTypes = function() {
               name: 'backgroundRadius',
               displayName: 'radius',
               type: 'integer',
-              default: 0
+              default: 0,
+              width: 35
             },
           ]
         },
