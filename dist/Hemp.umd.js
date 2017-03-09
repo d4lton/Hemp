@@ -32,7 +32,7 @@ Element.prototype.setupCanvas = function (environment, object) {
   this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
   if (object.backgroundColor) {
     this._context.save();
-    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor);
+    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor, object.backgroundAlpha);
     this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.backgroundRadius));
     this._context.restore();
   }
@@ -76,11 +76,16 @@ Element.prototype.renderCanvas = function (environment, object) {
   environment.context.restore();
 };
 
-Element.prototype.resolveColor = function (environment, color) {
+Element.prototype.resolveColor = function (environment, color, alpha) {
   if (environment.options && environment.options.selectionRender) {
     return 'black';
   } else {
-    return color;
+    if (alpha && alpha != 1) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+      return 'rgba(' + parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) + ', ' + alpha + ')';
+    } else {
+      return color;
+    }
   }
 };
 
@@ -152,6 +157,15 @@ ImageElement.getTypes = function () {
           displayName: '',
           type: 'color',
           default: '#000000'
+        }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
         }, {
           name: 'backgroundRadius',
           displayName: 'radius',
@@ -482,6 +496,15 @@ TextElement.getTypes = function () {
           type: 'color',
           default: '#000000'
         }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
+        }, {
           name: 'backgroundRadius',
           displayName: 'radius',
           type: 'integer',
@@ -688,6 +711,15 @@ ShapeElement.getTypes = function () {
           type: 'color',
           default: '#000000'
         }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
+        }, {
           name: 'backgroundRadius',
           displayName: 'radius',
           type: 'integer',
@@ -767,6 +799,15 @@ ShapeElement.getTypes = function () {
           displayName: '',
           type: 'color',
           default: '#000000'
+        }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
         }, {
           name: 'backgroundRadius',
           displayName: 'radius',

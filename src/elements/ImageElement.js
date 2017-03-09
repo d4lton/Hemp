@@ -70,6 +70,16 @@ ImageElement.getTypes = function() {
               default: '#000000'
             },
             {
+              name: 'backgroundAlpha',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 1,
+              step: 0.01,
+              default: 1,
+              width: 50
+            },
+            {
               name: 'backgroundRadius',
               displayName: 'radius',
               type: 'integer',
