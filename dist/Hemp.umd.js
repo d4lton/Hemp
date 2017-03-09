@@ -681,7 +681,7 @@ ShapeElement.prototype.renderEllipse = function (environment, object) {
   this._context.arc(1, 1, 1, 0, 2 * Math.PI, false);
   this._context.restore();
 
-  this._context.fillStyle = this.resolveColor(environment, object.color);
+  this._context.fillStyle = this.resolveColor(environment, object.color, object.alpha);
   this._context.fill();
 };
 
@@ -708,29 +708,6 @@ ShapeElement.getTypes = function () {
           width: 50
         }, {
           name: 'radius',
-          displayName: 'rad',
-          type: 'integer',
-          default: 0
-        }]
-      }, {
-        displayName: 'Background',
-        type: 'group',
-        properties: [{
-          name: 'backgroundColor',
-          displayName: '',
-          type: 'color',
-          default: '#000000'
-        }, {
-          name: 'backgroundAlpha',
-          displayName: '',
-          type: 'range',
-          min: 0,
-          max: 1,
-          step: 0.01,
-          default: 1,
-          width: 50
-        }, {
-          name: 'backgroundRadius',
           displayName: 'rad',
           type: 'integer',
           default: 0
