@@ -488,11 +488,6 @@ TextElement.getTypes = function () {
           default: 0
         }]
       }, {
-        name: 'backgroundRadius',
-        displayName: 'Radius',
-        type: 'integer',
-        default: 0
-      }, {
         name: 'align',
         displayName: 'Alignment',
         type: 'spiffy',
