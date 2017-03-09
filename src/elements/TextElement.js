@@ -44,12 +44,30 @@ TextElement.getTypes = function() {
           type: 'font',
           default: '40pt Helvetica'
         },
+
         {
-          name: 'color',
           displayName: 'Color',
-          type: 'color',
-          default: '#000000'
+          type: 'group',
+          properties: [
+            {
+              name: 'color',
+              displayName: 'Color',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'alpha',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 1,
+              step: 0.01,
+              default: 1,
+              width: 50
+            }
+          ]
         },
+
         {
           displayName: 'Background',
           type: 'group',

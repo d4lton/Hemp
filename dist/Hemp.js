@@ -164,7 +164,7 @@ ImageElement.getTypes = function () {
           width: 50
         }, {
           name: 'backgroundRadius',
-          displayName: 'radius',
+          displayName: 'rad',
           type: 'integer',
           default: 0,
           width: 35
@@ -279,7 +279,7 @@ var CanvasText = {
 
     context.font = CanvasText.resolveFont(object);
     context.textBaseline = 'hanging';
-    context.fillStyle = object.color ? object.color : CanvasText.DEFAULT_FONT_COLOR;
+    context.fillStyle = this.resolveColor(object.color, object.alpha);
     context.textAlign = object.align;
 
     var offset = CanvasText.resolveShadowOffset(object);
@@ -344,6 +344,15 @@ var CanvasText = {
       var fontSize = object.fontSize ? object.fontSize : CanvasText.DEFAULT_FONT_SIZE;
       var fontFamily = object.fontFamily ? object.fontFamily : CanvasText.DEFAULT_FONT_FAMILY;
       return fontSize + "pt '" + fontFamily + "'";
+    }
+  },
+
+  resolveColor: function resolveColor(color, alpha) {
+    if (typeof alpha !== 'undefined') {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+      return 'rgba(' + parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) + ', ' + alpha + ')';
+    } else {
+      return color;
     }
   },
 
@@ -480,10 +489,23 @@ TextElement.getTypes = function () {
         type: 'font',
         default: '40pt Helvetica'
       }, {
-        name: 'color',
         displayName: 'Color',
-        type: 'color',
-        default: '#000000'
+        type: 'group',
+        properties: [{
+          name: 'color',
+          displayName: 'Color',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'alpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
+        }]
       }, {
         displayName: 'Background',
         type: 'group',
