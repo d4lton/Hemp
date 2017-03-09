@@ -51,6 +51,12 @@ TextElement.getTypes = function() {
           default: '#000000'
         },
         {
+          name: 'backgroundColor',
+          displayName: 'Background',
+          type: 'color',
+          default: '#000000'
+        },
+        {
           name: 'align',
           displayName: 'Alignment',
           type: 'spiffy',
