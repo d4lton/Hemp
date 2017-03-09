@@ -75,7 +75,7 @@ Element.prototype.resolveColor = function(environment, color, alpha) {
   if (environment.options && environment.options.selectionRender) {
     return 'black';
   } else {
-    if (alpha && alpha != 1) {
+    if (typeof alpha !== 'undefined') {
       var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
       return 'rgba(' +
         parseInt(result[1], 16) +

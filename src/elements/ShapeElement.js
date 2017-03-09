@@ -31,7 +31,7 @@ ShapeElement.prototype.renderElement = function(environment, object) {
 };
 
 ShapeElement.prototype.renderRectangle = function(environment, object) {
-  this._context.fillStyle = this.resolveColor(environment, object.color);
+  this._context.fillStyle = this.resolveColor(environment, object.color, object.alpha);
   this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.radius));
 };
 
@@ -62,8 +62,18 @@ ShapeElement.getTypes = function() {
               default: '#000000'
             },
             {
+              name: 'alpha',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 1,
+              step: 0.01,
+              default: 1,
+              width: 50
+            },
+            {
               name: 'radius',
-              displayName: 'radius',
+              displayName: 'rad',
               type: 'integer',
               default: 0
             },
@@ -91,7 +101,7 @@ ShapeElement.getTypes = function() {
             },
             {
               name: 'backgroundRadius',
-              displayName: 'radius',
+              displayName: 'rad',
               type: 'integer',
               default: 0
             },
@@ -173,10 +183,26 @@ ShapeElement.getTypes = function() {
       displayName: 'Ellipse',
       properties: [
         {
-          name: 'color',
           displayName: 'Color',
-          type: 'color',
-          default: '#000000'
+          type: 'group',
+          properties: [
+            {
+              name: 'color',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'alpha',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 1,
+              step: 0.01,
+              default: 1,
+              width: 50
+            }
+          ]
         },
         {
           displayName: 'Background',
@@ -200,7 +226,7 @@ ShapeElement.getTypes = function() {
             },
             {
               name: 'backgroundRadius',
-              displayName: 'radius',
+              displayName: 'rad',
               type: 'integer',
               default: 0
             },

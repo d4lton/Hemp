@@ -76,7 +76,7 @@ Element.prototype.resolveColor = function (environment, color, alpha) {
   if (environment.options && environment.options.selectionRender) {
     return 'black';
   } else {
-    if (alpha && alpha != 1) {
+    if (typeof alpha !== 'undefined') {
       var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
       return 'rgba(' + parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) + ', ' + alpha + ')';
     } else {
@@ -502,9 +502,10 @@ TextElement.getTypes = function () {
           width: 50
         }, {
           name: 'backgroundRadius',
-          displayName: 'radius',
+          displayName: 'rad',
           type: 'integer',
-          default: 0
+          default: 0,
+          width: 35
         }]
       }, {
         displayName: 'Alignment',
@@ -665,7 +666,7 @@ ShapeElement.prototype.renderElement = function (environment, object) {
 };
 
 ShapeElement.prototype.renderRectangle = function (environment, object) {
-  this._context.fillStyle = this.resolveColor(environment, object.color);
+  this._context.fillStyle = this.resolveColor(environment, object.color, object.alpha);
   this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.radius));
 };
 
@@ -693,8 +694,17 @@ ShapeElement.getTypes = function () {
           type: 'color',
           default: '#000000'
         }, {
+          name: 'alpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
+        }, {
           name: 'radius',
-          displayName: 'radius',
+          displayName: 'rad',
           type: 'integer',
           default: 0
         }]
@@ -717,7 +727,7 @@ ShapeElement.getTypes = function () {
           width: 50
         }, {
           name: 'backgroundRadius',
-          displayName: 'radius',
+          displayName: 'rad',
           type: 'integer',
           default: 0
         }]
@@ -783,10 +793,23 @@ ShapeElement.getTypes = function () {
     ellipse: {
       displayName: 'Ellipse',
       properties: [{
-        name: 'color',
         displayName: 'Color',
-        type: 'color',
-        default: '#000000'
+        type: 'group',
+        properties: [{
+          name: 'color',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'alpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 1,
+          width: 50
+        }]
       }, {
         displayName: 'Background',
         type: 'group',
@@ -806,7 +829,7 @@ ShapeElement.getTypes = function () {
           width: 50
         }, {
           name: 'backgroundRadius',
-          displayName: 'radius',
+          displayName: 'rad',
           type: 'integer',
           default: 0
         }]
