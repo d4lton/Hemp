@@ -144,7 +144,7 @@ ImageElement.getTypes = function () {
         name: 'url',
         displayName: 'URL',
         type: 'url',
-        default: '{{image_link}}'
+        default: ''
       }, {
         displayName: 'Background',
         type: 'group',
@@ -226,11 +226,6 @@ ImageElement.getTypes = function () {
         max: 1,
         step: 0.01,
         default: 1
-      }, {
-        name: 'script',
-        displayName: 'Script',
-        type: 'script',
-        default: ''
       }]
     }
   };
@@ -658,11 +653,6 @@ TextElement.getTypes = function () {
         max: 1,
         step: 0.01,
         default: 1
-      }, {
-        name: 'script',
-        displayName: 'Script',
-        type: 'script',
-        default: ''
       }]
     }
   };
@@ -791,11 +781,6 @@ ShapeElement.getTypes = function () {
           default: 0,
           width: 32
         }]
-      }, {
-        name: 'script',
-        displayName: 'Script',
-        type: 'script',
-        default: ''
       }]
     },
     ellipse: {
@@ -899,11 +884,6 @@ ShapeElement.getTypes = function () {
         max: 1,
         step: 0.01,
         default: 1
-      }, {
-        name: 'script',
-        displayName: 'Script',
-        type: 'script',
-        default: ''
       }]
     }
   };
