@@ -573,15 +573,15 @@ TextElement.getTypes = function () {
           values: [{
             value: 'top',
             label: '',
-            fontIcon: 'fa fa-align-left'
+            fontIcon: 'fa fa-long-arrow-up'
           }, {
             value: 'middle',
             label: '',
-            fontIcon: 'fa fa-align-center'
+            fontIcon: 'fa fa-arrows-v'
           }, {
             value: 'bottom',
             label: '',
-            fontIcon: 'fa fa-align-right'
+            fontIcon: 'fa fa-long-arrow-down'
           }],
           default: 'middle'
         }]
