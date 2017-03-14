@@ -108,32 +108,45 @@ ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
 
-ImageElement.prototype._getFillSourceAndOffset = function (src, dst) {
-  var sourceWidth = src.width;
-  var sourceHeight = sourceWidth * (dst.height / dst.width);
-  if (sourceHeight > src.height) {
-    sourceWidth = src.height * (dst.width / dst.height);
-    sourceHeight = src.height;
+ImageElement.prototype._getFitHeightSource = function (src, dst) {
+  var width = src.width;
+  var height = width * (dst.height / dst.width);
+  if (height > src.height) {
+    width = src.height * (dst.width / dst.height);
+    height = src.height;
   }
-  var offsetX = Math.max(0, src.width - sourceWidth) / 2;
-  var offsetY = Math.max(0, src.height - sourceHeight) / 2;
+  var offsetX = Math.max(0, src.width - width) / 2;
+  var offsetY = Math.max(0, src.height - height) / 2;
   return {
-    source: {
-      width: sourceWidth,
-      height: sourceHeight
-    },
-    offset: {
-      x: offsetX,
-      y: offsetY
-    }
+    width: width,
+    height: height,
+    x: offsetX,
+    y: offsetY
+  };
+};
+
+ImageElement.prototype._getFitWidthSource = function (src, dst) {
+  var width = src.width;
+  var height = width * (dst.height / dst.width);
+  if (height > src.height) {
+    width = src.height * (dst.width / dst.height);
+    height = src.height;
+  }
+  var offsetX = Math.max(0, src.width - width) / 2;
+  var offsetY = Math.max(0, src.height - height) / 2;
+  return {
+    width: width,
+    height: height,
+    x: offsetX,
+    y: offsetY
   };
 };
 
 ImageElement.prototype.renderElement = function (environment, object) {
   if (object._image) {
     try {
-      var sourceAndOffset = this._getFillSourceAndOffset(object._image, object);
-      this._context.drawImage(object._image, sourceAndOffset.offset.x, sourceAndOffset.offset.y, sourceAndOffset.source.width, sourceAndOffset.source.height, 0, 0, object.width, object.height);
+      var source = this._getFitHeightSource(object._image, object);
+      this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
     } catch (e) {}
   }
 };
@@ -523,7 +536,7 @@ TextElement.getTypes = function () {
           min: 0,
           max: 1,
           step: 0.01,
-          default: 1,
+          default: 0,
           width: 50
         }, {
           name: 'backgroundRadius',
