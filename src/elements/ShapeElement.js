@@ -140,6 +140,12 @@ ShapeElement.getTypes = function() {
               width: 32
             }
           ]
+        },
+        {
+          name: 'script',
+          displayName: 'Script',
+          type: 'script',
+          default: ''
         }
       ]
     },
@@ -266,6 +272,12 @@ ShapeElement.getTypes = function() {
           max: 1,
           step: 0.01,
           default: 1
+        },
+        {
+          name: 'script',
+          displayName: 'Script',
+          type: 'script',
+          default: ''
         }
       ]
     }

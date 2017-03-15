@@ -170,6 +170,12 @@ ImageElement.getTypes = function() {
           max: 1,
           step: 0.01,
           default: 1
+        },
+        {
+          name: 'script',
+          displayName: 'Script',
+          type: 'script',
+          default: ''
         }
       ]
     }
