@@ -309,9 +309,11 @@ var CanvasText = {
     context.shadowOffsetX = offset.x;
     context.shadowOffsetY = offset.y;
 
-    CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
+    var area = CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
 
     context.restore();
+
+    return area;
   },
 
   renderWordWrapRows: function renderWordWrapRows(context, object, rows) {
@@ -334,10 +336,14 @@ var CanvasText = {
       rowY = (context.canvas.height - rows.length * rowHeight) / 2;
     }
 
+    var totalArea = 0;
     rows.forEach(function (row) {
       context.fillText(row, rowX, rowY - CanvasText.fontOffsetCache[context.font]);
       rowY += rowHeight;
+      totalArea += rowHeight * CanvasText.calculateRowWidth(context, object, row);
     });
+
+    return totalArea;
   },
 
   makeWordWrapRows: function makeWordWrapRows(context, object) {
@@ -500,7 +506,7 @@ TextElement.prototype.renderElement = function (environment, object) {
     this._context.fillRect(0, 0, object.width, object.height);
     return;
   }
-  CanvasText.drawText(this._context, object);
+  object._area = CanvasText.drawText(this._context, object);
 };
 
 TextElement.getTypes = function () {

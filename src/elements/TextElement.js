@@ -24,7 +24,7 @@ TextElement.prototype.renderElement = function(environment, object) {
     this._context.fillRect(0, 0, object.width, object.height);
     return;
   }
-  CanvasText.drawText(this._context, object);
+  object._area = CanvasText.drawText(this._context, object);
 };
 
 TextElement.getTypes = function() {
