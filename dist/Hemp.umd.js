@@ -271,6 +271,7 @@ var CanvasText = {
   FONT_HEIGHT_METHOD: 'canvas', // fontSize, measureM, dom, canvas
 
   fontHeightCache: {},
+  fontOffsetCache: {},
 
   /**
    * Draws word-wrapped text on a canvas, taking into account font size, top/right/bottom/left padding,
@@ -302,7 +303,7 @@ var CanvasText = {
     this._padding = CanvasText.resolvePadding(object);
 
     context.font = CanvasText.resolveFont(object);
-    context.textBaseline = 'hanging';
+    context.textBaseline = 'top';
     context.fillStyle = this.resolveColor(object.color, object.alpha);
     context.textAlign = object.align;
 
@@ -338,7 +339,7 @@ var CanvasText = {
     }
 
     rows.forEach(function (row) {
-      context.fillText(row, rowX, rowY);
+      context.fillText(row, rowX, rowY - CanvasText.fontOffsetCache[context.font]);
       rowY += rowHeight;
     });
   },
@@ -411,6 +412,7 @@ var CanvasText = {
   fontHeight: function fontHeight(context, object) {
     // why oh why does context.measureText() not return height?
     if (!CanvasText.fontHeightCache[context.font]) {
+      CanvasText.fontOffsetCache[context.font] = 0;
       switch (CanvasText.FONT_HEIGHT_METHOD) {
         case 'fontSize':
           var fontSize = parseInt(CanvasText.resolveFont(object));
@@ -440,16 +442,20 @@ var CanvasText = {
   },
 
   canvasFontHeight: function canvasFontHeight(context, object) {
-    var testString = 'Mjqye';
+    var testString = 'M';
+    var offset = 10;
     var fontSize = parseInt(CanvasText.resolveFont(object));
+
     var canvas = document.createElement('canvas');
     canvas.height = fontSize * 5;
-    canvas.width = context.measureText(testString).width;
+    canvas.width = context.measureText(testString).width * 2;
+
     var fontContext = canvas.getContext('2d');
     fontContext.font = context.font;
     fontContext.textAlign = 'left';
     fontContext.textBaseline = 'top';
-    fontContext.fillText(testString, 5, 5);
+    fontContext.fillText(testString, offset, offset);
+
     var data = fontContext.getImageData(0, 0, canvas.width, canvas.height).data;
 
     var first = canvas.height,
@@ -467,6 +473,9 @@ var CanvasText = {
         }
       }
     }
+
+    CanvasText.fontOffsetCache[context.font] = first - offset;
+
     return last - first;
   }
 
