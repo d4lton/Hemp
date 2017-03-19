@@ -8,6 +8,7 @@
 
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
+import '../lib/webfontloader.js';
 
 function TextElement() {
   Element.call(this);
@@ -18,13 +19,44 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
+TextElement.prototype.preload = function(object) {
+  return new Promise(function(resolve, reject) {
+    if (object.customFont) {
+      // add @font-face for object.customFont.name and object.customFont.url
+      var style = document.createElement('style');
+      style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
+      document.head.appendChild(style);
+
+      window.WebFont.load({
+        custom: {
+          families: [object.customFont.name]
+        },
+        active: function() {
+          object.customFont.loaded = true;
+          resolve();
+        },
+        inactive: function() {
+          reject();
+        },
+      });
+
+    } else {
+      resolve();
+    }
+  }.bind(this));
+};
+
 TextElement.prototype.renderElement = function(environment, object) {
   if (environment.options && environment.options.selectionRender) {
     this._context.fillStyle = this.resolveColor(environment, object.color);
     this._context.fillRect(0, 0, object.width, object.height);
     return;
   }
-  object._area = CanvasText.drawText(this._context, object);
+  if (!object.customFont || (object.customFont && object.customFont.loaded)) {
+    object._area = CanvasText.drawText(this._context, object);
+  } else {
+    this._renderPlaceholder(environment, object);
+  }
 };
 
 TextElement.getTypes = function() {

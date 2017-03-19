@@ -56,6 +56,9 @@ Element.prototype._fillRoundRect = function(context, x, y, w, h, r) {
   context.fill();
 };
 
+Element.prototype.preload = function(object) {  
+}
+
 Element.prototype.renderElement = function(environment, object) {
   console.warn('override me');
 };
@@ -72,6 +75,13 @@ Element.prototype.renderCanvas = function(environment, object) {
   environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
   environment.context.restore();
 };
+
+Element.prototype._renderPlaceholder = function(environment, object) {
+  this._context.strokeStyle = '#808080';
+  this._context.lineWidth = 10;
+  this._context.setLineDash([8, 4]);
+  this._context.strokeRect(0, 0, object.width, object.height);
+}
 
 Element.prototype.resolveColor = function(environment, color, alpha) {
   if (environment.options && environment.options.selectionRender) {
@@ -91,6 +101,10 @@ Element.prototype.resolveColor = function(environment, color, alpha) {
       return color;
     }
   }
+};
+
+Element.prototype._createPrivateProperty = function(object, property, value) {
+  Object.defineProperty(object, property, {enumerable: false, configurable: true, writable: true, value: value})
 };
 
 Element.getTypes = function() {

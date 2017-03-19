@@ -7,6 +7,7 @@
  */
 
 import Element from './Element.js';
+import MediaCache from '../MediaCache.js';
 
 function ImageElement() {
   Element.call(this);
@@ -16,6 +17,28 @@ ImageElement.prototype = Object.create(Element.prototype);
 ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
+
+ImageElement.prototype.preload = function(object) {
+  return new Promise(function(resolve, reject) {
+    var image = MediaCache.get(object.url);
+    if (image) {
+      this._createPrivateProperty(object, '_image', image);
+      resolve();
+    } else {
+      this._createPrivateProperty(object, '_image', new Image());
+      object._image.setAttribute('crossOrigin', 'anonymous');
+      object._image.onload = function() {
+        MediaCache.set(this.url, object._image);
+        object._imageLoaded = true;
+        resolve();
+      };
+      object._image.onerror = function(reason) {
+        resolve();
+      }.bind(this);
+      object._image.src = object.url;
+    }
+  }.bind(this));  
+};
 
 ImageElement.prototype._getFitHeightSource = function(src, dst) {
   var width = src.width;
@@ -52,12 +75,15 @@ ImageElement.prototype._getFitWidthSource = function(src, dst) {
 };
 
 ImageElement.prototype.renderElement = function(environment, object) {
-  if (object._image) {
+  if (object._image && object._imageLoaded) {
     try {
       var source = this._getFitHeightSource(object._image, object);
       this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
     } catch (e) {      
+      this._renderPlaceholder(environment, object);
     }
+  } else {
+    this._renderPlaceholder(environment, object);
   }
 };
 

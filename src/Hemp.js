@@ -31,7 +31,6 @@ var Hemp = function(width, height, objects, interactive, selector) {
   }
 
   this.setSize(width, height);
-  
   this.setObjects(objects);
 
 }
@@ -75,8 +74,6 @@ Hemp.prototype.setSize = function(width, height) {
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
   }
 
-  this._renderObjects(this._environment);
-
 };
 
 Hemp.prototype.destroy = function() {
@@ -111,10 +108,13 @@ Hemp.prototype.setObjects = function(objects, callback) {
   }
 
   this._objects = objects; // this._cleanObjects(objects);
-  
+
+  var promises = [];  
   this._objects.forEach(function(object, index) {
     object._index = index;
-  });
+    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
+    promises.push(object._element.preload(object));
+  }.bind(this));
   
   if (selectedObjects) {
     selectedObjects.forEach(function(object) {
@@ -122,11 +122,10 @@ Hemp.prototype.setObjects = function(objects, callback) {
     }.bind(this));
   }
   
-  // create an array of promises for all image objects
-  var promises = this._getImagePromises(this._objects);
-
-  // once all images are loaded, set the internal list of objects and render
-  Promise.all(promises).then(function(images) {
+  this.render();
+  
+  // once media is loaded, set the internal list of objects and render
+  Promise.all(promises).then(function() {
     this.render();
     if (typeof callback === 'function') {
       callback();
@@ -512,6 +511,7 @@ Hemp.prototype._cleanObject = function(object) {
 Hemp.prototype._renderTransformBoxForObject = function(environment, object) {
   var transformObject = this._cleanObject(object);
   transformObject.type = 'transform';
+  this._createPrivateProperty(transformObject, '_element', ElementFactory.getElement(transformObject));
   this._renderObject(environment, transformObject);
 }
 
@@ -520,11 +520,7 @@ Hemp.prototype._createPrivateProperty = function(object, property, value) {
 };
 
 Hemp.prototype._renderObject = function(environment, object) {
-  if (!object._element) {
-    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-  }
-  var options = {};
-  object._element.render(environment, object, options);
+  object._element.render(environment, object, {});
 };
 
 Hemp.prototype._setupRenderEnvironment = function(object, options) {

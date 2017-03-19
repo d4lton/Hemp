@@ -14,6 +14,7 @@ const del = require('del');
 const rollup = require('rollup');
 const babel = require('rollup-plugin-babel');
 const pkg = require('../package.json');
+const nodeResolve = require('rollup-plugin-node-resolve');
 
 let promise = Promise.resolve();
 
@@ -25,12 +26,14 @@ promise = promise.then(() => del(['dist/*']));
   promise = promise.then(() => rollup.rollup({
     entry: 'src/Hemp.js',
     external: Object.keys(pkg.dependencies),
-    plugins: [babel(Object.assign(pkg.babel, {
-      babelrc: false,
-      exclude: 'node_modules/**',
-      runtimeHelpers: true,
-      presets: pkg.babel.presets.map(x => (x === 'latest' ? ['latest', { es2015: { modules: false } }] : x)),
-    }))],
+    plugins: [
+      babel(Object.assign(pkg.babel, {
+        babelrc: false,
+        runtimeHelpers: true,
+        presets: pkg.babel.presets.map(x => (x === 'latest' ? ['latest', { es2015: { modules: false } }] : x)),
+      })),
+      nodeResolve({jsnext: true, main: true})
+    ]
   }).then(bundle => bundle.write({
     dest: `dist/${format === 'cjs' ? 'Hemp' : `Hemp.${format}`}.js`,
     format,
