@@ -47,7 +47,6 @@
     "mocha": "^3.1.2",
     "rollup": "^0.36.3",
     "rollup-plugin-babel": "^2.6.1",
-    "rollup-plugin-node-resolve": "^2.0.0",
     "sinon": "^2.0.0-pre.3"
   },
   "scripts": {

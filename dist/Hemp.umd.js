@@ -1773,9 +1773,9 @@ TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
 TransformElement.setObjectGeometry = function (src, dst) {
   dst.x = src.x;
   dst.y = src.y;
-  //dst.width = src.width;
-  //dst.height = src.height;
-  //dst.rotation = src.rotation;
+  dst.width = src.width;
+  dst.height = src.height;
+  dst.rotation = src.rotation;
 };
 
 TransformElement.snapToObject = function (object, hitObjects, event) {
