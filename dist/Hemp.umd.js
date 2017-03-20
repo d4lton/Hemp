@@ -164,28 +164,30 @@ ImageElement.prototype.constructor = ImageElement;
 /************************************************************************************/
 
 ImageElement.prototype.needsPreload = function (object) {
-  return typeof MediaCache.get(object.url) === 'undefined';
+  var image = MediaCache.get(object.url);
+  if (image) {
+    this._createPrivateProperty(object, '_image', image);
+    this._createPrivateProperty(object, '_imageLoaded', true);
+    return false;
+  } else {
+    return true;
+  }
 };
 
 ImageElement.prototype.preload = function (object) {
   return new Promise(function (resolve, reject) {
-    var image = MediaCache.get(object.url);
-    if (image) {
-      this._createPrivateProperty(object, '_image', image);
+    this._createPrivateProperty(object, '_image', new Image());
+    object._image.setAttribute('crossOrigin', 'anonymous');
+    object._image.onload = function () {
+      MediaCache.set(this.url, object._image);
+      object._imageLoaded = true;
+      this._createPrivateProperty(object, '_imageLoaded', true);
       resolve();
-    } else {
-      this._createPrivateProperty(object, '_image', new Image());
-      object._image.setAttribute('crossOrigin', 'anonymous');
-      object._image.onload = function () {
-        MediaCache.set(this.url, object._image);
-        object._imageLoaded = true;
-        resolve();
-      };
-      object._image.onerror = function (reason) {
-        resolve();
-      }.bind(this);
-      object._image.src = object.url;
-    }
+    }.bind(this);
+    object._image.onerror = function (reason) {
+      resolve();
+    }.bind(this);
+    object._image.src = object.url;
   }.bind(this));
 };
 
