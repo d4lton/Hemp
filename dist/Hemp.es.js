@@ -1460,9 +1460,10 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
     environment.context.rotate(object.rotation * Math.PI / 180);
   }
 
-  environment.context.lineWidth = 4;
+  environment.context.lineWidth = 2;
+  environment.context.setLineDash([8, 4]);
   environment.context.globalCompositeOperation = 'xor';
-  environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  environment.context.strokeStyle = 'rgba(127, 127, 127, 1.0)';
 
   // body
   environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
@@ -2154,7 +2155,9 @@ Hemp.prototype.setStickyTransform = function (value) {
 Hemp.prototype.select = function (object) {
   this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    this._selectObject(this._objects[object._index], true);
+    if (object._index < this._objects.length) {
+      this._selectObject(this._objects[object._index], true);
+    }
   }
 };
 

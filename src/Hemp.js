@@ -177,7 +177,9 @@ Hemp.prototype.setStickyTransform = function(value) {
 Hemp.prototype.select = function(object) {
   this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    this._selectObject(this._objects[object._index], true);
+    if (object._index < this._objects.length) {
+      this._selectObject(this._objects[object._index], true);
+    }
   }
 };
 
