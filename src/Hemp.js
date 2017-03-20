@@ -129,18 +129,23 @@ Hemp.prototype.setObjects = function(objects, callback) {
       this._selectObject(this._objects[object._index], true);
     }.bind(this));
   }
-  
-  this.render();
-  
+
   // once media is loaded, render again and perform the callback
-  Promise.all(promises).then(function() {
+  if (promises.length > 0) {
+    Promise.all(promises).then(function() {
+      this.render();
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }.bind(this), function(reason) {
+      console.error(reason);
+    });
+  } else {
     this.render();
     if (typeof callback === 'function') {
       callback();
     }
-  }.bind(this), function(reason) {
-    console.error(reason);
-  });
+  }
 };
 
 Hemp.prototype.getObjects = function() {
