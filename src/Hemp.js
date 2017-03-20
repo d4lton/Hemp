@@ -111,9 +111,17 @@ Hemp.prototype.setObjects = function(objects, callback) {
 
   var promises = [];  
   this._objects.forEach(function(object, index) {
+    // setup object index to make referencing the object easier later
     object._index = index;
+    // setup the rendering element for this object type
     this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-    promises.push(object._element.preload(object));
+    // if this element needs to load media, add a promise for that here
+    if (object._element.needsPreload(object)) {
+      var promise = object._element.preload(object);
+      if (promise) {
+        promises.push(promise);
+      }
+    }
   }.bind(this));
   
   if (selectedObjects) {
@@ -124,7 +132,7 @@ Hemp.prototype.setObjects = function(objects, callback) {
   
   this.render();
   
-  // once media is loaded, set the internal list of objects and render
+  // once media is loaded, render again and perform the callback
   Promise.all(promises).then(function() {
     this.render();
     if (typeof callback === 'function') {
@@ -133,37 +141,6 @@ Hemp.prototype.setObjects = function(objects, callback) {
   }.bind(this), function(reason) {
     console.error(reason);
   });
-};
-
-Hemp.prototype._getImagePromises = function(objects) {
-  return objects.filter(function(object) {
-    return object.type === 'image';
-  }).map(function(object) {
-    return new Promise(function(resolve, reject) {
-      var image = Hemp.ImageCache.get(object.url);
-      if (image) {
-        this._createPrivateProperty(object, '_image', image);
-        resolve();
-      } else {
-        this._createPrivateProperty(object, '_image', new Image());
-        object._image.setAttribute('crossOrigin', 'anonymous');
-        object._image.onload = function() {
-          Hemp.ImageCache.set(object.url, object._image);
-          resolve();
-        };
-        object._image.onerror = function(reason) {
-          object._image = this._createFailureImage();
-          resolve();
-        }.bind(this);
-        object._image.src = object.url;
-      }
-    }.bind(this));
-  }.bind(this));
-};
-
-Hemp.prototype._createFailureImage = function() {
-  // TODO: this should generate an image with some kind of helpful message
-  return new Image();
 };
 
 Hemp.prototype.getObjects = function() {
@@ -549,34 +526,6 @@ Hemp.windowToCanvas = function(environment, event) {
   return {
     x: (x - rect.left) * (environment.canvas.width / rect.width),
     y: (y - rect.top) * (environment.canvas.height / rect.height)
-  }
-};
-
-Hemp.ImageCache = {
-  _images: {},
-  _maxAgeMs: 300000,
-  get: function(key) {
-    this._age();
-    var entry = this._images[key];
-    if (entry) {
-      entry.hitMs = Date.now();
-      return entry.image;
-    }
-  },
-  set: function(key, image) {
-    this._images[key] = {
-      hitMs: Date.now(),
-      image: image
-    };
-    this._age();
-  },
-  _age: function() {
-    var cutoffMs = Date.now() - this._maxAgeMs;
-    Object.keys(this._images).forEach(function(key) {
-      if (this._images[key].hitMs < cutoffMs) {
-        delete this._images[key];
-      }
-    }.bind(this));
   }
 };
 

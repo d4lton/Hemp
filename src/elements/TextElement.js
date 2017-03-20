@@ -9,6 +9,7 @@
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
 import '../lib/webfontloader.js';
+import MediaCache from '../MediaCache.js';
 
 function TextElement() {
   Element.call(this);
@@ -19,30 +20,34 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
+TextElement.prototype.needsPreload = function(object) {
+  if (object.customFont) {
+    return (typeof MediaCache.get(object.customFont.url) === 'undefined');
+  } else {
+    return false;
+  }
+}
+
 TextElement.prototype.preload = function(object) {
   return new Promise(function(resolve, reject) {
-    if (object.customFont) {
-      // add @font-face for object.customFont.name and object.customFont.url
-      var style = document.createElement('style');
-      style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
-      document.head.appendChild(style);
+    // add @font-face for object.customFont.name and object.customFont.url
+    var style = document.createElement('style');
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
+    document.head.appendChild(style);
 
-      window.WebFont.load({
-        custom: {
-          families: [object.customFont.name]
-        },
-        active: function() {
-          object.customFont.loaded = true;
-          resolve();
-        },
-        inactive: function() {
-          reject();
-        },
-      });
-
-    } else {
-      resolve();
-    }
+    window.WebFont.load({
+      custom: {
+        families: [object.customFont.name]
+      },
+      active: function() {
+        object.customFont.loaded = true;
+        MediaCache.set(object.customFont.url, object.customFont);
+        resolve();
+      },
+      inactive: function() {
+        reject();
+      },
+    });
   }.bind(this));
 };
 

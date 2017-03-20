@@ -9,14 +9,14 @@ var MediaCache = {
     var entry = this._entries[key];
     if (entry) {
       entry.hitMs = Date.now();
-      return entry.image;
+      return entry.media;
     }
   },
 
-  set: function(key, image) {
+  set: function(key, media) {
     this._entries[key] = {
       hitMs: Date.now(),
-      image: image
+      media: media
     };
     this._age();
   },

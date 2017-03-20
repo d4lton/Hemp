@@ -18,6 +18,10 @@ ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
 
+ImageElement.prototype.needsPreload = function(object) {
+  return (typeof MediaCache.get(object.url) === 'undefined');
+}
+
 ImageElement.prototype.preload = function(object) {
   return new Promise(function(resolve, reject) {
     var image = MediaCache.get(object.url);

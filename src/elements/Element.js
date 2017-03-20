@@ -56,6 +56,10 @@ Element.prototype._fillRoundRect = function(context, x, y, w, h, r) {
   context.fill();
 };
 
+Element.prototype.needsPreload = function(object) {
+  return false;
+}
+
 Element.prototype.preload = function(object) {  
 }
 

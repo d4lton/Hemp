@@ -55,6 +55,10 @@ Element.prototype._fillRoundRect = function (context, x, y, w, h, r) {
   context.fill();
 };
 
+Element.prototype.needsPreload = function (object) {
+  return false;
+};
+
 Element.prototype.preload = function (object) {};
 
 Element.prototype.renderElement = function (environment, object) {
@@ -113,14 +117,14 @@ var MediaCache = {
     var entry = this._entries[key];
     if (entry) {
       entry.hitMs = Date.now();
-      return entry.image;
+      return entry.media;
     }
   },
 
-  set: function set(key, image) {
+  set: function set(key, media) {
     this._entries[key] = {
       hitMs: Date.now(),
-      image: image
+      media: media
     };
     this._age();
   },
@@ -152,6 +156,10 @@ ImageElement.prototype = Object.create(Element.prototype);
 ImageElement.prototype.constructor = ImageElement;
 
 /************************************************************************************/
+
+ImageElement.prototype.needsPreload = function (object) {
+  return typeof MediaCache.get(object.url) === 'undefined';
+};
 
 ImageElement.prototype.preload = function (object) {
   return new Promise(function (resolve, reject) {
@@ -933,29 +941,34 @@ TextElement.prototype.constructor = TextElement;
 
 /************************************************************************************/
 
+TextElement.prototype.needsPreload = function (object) {
+  if (object.customFont) {
+    return typeof MediaCache.get(object.customFont.url) === 'undefined';
+  } else {
+    return false;
+  }
+};
+
 TextElement.prototype.preload = function (object) {
   return new Promise(function (resolve, reject) {
-    if (object.customFont) {
-      // add @font-face for object.customFont.name and object.customFont.url
-      var style = document.createElement('style');
-      style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
-      document.head.appendChild(style);
+    // add @font-face for object.customFont.name and object.customFont.url
+    var style = document.createElement('style');
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
+    document.head.appendChild(style);
 
-      window.WebFont.load({
-        custom: {
-          families: [object.customFont.name]
-        },
-        active: function active() {
-          object.customFont.loaded = true;
-          resolve();
-        },
-        inactive: function inactive() {
-          reject();
-        }
-      });
-    } else {
-      resolve();
-    }
+    window.WebFont.load({
+      custom: {
+        families: [object.customFont.name]
+      },
+      active: function active() {
+        object.customFont.loaded = true;
+        MediaCache.set(object.customFont.url, object.customFont);
+        resolve();
+      },
+      inactive: function inactive() {
+        reject();
+      }
+    });
   }.bind(this));
 };
 
@@ -2068,9 +2081,17 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
   var promises = [];
   this._objects.forEach(function (object, index) {
+    // setup object index to make referencing the object easier later
     object._index = index;
+    // setup the rendering element for this object type
     this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-    promises.push(object._element.preload(object));
+    // if this element needs to load media, add a promise for that here
+    if (object._element.needsPreload(object)) {
+      var promise = object._element.preload(object);
+      if (promise) {
+        promises.push(promise);
+      }
+    }
   }.bind(this));
 
   if (selectedObjects) {
@@ -2081,7 +2102,7 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
   this.render();
 
-  // once media is loaded, set the internal list of objects and render
+  // once media is loaded, render again and perform the callback
   Promise.all(promises).then(function () {
     this.render();
     if (typeof callback === 'function') {
@@ -2090,37 +2111,6 @@ Hemp.prototype.setObjects = function (objects, callback) {
   }.bind(this), function (reason) {
     console.error(reason);
   });
-};
-
-Hemp.prototype._getImagePromises = function (objects) {
-  return objects.filter(function (object) {
-    return object.type === 'image';
-  }).map(function (object) {
-    return new Promise(function (resolve, reject) {
-      var image = Hemp.ImageCache.get(object.url);
-      if (image) {
-        this._createPrivateProperty(object, '_image', image);
-        resolve();
-      } else {
-        this._createPrivateProperty(object, '_image', new Image());
-        object._image.setAttribute('crossOrigin', 'anonymous');
-        object._image.onload = function () {
-          Hemp.ImageCache.set(object.url, object._image);
-          resolve();
-        };
-        object._image.onerror = function (reason) {
-          object._image = this._createFailureImage();
-          resolve();
-        }.bind(this);
-        object._image.src = object.url;
-      }
-    }.bind(this));
-  }.bind(this));
-};
-
-Hemp.prototype._createFailureImage = function () {
-  // TODO: this should generate an image with some kind of helpful message
-  return new Image();
 };
 
 Hemp.prototype.getObjects = function () {
@@ -2505,34 +2495,6 @@ Hemp.windowToCanvas = function (environment, event) {
     x: (x - rect.left) * (environment.canvas.width / rect.width),
     y: (y - rect.top) * (environment.canvas.height / rect.height)
   };
-};
-
-Hemp.ImageCache = {
-  _images: {},
-  _maxAgeMs: 300000,
-  get: function get(key) {
-    this._age();
-    var entry = this._images[key];
-    if (entry) {
-      entry.hitMs = Date.now();
-      return entry.image;
-    }
-  },
-  set: function set(key, image) {
-    this._images[key] = {
-      hitMs: Date.now(),
-      image: image
-    };
-    this._age();
-  },
-  _age: function _age() {
-    var cutoffMs = Date.now() - this._maxAgeMs;
-    Object.keys(this._images).forEach(function (key) {
-      if (this._images[key].hitMs < cutoffMs) {
-        delete this._images[key];
-      }
-    }.bind(this));
-  }
 };
 
 export default Hemp;
