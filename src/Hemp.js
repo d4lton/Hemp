@@ -97,55 +97,58 @@ Hemp.prototype.toImage = function(callback) {
 }
 
 Hemp.prototype.setObjects = function(objects, callback) {
-  objects = (objects && Array.isArray(objects)) ? objects : [];
-  
-  // deselect any existing objects, then update the internal list of objects
-  var selectedObjects;
-  if (this._objects && (objects.length === this._objects.length)) {
-    selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
-  } else {
-    this._deselectAllObjects(true);
-  }
-
-  this._objects = objects; // this._cleanObjects(objects);
-
-  var promises = [];  
-  this._objects.forEach(function(object, index) {
-    // setup object index to make referencing the object easier later
-    object._index = index;
-    // setup the rendering element for this object type
-    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-    // if this element needs to load media, add a promise for that here
-    if (object._element.needsPreload(object)) {
-      var promise = object._element.preload(object);
-      if (promise) {
-        promises.push(promise);
-      }
+  clearTimeout(this._setObjectsTimeout);
+  this._setObjectsTimeout = setTimeout(function() {
+    objects = (objects && Array.isArray(objects)) ? objects : [];
+    
+    // deselect any existing objects, then update the internal list of objects
+    var selectedObjects;
+    if (this._objects && (objects.length === this._objects.length)) {
+      selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
+    } else {
+      this._deselectAllObjects(true);
     }
-  }.bind(this));
   
-  if (selectedObjects) {
-    selectedObjects.forEach(function(object) {
-      this._selectObject(this._objects[object._index], true);
+    this._objects = objects; // this._cleanObjects(objects);
+  
+    var promises = [];  
+    this._objects.forEach(function(object, index) {
+      // setup object index to make referencing the object easier later
+      object._index = index;
+      // setup the rendering element for this object type
+      this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
+      // if this element needs to load media, add a promise for that here
+      if (object._element.needsPreload(object)) {
+        var promise = object._element.preload(object);
+        if (promise) {
+          promises.push(promise);
+        }
+      }
     }.bind(this));
-  }
-
-  // once media is loaded, render again and perform the callback
-  if (promises.length > 0) {
-    Promise.all(promises).then(function() {
+    
+    if (selectedObjects) {
+      selectedObjects.forEach(function(object) {
+        this._selectObject(this._objects[object._index], true);
+      }.bind(this));
+    }
+  
+    // once media is loaded, render again and perform the callback
+    if (promises.length > 0) {
+      Promise.all(promises).then(function() {
+        this.render();
+        if (typeof callback === 'function') {
+          callback();
+        }
+      }.bind(this), function(reason) {
+        console.error(reason);
+      });
+    } else {
       this.render();
       if (typeof callback === 'function') {
         callback();
       }
-    }.bind(this), function(reason) {
-      console.error(reason);
-    });
-  } else {
-    this.render();
-    if (typeof callback === 'function') {
-      callback();
     }
-  }
+  }.bind(this), 100);
 };
 
 Hemp.prototype.getObjects = function() {

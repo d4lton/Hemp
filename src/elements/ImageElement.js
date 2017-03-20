@@ -35,7 +35,6 @@ ImageElement.prototype.preload = function(object) {
     object._image.setAttribute('crossOrigin', 'anonymous');
     object._image.onload = function() {
       MediaCache.set(this.url, object._image);
-      object._imageLoaded = true;
       this._createPrivateProperty(object, '_imageLoaded', true);
       resolve();
     }.bind(this);
@@ -81,7 +80,7 @@ ImageElement.prototype._getFitWidthSource = function(src, dst) {
 };
 
 ImageElement.prototype.renderElement = function(environment, object) {
-  if (object._image && object._imageLoaded) {
+  if (object._image) {
     try {
       var source = this._getFitHeightSource(object._image, object);
       this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);

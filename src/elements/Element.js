@@ -13,6 +13,7 @@ function Element() {
 
 Element.prototype.render = function(environment, object) {
   if (object.visible !== false || (environment.options && environment.options.selectionRender)) {
+    clearTimeout(this._renderTimeout);
     this.setupCanvas(environment, object);
     this.renderElement(environment, object);
     this.renderCanvas(environment, object);

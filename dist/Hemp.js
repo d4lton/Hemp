@@ -14,6 +14,7 @@ function Element() {}
 
 Element.prototype.render = function (environment, object) {
   if (object.visible !== false || environment.options && environment.options.selectionRender) {
+    clearTimeout(this._renderTimeout);
     this.setupCanvas(environment, object);
     this.renderElement(environment, object);
     this.renderCanvas(environment, object);
@@ -176,7 +177,6 @@ ImageElement.prototype.preload = function (object) {
     object._image.setAttribute('crossOrigin', 'anonymous');
     object._image.onload = function () {
       MediaCache.set(this.url, object._image);
-      object._imageLoaded = true;
       this._createPrivateProperty(object, '_imageLoaded', true);
       resolve();
     }.bind(this);
@@ -222,7 +222,7 @@ ImageElement.prototype._getFitWidthSource = function (src, dst) {
 };
 
 ImageElement.prototype.renderElement = function (environment, object) {
-  if (object._image && object._imageLoaded) {
+  if (object._image) {
     try {
       var source = this._getFitHeightSource(object._image, object);
       this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
@@ -2076,55 +2076,58 @@ Hemp.prototype.toImage = function (callback) {
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
-  objects = objects && Array.isArray(objects) ? objects : [];
+  clearTimeout(this._setObjectsTimeout);
+  this._setObjectsTimeout = setTimeout(function () {
+    objects = objects && Array.isArray(objects) ? objects : [];
 
-  // deselect any existing objects, then update the internal list of objects
-  var selectedObjects;
-  if (this._objects && objects.length === this._objects.length) {
-    selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
-  } else {
-    this._deselectAllObjects(true);
-  }
-
-  this._objects = objects; // this._cleanObjects(objects);
-
-  var promises = [];
-  this._objects.forEach(function (object, index) {
-    // setup object index to make referencing the object easier later
-    object._index = index;
-    // setup the rendering element for this object type
-    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-    // if this element needs to load media, add a promise for that here
-    if (object._element.needsPreload(object)) {
-      var promise = object._element.preload(object);
-      if (promise) {
-        promises.push(promise);
-      }
+    // deselect any existing objects, then update the internal list of objects
+    var selectedObjects;
+    if (this._objects && objects.length === this._objects.length) {
+      selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
+    } else {
+      this._deselectAllObjects(true);
     }
-  }.bind(this));
 
-  if (selectedObjects) {
-    selectedObjects.forEach(function (object) {
-      this._selectObject(this._objects[object._index], true);
+    this._objects = objects; // this._cleanObjects(objects);
+
+    var promises = [];
+    this._objects.forEach(function (object, index) {
+      // setup object index to make referencing the object easier later
+      object._index = index;
+      // setup the rendering element for this object type
+      this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
+      // if this element needs to load media, add a promise for that here
+      if (object._element.needsPreload(object)) {
+        var promise = object._element.preload(object);
+        if (promise) {
+          promises.push(promise);
+        }
+      }
     }.bind(this));
-  }
 
-  // once media is loaded, render again and perform the callback
-  if (promises.length > 0) {
-    Promise.all(promises).then(function () {
+    if (selectedObjects) {
+      selectedObjects.forEach(function (object) {
+        this._selectObject(this._objects[object._index], true);
+      }.bind(this));
+    }
+
+    // once media is loaded, render again and perform the callback
+    if (promises.length > 0) {
+      Promise.all(promises).then(function () {
+        this.render();
+        if (typeof callback === 'function') {
+          callback();
+        }
+      }.bind(this), function (reason) {
+        console.error(reason);
+      });
+    } else {
       this.render();
       if (typeof callback === 'function') {
         callback();
       }
-    }.bind(this), function (reason) {
-      console.error(reason);
-    });
-  } else {
-    this.render();
-    if (typeof callback === 'function') {
-      callback();
     }
-  }
+  }.bind(this), 100);
 };
 
 Hemp.prototype.getObjects = function () {
