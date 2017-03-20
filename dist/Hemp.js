@@ -906,9 +906,16 @@ var CanvasText = {
     return new Ia(b, a);
   };Y.a.c.google = function (a, b) {
     return new Ga(b, a);
-  };var Z = { load: p(Y.load, Y) };"function" === typeof define && define.amd ? define(function () {
-    return Z;
-  }) : "undefined" !== typeof module && module.exports ? module.exports = Z : (window.WebFont = Z, window.WebFontConfig && Y.load(window.WebFontConfig));
+  };
+  var Z = { load: p(Y.load, Y) };
+  window.WebFont = Z, window.WebFontConfig && Y.load(window.WebFontConfig);
+  /*
+  "function"===typeof define&&define.amd?
+    define(function(){return Z}):
+    "undefined"!==typeof module&&module.exports?
+      module.exports=Z:
+      (window.WebFont=Z,window.WebFontConfig&&Y.load(window.WebFontConfig));
+  */
 })();
 
 /**
