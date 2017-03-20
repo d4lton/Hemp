@@ -80,7 +80,7 @@ ImageElement.prototype._getFitWidthSource = function(src, dst) {
 };
 
 ImageElement.prototype.renderElement = function(environment, object) {
-  if (object._image) {
+  if (object._imageLoaded) {
     try {
       var source = this._getFitHeightSource(object._image, object);
       this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);

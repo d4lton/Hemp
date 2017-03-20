@@ -131,7 +131,9 @@ Hemp.prototype.setObjects = function(objects, callback) {
         this._selectObject(this._objects[object._index], true);
       }.bind(this));
     }
-  
+    
+    this.render();
+
     // once media is loaded, render again and perform the callback
     if (promises.length > 0) {
       Promise.all(promises).then(function() {

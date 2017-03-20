@@ -82,7 +82,7 @@ Element.prototype.renderCanvas = function (environment, object) {
 };
 
 Element.prototype._renderPlaceholder = function (environment, object) {
-  this._context.strokeStyle = '#808080';
+  this._context.strokeStyle = '#FFFF80';
   this._context.lineWidth = 10;
   this._context.setLineDash([8, 4]);
   this._context.strokeRect(0, 0, object.width, object.height);
@@ -222,7 +222,7 @@ ImageElement.prototype._getFitWidthSource = function (src, dst) {
 };
 
 ImageElement.prototype.renderElement = function (environment, object) {
-  if (object._image) {
+  if (object._imageLoaded) {
     try {
       var source = this._getFitHeightSource(object._image, object);
       this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
@@ -2111,6 +2111,8 @@ Hemp.prototype.setObjects = function (objects, callback) {
         this._selectObject(this._objects[object._index], true);
       }.bind(this));
     }
+
+    this.render();
 
     // once media is loaded, render again and perform the callback
     if (promises.length > 0) {

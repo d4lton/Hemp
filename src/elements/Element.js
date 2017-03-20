@@ -82,11 +82,11 @@ Element.prototype.renderCanvas = function(environment, object) {
 };
 
 Element.prototype._renderPlaceholder = function(environment, object) {
-  this._context.strokeStyle = '#808080';
+  this._context.strokeStyle = '#FFFF80';
   this._context.lineWidth = 10;
   this._context.setLineDash([8, 4]);
   this._context.strokeRect(0, 0, object.width, object.height);
-}
+};
 
 Element.prototype.resolveColor = function(environment, color, alpha) {
   if (environment.options && environment.options.selectionRender) {
