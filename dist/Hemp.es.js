@@ -943,7 +943,12 @@ TextElement.prototype.constructor = TextElement;
 
 TextElement.prototype.needsPreload = function (object) {
   if (object.customFont) {
-    return typeof MediaCache.get(object.customFont.url) === 'undefined';
+    if (typeof MediaCache.get(object.customFont.url) === 'undefined') {
+      return true;
+    } else {
+      object.customFont.loaded = true;
+      return false;
+    }
   } else {
     return false;
   }
