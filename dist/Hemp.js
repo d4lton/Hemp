@@ -2117,7 +2117,7 @@ Hemp.prototype.setObjects = function (objects, callback) {
       Promise.all(promises).then(function () {
         this.render();
         if (typeof callback === 'function') {
-          callback();
+          callback(this._objects);
         }
       }.bind(this), function (reason) {
         console.error(reason);
@@ -2125,7 +2125,7 @@ Hemp.prototype.setObjects = function (objects, callback) {
     } else {
       this.render();
       if (typeof callback === 'function') {
-        callback();
+        callback(this._objects);
       }
     }
   }.bind(this), 100);
