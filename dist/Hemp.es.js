@@ -60,7 +60,15 @@ Element.prototype.needsPreload = function (object) {
   return false;
 };
 
-Element.prototype.preload = function (object) {};
+Element.prototype.preload = function (object, reflectorUrl) {};
+
+Element.prototype._resolveMediaUrl = function (url, reflectorUrl) {
+  var result = url;
+  if (reflectorUrl) {
+    result = reflectorUrl.replace('{{url}}', url);
+  }
+  return result;
+};
 
 Element.prototype.renderElement = function (environment, object) {
   console.warn('override me');
@@ -169,10 +177,10 @@ ImageElement.prototype.needsPreload = function (object) {
   }
 };
 
-ImageElement.prototype.preload = function (object) {
+ImageElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
     this._createPrivateProperty(object, '_image', new Image());
-    object._image.setAttribute('crossOrigin', 'anonymous');
+    object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
       MediaCache.set(this.url, object._image);
       this._createPrivateProperty(object, '_imageLoaded', true);
@@ -181,7 +189,7 @@ ImageElement.prototype.preload = function (object) {
     object._image.onerror = function (reason) {
       resolve();
     }.bind(this);
-    object._image.src = object.url;
+    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));
 };
 
@@ -956,7 +964,7 @@ TextElement.prototype.needsPreload = function (object) {
   }
 };
 
-TextElement.prototype.preload = function (object) {
+TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
@@ -2022,6 +2030,10 @@ Hemp.prototype.getEnvironment = function () {
   return this._environment;
 };
 
+Hemp.prototype.setMediaReflectorUrl = function (url) {
+  this._mediaReflectorUrl = url;
+};
+
 Hemp.prototype.setSize = function (width, height) {
   this._width = width;
   this._height = height;
@@ -2106,7 +2118,7 @@ Hemp.prototype._setObjects = function (objects, callback) {
     this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
     // if this element needs to load media, add a promise for that here
     if (object._element.needsPreload(object)) {
-      var promise = object._element.preload(object);
+      var promise = object._element.preload(object, this._mediaReflectorUrl);
       if (promise) {
         promises.push(promise);
       }
@@ -2123,14 +2135,20 @@ Hemp.prototype._setObjects = function (objects, callback) {
 
   // once media is loaded, render again and perform the callback
   if (promises.length > 0) {
-    Promise.all(promises).then(function () {
-      this.render();
-      if (typeof callback === 'function') {
-        callback(this._objects);
-      }
-    }.bind(this), function (reason) {
-      console.error(reason);
-    });
+    promises.forEach(function (promise) {
+      promise.then(function () {
+        this.render();
+        if (typeof callback === 'function') {
+          callback(this._objects);
+        }
+      }.bind(this), function (reason) {
+        console.error(reason);
+        this.render();
+        if (typeof callback === 'function') {
+          callback(this._objects);
+        }
+      }.bind(this));
+    }.bind(this));
   } else {
     this.render();
     if (typeof callback === 'function') {

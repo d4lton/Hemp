@@ -43,6 +43,10 @@ Hemp.prototype.getEnvironment = function() {
   return this._environment;
 };
 
+Hemp.prototype.setMediaReflectorUrl = function(url) {
+  this._mediaReflectorUrl = url
+};
+
 Hemp.prototype.setSize = function(width, height) {
   this._width = width;
   this._height = height;
@@ -128,7 +132,7 @@ Hemp.prototype._setObjects = function(objects, callback) {
     this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
     // if this element needs to load media, add a promise for that here
     if (object._element.needsPreload(object)) {
-      var promise = object._element.preload(object);
+      var promise = object._element.preload(object, this._mediaReflectorUrl);
       if (promise) {
         promises.push(promise);
       }
@@ -145,14 +149,20 @@ Hemp.prototype._setObjects = function(objects, callback) {
 
   // once media is loaded, render again and perform the callback
   if (promises.length > 0) {
-    Promise.all(promises).then(function() {
-      this.render();
-      if (typeof callback === 'function') {
-        callback(this._objects);
-      }
-    }.bind(this), function(reason) {
-      console.error(reason);
-    });
+    promises.forEach(function(promise) {
+      promise.then(function() {
+        this.render();
+        if (typeof callback === 'function') {
+          callback(this._objects);
+        }
+      }.bind(this), function(reason) {
+        console.error(reason)
+        this.render();
+        if (typeof callback === 'function') {
+          callback(this._objects);
+        }
+      }.bind(this));
+    }.bind(this));
   } else {
     this.render();
     if (typeof callback === 'function') {

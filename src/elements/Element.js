@@ -61,8 +61,16 @@ Element.prototype.needsPreload = function(object) {
   return false;
 }
 
-Element.prototype.preload = function(object) {  
+Element.prototype.preload = function(object, reflectorUrl) {  
 }
+
+Element.prototype._resolveMediaUrl = function(url, reflectorUrl) {
+  var result = url;
+  if (reflectorUrl) {
+    result = reflectorUrl.replace('{{url}}', url);
+  }
+  return result;
+};
 
 Element.prototype.renderElement = function(environment, object) {
   console.warn('override me');

@@ -29,10 +29,10 @@ ImageElement.prototype.needsPreload = function(object) {
   }
 }
 
-ImageElement.prototype.preload = function(object) {
+ImageElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
     this._createPrivateProperty(object, '_image', new Image());
-    object._image.setAttribute('crossOrigin', 'anonymous');
+    object._image.crossOrigin = 'Anonymous';
     object._image.onload = function() {
       MediaCache.set(this.url, object._image);
       this._createPrivateProperty(object, '_imageLoaded', true);
@@ -41,7 +41,7 @@ ImageElement.prototype.preload = function(object) {
     object._image.onerror = function(reason) {
       resolve();
     }.bind(this);
-    object._image.src = object.url;
+    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));  
 };
 
