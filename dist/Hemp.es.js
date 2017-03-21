@@ -65,7 +65,7 @@ Element.prototype.preload = function (object, reflectorUrl) {};
 Element.prototype._resolveMediaUrl = function (url, reflectorUrl) {
   var result = url;
   if (reflectorUrl) {
-    result = reflectorUrl.replace('{{url}}', url);
+    result = reflectorUrl.replace('{{url}}', encodeURIComponent(url));
   }
   return result;
 };
