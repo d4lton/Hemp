@@ -149,25 +149,34 @@ Hemp.prototype._setObjects = function(objects, callback) {
 
   // once media is loaded, render again and perform the callback
   if (promises.length > 0) {
-    promises.forEach(function(promise) {
-      promise.then(function() {
-        this.render();
-        if (typeof callback === 'function') {
-          callback(this._objects);
-        }
-      }.bind(this), function(reason) {
-        console.error(reason)
-        this.render();
-        if (typeof callback === 'function') {
-          callback(this._objects);
-        }
+    if (this._interactive) {
+    
+      promises.forEach(function(promise) {
+        promise.then(function() {
+          this._finishLoading(callback);
+        }.bind(this), function(reason) {
+          this._finishLoading(callback);
+        }.bind(this));
       }.bind(this));
-    }.bind(this));
-  } else {
-    this.render();
-    if (typeof callback === 'function') {
-      callback(this._objects);
+      
+    } else {
+
+      Promise.all(promises).then(function() {
+        this._finishLoading(callback);
+      }.bind(this), function(reason) {
+        this._finishLoading(callback);
+      }.bind(this));
+
     }
+  } else {
+    this._finishLoading(callback);
+  }
+};
+
+Hemp.prototype._finishLoading = function(callback) {
+  this.render();
+  if (typeof callback === 'function') {
+    callback(this._objects);
   }
 };
 
