@@ -206,10 +206,16 @@ ImageElement.getTypes = function() {
           default: 1
         },
         {
+          name: 'compositing',
+          displayName: 'Compositing',
+          type: 'string',
+          default: ''
+        },
+        {
           name: 'script',
           displayName: 'Script',
           type: 'script',
-          default: ''
+          default: 'source-over'
         }
       ]
     }

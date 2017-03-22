@@ -85,6 +85,9 @@ Element.prototype.renderCanvas = function(environment, object) {
   if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
     environment.context.globalAlpha = object.opacity;
   }
+  if (typeof object.compositing !== 'undefined') {
+    environment.context.globalCompositeOperation = object.compositing;
+  }
   environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
   environment.context.restore();
 };

@@ -85,6 +85,9 @@ Element.prototype.renderCanvas = function (environment, object) {
   if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
     environment.context.globalAlpha = object.opacity;
   }
+  if (typeof object.compositing !== 'undefined') {
+    environment.context.globalCompositeOperation = object.compositing;
+  }
   environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
   environment.context.restore();
 };
@@ -336,10 +339,15 @@ ImageElement.getTypes = function () {
         step: 0.01,
         default: 1
       }, {
+        name: 'compositing',
+        displayName: 'Compositing',
+        type: 'string',
+        default: ''
+      }, {
         name: 'script',
         displayName: 'Script',
         type: 'script',
-        default: ''
+        default: 'source-over'
       }]
     }
   };
@@ -2092,18 +2100,14 @@ Hemp.prototype.toImage = function (callback) {
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
-  /*
-    if (this._interactive) {
-      clearTimeout(this._setObjectsTimeout);
-      this._setObjectsTimeout = setTimeout(function() {
-        this._setObjects(objects, callback);
-      }.bind(this), 100);
-    } else {
-    */
-  this._setObjects(objects, callback);
-  /*
+  if (this._interactive) {
+    clearTimeout(this._setObjectsTimeout);
+    this._setObjectsTimeout = setTimeout(function () {
+      this._setObjects(objects, callback);
+    }.bind(this), 100);
+  } else {
+    this._setObjects(objects, callback);
   }
-  */
 };
 
 Hemp.prototype._setObjects = function (objects, callback) {
