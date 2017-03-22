@@ -186,7 +186,7 @@ ImageElement.prototype.needsPreload = function (object) {
 ImageElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
     this._createPrivateProperty(object, '_image', new Image());
-    //object._image.crossOrigin = 'Anonymous';
+    object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
       MediaCache.set(this.url, object._image);
       this._createPrivateProperty(object, '_imageLoaded', true);
