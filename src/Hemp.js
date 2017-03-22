@@ -154,7 +154,7 @@ Hemp.prototype._setObjects = function(objects, callback) {
       promises.forEach(function(promise) {
         promise.then(function() {
           this._finishLoading(callback);
-        }.bind(this), function(reason) {
+        }.bind(this), function() {
           this._finishLoading(callback);
         }.bind(this));
       }.bind(this));
@@ -163,9 +163,8 @@ Hemp.prototype._setObjects = function(objects, callback) {
 
       Promise.all(promises).then(function() {
         this._finishLoading(callback);
-      }.bind(this), function(reason) {
-        throw new Error(reason);
-        //this._finishLoading(callback);
+      }.bind(this), function() {
+        this._finishLoading(callback);
       }.bind(this));
 
     }

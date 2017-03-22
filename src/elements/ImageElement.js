@@ -38,8 +38,8 @@ ImageElement.prototype.preload = function(object, reflectorUrl) {
       this._createPrivateProperty(object, '_imageLoaded', true);
       resolve();
     }.bind(this);
-    object._image.onerror = function(reason) {
-      reject(reason);
+    object._image.onerror = function(event) {
+      reject();
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));  
