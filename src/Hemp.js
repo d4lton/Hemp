@@ -116,10 +116,12 @@ Hemp.prototype._setObjects = function(objects, callback) {
   
   // deselect any existing objects, then update the internal list of objects
   var selectedObjects;
-  if (this._objects && (objects.length === this._objects.length)) {
-    selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
-  } else {
-    this._deselectAllObjects(true);
+  if (this._interactive) {
+    if (this._objects && (objects.length === this._objects.length)) {
+      selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
+    } else {
+      this._deselectAllObjects(true);
+    }
   }
 
   this._objects = objects; // this._cleanObjects(objects);
@@ -164,6 +166,7 @@ Hemp.prototype._setObjects = function(objects, callback) {
       Promise.all(promises).then(function() {
         this._finishLoading(callback);
       }.bind(this), function() {
+        console.log('promise failure');
         this._finishLoading(callback);
       }.bind(this));
 

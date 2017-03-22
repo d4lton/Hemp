@@ -193,6 +193,7 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
       resolve();
     }.bind(this);
     object._image.onerror = function (event) {
+      console.log('could not load image from ', object.url, reflectorUrl, this._resolveMediaUrl(object.url, reflectorUrl));
       reject();
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
@@ -2108,10 +2109,12 @@ Hemp.prototype._setObjects = function (objects, callback) {
 
   // deselect any existing objects, then update the internal list of objects
   var selectedObjects;
-  if (this._objects && objects.length === this._objects.length) {
-    selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
-  } else {
-    this._deselectAllObjects(true);
+  if (this._interactive) {
+    if (this._objects && objects.length === this._objects.length) {
+      selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
+    } else {
+      this._deselectAllObjects(true);
+    }
   }
 
   this._objects = objects; // this._cleanObjects(objects);
@@ -2155,6 +2158,7 @@ Hemp.prototype._setObjects = function (objects, callback) {
       Promise.all(promises).then(function () {
         this._finishLoading(callback);
       }.bind(this), function () {
+        console.log('promise failure');
         this._finishLoading(callback);
       }.bind(this));
     }
