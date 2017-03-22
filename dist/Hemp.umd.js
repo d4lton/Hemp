@@ -2096,14 +2096,18 @@ Hemp.prototype.toImage = function (callback) {
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
-  if (this._interactive) {
-    clearTimeout(this._setObjectsTimeout);
-    this._setObjectsTimeout = setTimeout(function () {
-      this._setObjects(objects, callback);
-    }.bind(this), 100);
-  } else {
-    this._setObjects(objects, callback);
+  /*
+    if (this._interactive) {
+      clearTimeout(this._setObjectsTimeout);
+      this._setObjectsTimeout = setTimeout(function() {
+        this._setObjects(objects, callback);
+      }.bind(this), 100);
+    } else {
+    */
+  this._setObjects(objects, callback);
+  /*
   }
+  */
 };
 
 Hemp.prototype._setObjects = function (objects, callback) {
