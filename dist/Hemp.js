@@ -175,6 +175,7 @@ ImageElement.prototype.needsPreload = function (object) {
     this._createPrivateProperty(object, '_imageLoaded', true);
     return false;
   } else {
+    this._createPrivateProperty(object, '_imageLoaded', false);
     return true;
   }
 };
