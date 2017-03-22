@@ -189,7 +189,7 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
       resolve();
     }.bind(this);
     object._image.onerror = function (reason) {
-      resolve();
+      reject(reason);
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));
@@ -2151,7 +2151,8 @@ Hemp.prototype._setObjects = function (objects, callback) {
       Promise.all(promises).then(function () {
         this._finishLoading(callback);
       }.bind(this), function (reason) {
-        this._finishLoading(callback);
+        throw new Error(reason);
+        //this._finishLoading(callback);
       }.bind(this));
     }
   } else {

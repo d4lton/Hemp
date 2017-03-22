@@ -39,7 +39,7 @@ ImageElement.prototype.preload = function(object, reflectorUrl) {
       resolve();
     }.bind(this);
     object._image.onerror = function(reason) {
-      resolve();
+      reject(reason);
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));  
