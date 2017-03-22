@@ -339,13 +339,13 @@ ImageElement.getTypes = function () {
       }, {
         name: 'compositing',
         displayName: 'Compositing',
-        type: 'string',
-        default: ''
+        type: 'compositing',
+        default: 'source-over'
       }, {
         name: 'script',
         displayName: 'Script',
         type: 'script',
-        default: 'source-over'
+        default: ''
       }]
     }
   };
