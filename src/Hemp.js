@@ -136,7 +136,6 @@ Hemp.prototype._setObjects = function(objects, callback) {
     object._index = index;
     // setup the rendering element for this object type
     this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
-    this._createPrivateProperty(object, '_imageLoaded', false);
     // if this element needs to load media, add a promise for that here
     if (object._element.needsPreload(object)) {
       var promise = object._element.preload(object, this._mediaReflectorUrl);
@@ -152,8 +151,6 @@ Hemp.prototype._setObjects = function(objects, callback) {
     }.bind(this));
   }
   
-  this.render();
-
   // once media is loaded, render again and perform the callback
   if (promises.length > 0) {
     if (this._interactive) {

@@ -82,12 +82,16 @@ Element.prototype.renderCanvas = function(environment, object) {
   if (typeof object.rotation !== 'undefined' && object.rotation != 0) {
     environment.context.rotate(object.rotation * Math.PI / 180);
   }
-  if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
-    environment.context.globalAlpha = object.opacity;
+
+  if (!environment.options || !environment.options.selectionRender) {
+    if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
+      environment.context.globalAlpha = object.opacity;
+    }
+    if (typeof object.compositing !== 'undefined') {
+      environment.context.globalCompositeOperation = object.compositing;
+    }
   }
-  if (typeof object.compositing !== 'undefined') {
-    environment.context.globalCompositeOperation = object.compositing;
-  }
+
   environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
   environment.context.restore();
 };
