@@ -172,7 +172,7 @@ TextElement.getTypes = function() {
                 {
                   value: 'top',
                   label: '',
-                  fontIcon: 'fa fa-long-arrow-down'
+                  fontIcon: 'fa fa-long-arrow-up'
                 },
                 {
                   value: 'middle',
@@ -182,7 +182,7 @@ TextElement.getTypes = function() {
                 {
                   value: 'bottom',
                   label: '',
-                  fontIcon: 'fa fa-long-arrow-up'
+                  fontIcon: 'fa fa-long-arrow-down'
                 }
               ],
               default: 'middle'
