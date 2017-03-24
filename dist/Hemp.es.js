@@ -288,7 +288,7 @@ ImageElement.getTypes = function () {
           values: [{
             value: 'top',
             label: '',
-            fontIcon: 'fa fa-long-arrow-up'
+            fontIcon: 'fa fa-long-arrow-down'
           }, {
             value: 'middle',
             label: '',
@@ -296,7 +296,7 @@ ImageElement.getTypes = function () {
           }, {
             value: 'bottom',
             label: '',
-            fontIcon: 'fa fa-long-arrow-down'
+            fontIcon: 'fa fa-long-arrow-up'
           }],
           default: 'middle'
         }]
