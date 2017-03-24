@@ -478,7 +478,7 @@ var CanvasText = {
   },
 
   renderDecoration: function renderDecoration(context, object, x, y, height, rowHeight, width) {
-    if (object.decoration) {
+    if (object.decoration && object.decoration !== 'none') {
 
       context.save();
 
@@ -1097,6 +1097,10 @@ TextElement.getTypes = function () {
         displayName: 'Decoration',
         type: 'spiffy',
         values: [{
+          value: 'none',
+          label: '',
+          fontIcon: 'fa fa-font'
+        }, {
           value: 'underline',
           label: '',
           fontIcon: 'fa fa-underline'
@@ -1104,7 +1108,8 @@ TextElement.getTypes = function () {
           value: 'strikethrough',
           label: '',
           fontIcon: 'fa fa-strikethrough'
-        }]
+        }],
+        default: 'none'
       }, {
         displayName: 'Color',
         type: 'group',

@@ -98,6 +98,11 @@ TextElement.getTypes = function() {
           type: 'spiffy',
           values: [
             {
+              value: 'none',
+              label: '',
+              fontIcon: 'fa fa-font'
+            },
+            {
               value: 'underline',
               label: '',
               fontIcon: 'fa fa-underline'
@@ -107,7 +112,8 @@ TextElement.getTypes = function() {
               label: '',
               fontIcon: 'fa fa-strikethrough'
             }
-          ]
+          ],
+          default: 'none'
         },
         {
           displayName: 'Color',
