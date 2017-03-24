@@ -92,7 +92,23 @@ TextElement.getTypes = function() {
           type: 'font',
           default: '40pt Helvetica'
         },
-
+        {
+          name: 'decoration',
+          displayName: 'Decoration',
+          type: 'spiffy',
+          values: [
+            {
+              value: 'underline',
+              label: '',
+              fontIcon: 'fa fa-underline'
+            },
+            {
+              value: 'strikethrough',
+              label: '',
+              fontIcon: 'fa fa-strikethrough'
+            }
+          ]
+        },
         {
           displayName: 'Color',
           type: 'group',
@@ -113,36 +129,6 @@ TextElement.getTypes = function() {
               default: 1,
               width: 50
             }
-          ]
-        },
-
-        {
-          displayName: 'Background',
-          type: 'group',
-          properties: [
-            {
-              name: 'backgroundColor',
-              displayName: '',
-              type: 'color',
-              default: '#000000'
-            },
-            {
-              name: 'backgroundAlpha',
-              displayName: '',
-              type: 'range',
-              min: 0,
-              max: 1,
-              step: 0.01,
-              default: 0,
-              width: 50
-            },
-            {
-              name: 'backgroundRadius',
-              displayName: 'rad',
-              type: 'integer',
-              default: 0,
-              width: 35
-            },
           ]
         },
         {
@@ -194,6 +180,35 @@ TextElement.getTypes = function() {
                 }
               ],
               default: 'middle'
+            },
+          ]
+        },
+        {
+          displayName: 'Background',
+          type: 'group',
+          properties: [
+            {
+              name: 'backgroundColor',
+              displayName: '',
+              type: 'color',
+              default: '#000000'
+            },
+            {
+              name: 'backgroundAlpha',
+              displayName: '',
+              type: 'range',
+              min: 0,
+              max: 1,
+              step: 0.01,
+              default: 0,
+              width: 50
+            },
+            {
+              name: 'backgroundRadius',
+              displayName: 'rad',
+              type: 'integer',
+              default: 0,
+              width: 35
             },
           ]
         },

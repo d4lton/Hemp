@@ -460,12 +460,39 @@ var CanvasText = {
 
     var totalArea = 0;
     rows.forEach(function (row) {
+      var width = CanvasText.calculateRowWidth(context, object, row);
       context.fillText(row, rowX, rowY - CanvasText.fontOffsetCache[context.font]);
+      CanvasText.renderDecoration(context, object, rowX, rowY, rowHeight, width);
+      totalArea += rowHeight * width;
       rowY += rowHeight;
-      totalArea += rowHeight * CanvasText.calculateRowWidth(context, object, row);
     });
 
     return totalArea;
+  },
+
+  renderDecoration: function renderDecoration(context, object, x, y, height, width) {
+    if (object.decoration) {
+      context.save();
+      context.strokeStyle = this.resolveColor(object.color, object.alpha);
+      context.lineWidth = Math.max(1, height / 20);
+      context.lineCap = 'round';
+      var lineX = x;
+      if (object.align === 'right') {
+        lineX = x - width + this._padding.right;
+      }
+      if (object.align === 'center') {
+        lineX = x - width / 2;
+      }
+      var lineY = y + height;
+      if (object.decoration === 'strikethrough') {
+        lineY = y + height / 2;
+      }
+      context.beginPath();
+      context.moveTo(lineX, lineY);
+      context.lineTo(lineX + width, lineY);
+      context.stroke();
+      context.restore();
+    }
   },
 
   makeWordWrapRows: function makeWordWrapRows(context, object) {
@@ -1047,6 +1074,19 @@ TextElement.getTypes = function () {
         type: 'font',
         default: '40pt Helvetica'
       }, {
+        name: 'decoration',
+        displayName: 'Decoration',
+        type: 'spiffy',
+        values: [{
+          value: 'underline',
+          label: '',
+          fontIcon: 'fa fa-underline'
+        }, {
+          value: 'strikethrough',
+          label: '',
+          fontIcon: 'fa fa-strikethrough'
+        }]
+      }, {
         displayName: 'Color',
         type: 'group',
         properties: [{
@@ -1063,30 +1103,6 @@ TextElement.getTypes = function () {
           step: 0.01,
           default: 1,
           width: 50
-        }]
-      }, {
-        displayName: 'Background',
-        type: 'group',
-        properties: [{
-          name: 'backgroundColor',
-          displayName: '',
-          type: 'color',
-          default: '#000000'
-        }, {
-          name: 'backgroundAlpha',
-          displayName: '',
-          type: 'range',
-          min: 0,
-          max: 1,
-          step: 0.01,
-          default: 0,
-          width: 50
-        }, {
-          name: 'backgroundRadius',
-          displayName: 'rad',
-          type: 'integer',
-          default: 0,
-          width: 35
         }]
       }, {
         displayName: 'Alignment',
@@ -1127,6 +1143,30 @@ TextElement.getTypes = function () {
             fontIcon: 'fa fa-long-arrow-down'
           }],
           default: 'middle'
+        }]
+      }, {
+        displayName: 'Background',
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 0,
+          width: 50
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'rad',
+          type: 'integer',
+          default: 0,
+          width: 35
         }]
       }, {
         name: 'padding',
