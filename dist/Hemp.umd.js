@@ -2352,9 +2352,9 @@ Hemp.prototype.setStickyTransform = function (value) {
 };
 
 Hemp.prototype.select = function (object) {
-  if (typeof object !== 'undefined') {
+  if (object) {
     var selectedObject = this._getObjectByInternalId(object._internalId);
-    if (!selectedObject._selected) {
+    if (selectedObject && !selectedObject._selected) {
       this._selectObject(selectedObject, true);
     }
   }
