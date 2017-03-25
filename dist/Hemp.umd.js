@@ -1898,9 +1898,12 @@ TransformElement.snapMaximize = function (environment, object, mouseX, mouseY) {
   }
 };
 
-TransformElement.setObjectGeometry = function (src, dst) {
+TransformElement.setObjectGeometry = function (src, dst, onlyLocation) {
   dst.x = src.x;
   dst.y = src.y;
+  if (onlyLocation === true) {
+    return;
+  }
   dst.width = src.width;
   dst.height = src.height;
   dst.rotation = src.rotation;
@@ -1909,7 +1912,7 @@ TransformElement.setObjectGeometry = function (src, dst) {
 TransformElement.snapToObject = function (object, hitObjects, event) {
   var hitObject;
 
-  if (event.metaKey) {
+  if (event.altKey) {
     if (hitObjects.length > 0) {
       for (var i = hitObjects.length - 1; i >= 0; i--) {
         if (hitObjects[i] !== object) {
@@ -1924,14 +1927,14 @@ TransformElement.snapToObject = function (object, hitObjects, event) {
     // if we haven't saved the original size, do so
     if (!object._transform.snapped) {
       object._transform.snapped = {};
-      TransformElement.setObjectGeometry(object, object._transform.snapped);
+      TransformElement.setObjectGeometry(object, object._transform.snapped, true);
     }
     // set the height/width and x, y of object to hitObject
-    TransformElement.setObjectGeometry(hitObject, object);
+    TransformElement.setObjectGeometry(hitObject, object, true);
   } else {
     // if we saved the orignal size, restore
     if (object._transform.snapped) {
-      TransformElement.setObjectGeometry(object._transform.snapped, object);
+      TransformElement.setObjectGeometry(object._transform.snapped, object, true);
       delete object._transform.snapped;
     }
   }
@@ -2124,6 +2127,8 @@ Hemp.ElementFactory = ElementFactory;
 
 // -----------------------------------------------------------------------------
 
+Hemp.nextId = 0;
+
 Hemp.prototype.getEnvironment = function () {
   return this._environment;
 };
@@ -2143,6 +2148,7 @@ Hemp.prototype.setSize = function (width, height) {
     }
     if (this._interactive) {
       this._environment.canvas.removeEventListener('mousedown', this._onMouseDown.bind(this));
+      this._environment.canvas.removeEventListener('contextmenu', this._onMouseDown.bind(this));
     }
   }
 
@@ -2161,6 +2167,7 @@ Hemp.prototype.setSize = function (width, height) {
   if (this._interactive) {
     this._environment.canvas.setAttribute('tabIndex', '1');
     this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
+    this._environment.canvas.addEventListener('contextmenu', this._onMouseDown.bind(this));
   }
 };
 
@@ -2185,60 +2192,28 @@ Hemp.prototype.toImage = function (callback) {
 };
 
 Hemp.prototype.setObjects = function (objects, callback) {
-  /*
-    if (this._interactive) {
-      clearTimeout(this._setObjectsTimeout);
-      this._setObjectsTimeout = setTimeout(function() {
-        this._setObjects(objects, callback);
-      }.bind(this), 100);
-    } else {
-  */
-  this._setObjects(objects, callback);
-  /*
-    }
-  */
-};
-
-Hemp.prototype._setObjects = function (objects, callback) {
   objects = objects && Array.isArray(objects) ? objects : [];
 
-  // deselect any existing objects, then update the internal list of objects
-  var selectedObjects;
-  if (this._interactive) {
-    if (this._objects && objects.length === this._objects.length) {
-      selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
-    } else {
-      this._deselectAllObjects(true);
-    }
-  }
-
-  this._objects = objects; // this._cleanObjects(objects);
+  this._addUpdateObjects(objects);
 
   var promises = [];
+  var now = Date.now();
   this._objects.forEach(function (object, index) {
-    // setup object index to make referencing the object easier later
-    object._index = index;
+    this._generateInternalId(now, object);
     // setup the rendering element for this object type
-    this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
+    if (!object._element) {
+      this._createPrivateProperty(object, '_element', ElementFactory.getElement(object));
+    }
     // if this element needs to load media, add a promise for that here
     if (object._element.needsPreload(object)) {
-      var promise = object._element.preload(object, this._mediaReflectorUrl);
-      if (promise) {
-        promises.push(promise);
-      }
+      promises.push(object._element.preload(object, this._mediaReflectorUrl));
     }
   }.bind(this));
 
-  if (selectedObjects) {
-    selectedObjects.forEach(function (object) {
-      this._selectObject(this._objects[object._index], true);
-    }.bind(this));
-  }
-
-  // once media is loaded, render again and perform the callback
+  // if there are any media-load promises, run them  
   if (promises.length > 0) {
     if (this._interactive) {
-
+      // if interactive, run promises in parallel to not block render
       promises.forEach(function (promise) {
         promise.then(function () {
           this._finishLoading(callback);
@@ -2247,7 +2222,7 @@ Hemp.prototype._setObjects = function (objects, callback) {
         }.bind(this));
       }.bind(this));
     } else {
-
+      // if not interactive, run all promises in serial, blocking render until done
       Promise.all(promises).then(function () {
         this._finishLoading(callback);
       }.bind(this), function () {
@@ -2256,6 +2231,53 @@ Hemp.prototype._setObjects = function (objects, callback) {
     }
   } else {
     this._finishLoading(callback);
+  }
+};
+
+Hemp.prototype._generateInternalId = function (ms, object) {
+  if (!object._internalId) {
+    var id = ms + '_' + Hemp.nextId++;
+    object._internalId = id;
+  }
+};
+
+Hemp.prototype._getObjectByInternalId = function (id) {
+  for (var i = 0; i < this._objects.length; i++) {
+    if (this._objects[i]._internalId === id) {
+      return this._objects[i];
+    }
+  }
+};
+
+Hemp.prototype._copyPublicProperties = function (src, dst) {
+  Object.keys(src).forEach(function (id) {
+    if (id.substr(0, 1) !== '_') {
+      console.log('setting', id);
+      dst[id] = src[id];
+    }
+  });
+};
+
+Hemp.prototype._addUpdateObjects = function (objects) {
+  if (!this._objects) {
+    this._objects = [];
+  }
+
+  this._objects = this._objects.concat(objects);
+
+  for (var i = 0; i < this._objects.length; i++) {
+    var found = false;
+    for (var j = i + 1; j < this._objects.length; j++) {
+      if (this._objects[i]._internalId && this._objects[i]._internalId === this._objects[j]._internalId) {
+        this._copyPublicProperties(this._objects[j], this._objects[i]);
+        this._objects.splice(j, 1);
+        found = true;
+        break;
+      }
+    }
+    if (!found && this._objects[i]._internalId) {
+      this._objects.splice(i, 1);
+    }
   }
 };
 
@@ -2268,7 +2290,6 @@ Hemp.prototype._finishLoading = function (callback) {
 
 Hemp.prototype.getObjects = function () {
   return this._cleanObjects(this._objects).map(function (object) {
-    delete object._index;
     return object;
   });
 };
@@ -2292,9 +2313,7 @@ Hemp.prototype.setStickyTransform = function (value) {
 Hemp.prototype.select = function (object) {
   this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    if (object._index < this._objects.length) {
-      this._selectObject(this._objects[object._index], true);
-    }
+    this._selectObject(this._getObjectByInternalId(object._internalId), true);
   }
 };
 
@@ -2415,17 +2434,16 @@ Hemp.prototype._nudgeObject = function (object, offsetX, offsetY, event) {
 };
 
 Hemp.prototype._onMouseDown = function (event) {
+  event.preventDefault();
   var coordinates = Hemp.windowToCanvas(this._environment, event);
   var hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
 
   this._transformStart = Date.now();
   this._transformFrames = 0;
 
-  event.preventDefault();
-
   // if there's already a selected object, transform it if possible
   if (this._setupTransformingObject(coordinates.x, coordinates.y, event, hitObjects)) {
-    return;
+    return false;
   }
 
   // if we hit an object, select it and start transforming it if possible
@@ -2437,6 +2455,7 @@ Hemp.prototype._onMouseDown = function (event) {
     }
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
   }
+  return false;
 };
 
 Hemp.prototype._onWindowMouseDown = function (event) {
@@ -2491,7 +2510,7 @@ Hemp.prototype._onMouseMove = function (event) {
   if (this._transformingObject && this._transformingObject.locked !== true) {
     var coordinates = Hemp.windowToCanvas(this._environment, event);
     var hitObjects;
-    if (event.metaKey) {
+    if (event.altKey) {
       hitObjects = this._findObjectsAt(coordinates.x, coordinates.y);
     }
     TransformElement.transformMove(this._environment, this._transformingObject, coordinates.x, coordinates.y, event, hitObjects);
@@ -2510,6 +2529,7 @@ Hemp.prototype._onMouseUp = function (event) {
   if (this._mouse) {
     delete this._mouse;
   }
+  this._clearFindObjectsAt();
 };
 
 Hemp.prototype._deselectAllObjects = function (skipEvent) {
@@ -2523,6 +2543,7 @@ Hemp.prototype._deselectAllObjects = function (skipEvent) {
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
     if (this._element && skipEvent !== true) {
+      console.trace('deselect');
       this._element.dispatchEvent(new CustomEvent('deselect', { detail: this._cleanObjects(deselectedObjects) }));
     }
   }
@@ -2558,21 +2579,29 @@ Hemp.prototype._getObjects = function (filter) {
   }
 };
 
+Hemp.prototype._clearFindObjectsAt = function () {
+  this._getObjects().forEach(function (object) {
+    if (object._hitEnvironment) {
+      delete object._hitEnvironment;
+    }
+  }.bind(this));
+};
+
 Hemp.prototype._findObjectsAt = function (x, y) {
   var results = [];
-  if (!this._hitEnvironment) {
-    this._hitEnvironment = this._setupRenderEnvironment({
-      width: this._width,
-      height: this._height
-    }, {
-      selectionRender: true
-    });
-  }
   this._getObjects().forEach(function (object) {
-    this._clearEnvironment(this._hitEnvironment);
-    this._renderObject(this._hitEnvironment, object);
+
+    if (!object._hitEnvironment) {
+      this._createPrivateProperty(object, '_hitEnvironment', this._setupRenderEnvironment({
+        width: this._width,
+        height: this._height
+      }, {
+        selectionRender: true
+      }));
+      this._renderObject(object._hitEnvironment, object);
+    }
     var hitboxSize = 10; // make this configurable
-    var p = this._hitEnvironment.context.getImageData(x - hitboxSize / 2, y - hitboxSize / 2, hitboxSize, hitboxSize).data;
+    var p = object._hitEnvironment.context.getImageData(x - hitboxSize / 2, y - hitboxSize / 2, hitboxSize, hitboxSize).data;
     for (var i = 0; i < p.length; i += 4) {
       if (p[i + 3] !== 0) {
         // looking only at alpha channel

@@ -372,9 +372,12 @@ TransformElement.snapMaximize = function(environment, object, mouseX, mouseY) {
   }
 };
 
-TransformElement.setObjectGeometry = function(src, dst) {
+TransformElement.setObjectGeometry = function(src, dst, onlyLocation) {
   dst.x = src.x;
   dst.y = src.y;
+  if (onlyLocation === true) {
+    return;
+  }
   dst.width = src.width;
   dst.height = src.height;
   dst.rotation = src.rotation;
@@ -383,7 +386,7 @@ TransformElement.setObjectGeometry = function(src, dst) {
 TransformElement.snapToObject = function(object, hitObjects, event) {
   var hitObject;
 
-  if (event.metaKey) {
+  if (event.altKey) {
     if (hitObjects.length > 0) {
       for (var i = hitObjects.length-1; i >= 0; i--) {
         if (hitObjects[i] !== object) {
@@ -398,14 +401,14 @@ TransformElement.snapToObject = function(object, hitObjects, event) {
     // if we haven't saved the original size, do so
     if (!object._transform.snapped) {
       object._transform.snapped = {};
-      TransformElement.setObjectGeometry(object, object._transform.snapped);
+      TransformElement.setObjectGeometry(object, object._transform.snapped, true);
     }
     // set the height/width and x, y of object to hitObject
-    TransformElement.setObjectGeometry(hitObject, object);
+    TransformElement.setObjectGeometry(hitObject, object, true);
   } else {
     // if we saved the orignal size, restore
     if (object._transform.snapped) {
-      TransformElement.setObjectGeometry(object._transform.snapped, object);
+      TransformElement.setObjectGeometry(object._transform.snapped, object, true);
       delete object._transform.snapped;
     }
   }
