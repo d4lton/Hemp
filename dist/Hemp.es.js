@@ -1930,7 +1930,7 @@ TransformElement.setObjectGeometry = function (src, dst, onlyLocation) {
 TransformElement.snapToObject = function (object, hitObjects, event) {
   var hitObject;
 
-  if (event.altKey && event.metaKey) {
+  if (event.altKey) {
     if (hitObjects.length > 0) {
       for (var i = hitObjects.length - 1; i >= 0; i--) {
         if (hitObjects[i] !== object) {
@@ -1975,7 +1975,8 @@ TransformElement.transformMoveObject = function (environment, object, mouseX, mo
     }
   }
 
-  TransformElement.snapToObject(object, hitObjects, event);
+  // TODO: revisit this functionality
+  //TransformElement.snapToObject(object, hitObjects, event);
 };
 
 TransformElement.getObjectRotationInRadians = function (object) {
@@ -2283,19 +2284,23 @@ Hemp.prototype._addUpdateObjects = function (objects) {
     this._objects = [];
   }
 
-  this._objects = this._objects.concat(objects);
+  this._objects = objects.concat(this._objects);
 
   for (var i = 0; i < this._objects.length; i++) {
     var found = false;
     for (var j = i + 1; j < this._objects.length; j++) {
       if (this._objects[i]._internalId && this._objects[i]._internalId === this._objects[j]._internalId) {
-        this._copyPublicProperties(this._objects[j], this._objects[i]);
+        // copy public properties from new "object" to old "object" (leaving private ones alone)
+        this._copyPublicProperties(this._objects[i], this._objects[j]);
+        // set the new "object" to the old "object" (now that public properties are the same)
+        this._objects[j] = this._objects[i];
+        // remove old "object" from the list
         this._objects.splice(j, 1);
         found = true;
         break;
       }
     }
-    if (!found && this._objects[i]._internalId) {
+    if (!found && i >= objects.length) {
       this._objects.splice(i, 1);
     }
   }
