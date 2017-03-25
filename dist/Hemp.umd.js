@@ -2353,7 +2353,10 @@ Hemp.prototype.setStickyTransform = function (value) {
 
 Hemp.prototype.select = function (object) {
   if (typeof object !== 'undefined') {
-    this._selectObject(this._getObjectByInternalId(object._internalId), true);
+    var selectedObject = this._getObjectByInternalId(object._internalId);
+    if (!selectedObject._selected) {
+      this._selectObject(selectedObject, true);
+    }
   }
 };
 
