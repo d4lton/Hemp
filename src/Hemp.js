@@ -167,7 +167,6 @@ Hemp.prototype._getObjectByInternalId = function(id) {
 Hemp.prototype._copyPublicProperties = function(src, dst) {
   Object.keys(src).forEach(function(id) {
     if (id.substr(0, 1) !== '_') {
-      console.log('setting', id);
       dst[id] = src[id];
     }
   });
@@ -228,7 +227,10 @@ Hemp.prototype.setStickyTransform = function(value) {
 Hemp.prototype.select = function(object) {
   this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    this._selectObject(this._getObjectByInternalId(object._internalId), true);
+    var selectedObject = this._getObjectByInternalId(object._internalId);
+    if (selectedObject) {
+      this._selectObject(selectedObject, true);
+    }
   }
 };
 
@@ -461,7 +463,6 @@ Hemp.prototype._deselectAllObjects = function(skipEvent) {
   this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
     if (this._element && skipEvent !== true) {
-      console.trace('deselect');
       this._element.dispatchEvent(new CustomEvent('deselect', {detail: this._cleanObjects(deselectedObjects)}));
     }
   }

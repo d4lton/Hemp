@@ -33,45 +33,69 @@ TransformElement.prototype.renderElement = function(environment, object) {
 
 TransformElement.prototype.renderCanvas = function(environment, object) {
   environment.context.save();
+
   environment.context.translate(object.x, object.y);
   if (typeof object.rotation !== 'undefined') {
     environment.context.rotate(object.rotation * Math.PI / 180);
   }
-
-  environment.context.lineWidth = 2;
-  environment.context.setLineDash([8, 4]);
-  environment.context.globalCompositeOperation = 'xor';
-  environment.context.strokeStyle = 'rgba(127, 127, 127, 1.0)';
+  
+  for (var i = 0; i < 2; i++) {
+    var type;
+    if (i == 0) {
+      environment.context.lineWidth = 4;
+      environment.context.setLineDash([]);
+      environment.context.strokeStyle = 'rgba(0, 0, 0, 1.0)';
+      type = 'stroke';
+    } else {
+      environment.context.lineWidth = 2;
+      environment.context.setLineDash([6, 2]);
+      environment.context.strokeStyle = 'rgba(255, 255, 0, 1.0)';
+      environment.context.fillStyle = 'rgba(255, 255, 0, 1.0)';
+      type = 'fill';
+    }
+      
+    // body
+    environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
     
-  // body
-  environment.context.strokeRect(-object.width / 2, -object.height / 2, object.width, object.height);
-  
-  if (object.locked !== true) {
-    // ul
-    environment.context.strokeRect(-object.width / 2, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
-    // ur
-    environment.context.strokeRect((object.width / 2) - TransformElement.handleSize, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
-    // lr
-    environment.context.strokeRect((object.width / 2) - TransformElement.handleSize, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
-    // ll
-    environment.context.strokeRect(-object.width / 2, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
-  
-    // top
-    environment.context.strokeRect(-10, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize);
-    // right
-    environment.context.strokeRect((object.width / 2) - TransformElement.handleSize, -10, TransformElement.handleSize, TransformElement.handleSize);
-    // bottom
-    environment.context.strokeRect(-10, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize);
-    // left
-    environment.context.strokeRect(-object.width / 2, -10, TransformElement.handleSize, TransformElement.handleSize);
-  
-    // rotate handle
-    environment.context.strokeRect(-10, -(object.height / 2) - (TransformElement.handleSize * 2), TransformElement.handleSize, TransformElement.handleSize);
-    // rotate connector
-    environment.context.strokeRect(0, -(object.height / 2) - TransformElement.handleSize, 1, TransformElement.handleSize);
+    if (object.locked !== true) {
+      // ul
+      TransformElement.fillOrStrokeRect(environment.context, -object.width / 2, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize, type);
+      // ur
+      TransformElement.fillOrStrokeRect(environment.context, (object.width / 2) - TransformElement.handleSize, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize, type);
+      // lr
+      TransformElement.fillOrStrokeRect(environment.context, (object.width / 2) - TransformElement.handleSize, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize, type);
+      // ll
+      TransformElement.fillOrStrokeRect(environment.context, -object.width / 2, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize, type);
+    
+      // top
+      TransformElement.fillOrStrokeRect(environment.context, -10, -object.height / 2, TransformElement.handleSize, TransformElement.handleSize, type);
+      // right
+      TransformElement.fillOrStrokeRect(environment.context, (object.width / 2) - TransformElement.handleSize, -10, TransformElement.handleSize, TransformElement.handleSize, type);
+      // bottom
+      TransformElement.fillOrStrokeRect(environment.context, -10, (object.height / 2) - TransformElement.handleSize, TransformElement.handleSize, TransformElement.handleSize, type);
+      // left
+      TransformElement.fillOrStrokeRect(environment.context, -object.width / 2, -10, TransformElement.handleSize, TransformElement.handleSize, type);
+    
+      // rotate handle
+      TransformElement.fillOrStrokeRect(environment.context, -10, -(object.height / 2) - (TransformElement.handleSize * 2), TransformElement.handleSize, TransformElement.handleSize, type);
+      // rotate connector
+      environment.context.strokeRect(0, -(object.height / 2) - TransformElement.handleSize, 1, TransformElement.handleSize);
+    }
   }
 
   environment.context.restore();
+};
+
+TransformElement.fillOrStrokeRect = function(context, x, y, height, width, type) {
+  switch (type) {
+    case 'fill':
+      context.fillRect(x, y, height, width);
+      break;
+    case 'stroke':
+      context.strokeRect(x, y, height, width);
+      break;
+  }
+  
 };
 
 
@@ -349,6 +373,7 @@ TransformElement.snapObject = function(environment, object) {
   if (!snapped) {
     object.rotation = object._transform.origin.object.rotation;
   }
+  return snapped;
 };
 
 TransformElement.snapMaximize = function(environment, object, mouseX, mouseY) {
@@ -425,11 +450,14 @@ TransformElement.transformMoveObject = function(environment, object, mouseX, mou
   }
   
   TransformElement.snapMaximize(environment, object, mouseX, mouseY);
-  TransformElement.snapToObject(object, hitObjects, event);
 
   if (event.altKey) {
-    TransformElement.snapObject(environment, object);
+    if (TransformElement.snapObject(environment, object)) {
+      return;
+    }
   }
+
+  TransformElement.snapToObject(object, hitObjects, event);
 
 };
 
