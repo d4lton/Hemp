@@ -2286,6 +2286,10 @@ Hemp.prototype._addUpdateObjects = function (objects) {
     this._objects = [];
   }
 
+  var selectedObjectIds = this._getObjects({ name: '_selected', value: true, op: 'eq' }).map(function (object) {
+    return object._internalId;
+  });
+
   this._objects = objects.concat(this._objects);
 
   for (var i = 0; i < this._objects.length; i++) {
@@ -2306,6 +2310,12 @@ Hemp.prototype._addUpdateObjects = function (objects) {
       this._objects.splice(i, 1);
     }
   }
+
+  this._objects.forEach(function (object) {
+    if (selectedObjectIds.indexOf(object._internalId) !== -1) {
+      this._createPrivateProperty(object, '_selected', true);
+    }
+  }.bind(this));
 };
 
 Hemp.prototype._finishLoading = function (callback) {
@@ -2338,17 +2348,14 @@ Hemp.prototype.setStickyTransform = function (value) {
 };
 
 Hemp.prototype.select = function (object) {
-  this._deselectAllObjects(true);
   if (typeof object !== 'undefined') {
-    var selectedObject = this._getObjectByInternalId(object._internalId);
-    if (selectedObject) {
-      this._selectObject(selectedObject, true);
-    }
+    this._selectObject(this._getObjectByInternalId(object._internalId), true);
   }
 };
 
 Hemp.prototype.deselect = function (object) {
   this._deselectAllObjects(true);
+  this._renderObjects(this._environment);
 };
 
 Hemp.prototype._createCanvas = function (width, height) {
@@ -2390,6 +2397,7 @@ Hemp.prototype._onKeyDown = function (event) {
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
+      this._renderObjects(this._environment);
       break;
     /*
     case 'ArrowLeft':
@@ -2480,7 +2488,6 @@ Hemp.prototype._onMouseDown = function (event) {
   if (hitObjects.length > 0) {
     var hitObject = hitObjects[hitObjects.length - 1];
     if (hitObject._selected !== true) {
-      this._deselectAllObjects();
       this._selectObject(hitObject);
     }
     this._setupTransformingObject(coordinates.x, coordinates.y, event);
@@ -2570,7 +2577,6 @@ Hemp.prototype._deselectAllObjects = function (skipEvent) {
     }
     delete object._selected;
   });
-  this._renderObjects(this._environment);
   if (deselectedObjects.length > 0) {
     if (this._element && skipEvent !== true) {
       this._element.dispatchEvent(new CustomEvent('deselect', { detail: this._cleanObjects(deselectedObjects) }));
@@ -2579,9 +2585,12 @@ Hemp.prototype._deselectAllObjects = function (skipEvent) {
 };
 
 Hemp.prototype._selectObject = function (object, skipEvent) {
+  var selected = object._selected;
   this._deselectAllObjects(skipEvent);
   this._createPrivateProperty(object, '_selected', true);
-  this._renderObjects(this._environment);
+  if (!selected) {
+    this._renderObjects(this._environment);
+  }
   if (this._element && skipEvent !== true) {
     this._element.dispatchEvent(new CustomEvent('select', { detail: this._cleanObject(object) }));
   }
