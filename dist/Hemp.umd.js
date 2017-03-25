@@ -1936,7 +1936,7 @@ TransformElement.setObjectGeometry = function (src, dst, onlyLocation) {
 TransformElement.snapToObject = function (object, hitObjects, event) {
   var hitObject;
 
-  if (event.altKey) {
+  if (event.altKey && event.metaKey) {
     if (hitObjects.length > 0) {
       for (var i = hitObjects.length - 1; i >= 0; i--) {
         if (hitObjects[i] !== object) {

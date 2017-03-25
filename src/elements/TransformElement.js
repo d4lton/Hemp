@@ -413,7 +413,7 @@ TransformElement.snapToObject = function(object, hitObjects, event) {
 
   if (event.altKey) {
     if (hitObjects.length > 0) {
-      for (var i = hitObjects.length-1; i >= 0; i--) {
+      for (var i = hitObjects.length - 1; i >= 0; i--) {
         if (hitObjects[i] !== object) {
           hitObject = hitObjects[i];
           break;
@@ -457,7 +457,8 @@ TransformElement.transformMoveObject = function(environment, object, mouseX, mou
     }
   }
 
-  TransformElement.snapToObject(object, hitObjects, event);
+  // TODO: revisit this functionality
+  //TransformElement.snapToObject(object, hitObjects, event);
 
 };
 
