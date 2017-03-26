@@ -2134,12 +2134,18 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
   }
 
   if (this._interactive) {
-    window.addEventListener('keydown', this._onKeyDown.bind(this));
-    window.addEventListener('keyup', this._onKeyUp.bind(this));
-    window.addEventListener('mousemove', this._onMouseMove.bind(this));
-    window.addEventListener('mouseup', this._onMouseUp.bind(this));
+    this._onMouseDownHandler = this._onMouseDown.bind(this);
+    this._onKeyDownHandler = this._onKeyDown.bind(this);
+    this._onKeyUpHandler = this._onKeyUp.bind(this);
+    this._onMouseMoveHandler = this._onMouseMove.bind(this);
+    this._onMouseUpHandler = this._onMouseUp.bind(this);
+    window.addEventListener('keydown', this._onKeyDownHandler);
+    window.addEventListener('keyup', this._onKeyUpHandler);
+    window.addEventListener('mousemove', this._onMouseMoveHandler);
+    window.addEventListener('mouseup', this._onMouseUpHandler);
     if (this._allowWindowDeselect) {
-      window.addEventListener('mousedown', this._onWindowMouseDown.bind(this));
+      this._onWindowMouseDownHandler = this._onWindowMouseDown.bind(this);
+      window.addEventListener('mousedown', this._onWindowMouseDownHandler);
     }
   }
 
@@ -2171,8 +2177,8 @@ Hemp.prototype.setSize = function (width, height) {
       this._element.removeChild(this._environment.canvas);
     }
     if (this._interactive) {
-      this._environment.canvas.removeEventListener('mousedown', this._onMouseDown.bind(this));
-      this._environment.canvas.removeEventListener('contextmenu', this._onMouseDown.bind(this));
+      this._environment.canvas.removeEventListener('mousedown', this._onMouseDownHandler);
+      this._environment.canvas.removeEventListener('contextmenu', this._onMouseDownHandler);
     }
   }
 
@@ -2190,19 +2196,21 @@ Hemp.prototype.setSize = function (width, height) {
   // if we have user interaction, setup for canvas mousedowns
   if (this._interactive) {
     this._environment.canvas.setAttribute('tabIndex', '1');
-    this._environment.canvas.addEventListener('mousedown', this._onMouseDown.bind(this));
-    this._environment.canvas.addEventListener('contextmenu', this._onMouseDown.bind(this));
+    this._environment.canvas.addEventListener('mousedown', this._onMouseDownHandler);
+    this._environment.canvas.addEventListener('contextmenu', this._onMouseDownHandler);
   }
 };
 
 Hemp.prototype.destroy = function () {
   if (this._interactive) {
-    window.removeEventListener('keydown', this._onKeyDown);
-    window.removeEventListener('keyup', this._onKeyUp);
-    window.removeEventListener('mousemove', this._onMouseMove);
-    window.removeEventListener('mouseup', this._onMouseUp);
+    window.removeEventListener('keydown', this._onKeyDownHandler);
+    window.removeEventListener('keyup', this._onKeyUpHandler);
+    window.removeEventListener('mousemove', this._onMouseMoveHandler);
+    window.removeEventListener('mouseup', this._onMouseUpHandler);
+    this._environment.canvas.removeEventListener('mousedown', this._onMouseDownHandler);
+    this._environment.canvas.removeEventListener('contextmenu', this._onMouseDownHandler);
     if (this._allowWindowDeselect) {
-      window.removeEventListener('mousedown', this._onWindowMouseDown);
+      window.removeEventListener('mousedown', this._onWindowMouseDownHandler);
     }
   }
 };
