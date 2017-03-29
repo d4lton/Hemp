@@ -87,7 +87,6 @@ Hemp.prototype.setSize = function(width, height) {
     this._environment.canvas.addEventListener('mousedown', this._onMouseDownHandler);
     this._environment.canvas.addEventListener('contextmenu', this._onMouseDownHandler);
   }
-
 };
 
 Hemp.prototype.destroy = function() {

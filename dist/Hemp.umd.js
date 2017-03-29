@@ -1344,7 +1344,7 @@ ShapeElement.getTypes = function () {
           name: 'color',
           displayName: '',
           type: 'color',
-          default: '#000000'
+          default: '#2677b0'
         }, {
           name: 'alpha',
           displayName: '',
@@ -1426,7 +1426,7 @@ ShapeElement.getTypes = function () {
           name: 'color',
           displayName: '',
           type: 'color',
-          default: '#000000'
+          default: '#2677b0'
         }, {
           name: 'alpha',
           displayName: '',
