@@ -2712,7 +2712,10 @@ Hemp.prototype._setupRenderEnvironment = function (object, options) {
 };
 
 Hemp.prototype._clearEnvironment = function (environment) {
-  environment.context.clearRect(0, 0, environment.canvas.width, environment.canvas.height);
+  environment.context.save();
+  environment.context.fillStyle = '#000000';
+  environment.context.fillRect(0, 0, environment.canvas.width, environment.canvas.height);
+  environment.context.restore();
 };
 
 // -----------------------------------------------------------------------------
