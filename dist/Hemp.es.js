@@ -11,8 +11,8 @@ function Element() {}
 /************************************************************************************/
 
 Element.prototype.render = function (environment, object) {
-  if (object.visible !== false || environment.options && environment.options.selectionRender) {
-    clearTimeout(this._renderTimeout);
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (object.visible !== false || render === 'select') {
     this.setupCanvas(environment, object);
     this.renderElement(environment, object);
     this.renderCanvas(environment, object);
@@ -81,7 +81,8 @@ Element.prototype.renderCanvas = function (environment, object) {
     environment.context.rotate(object.rotation * Math.PI / 180);
   }
 
-  if (!environment.options || !environment.options.selectionRender) {
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (render === 'normal') {
     if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
       environment.context.globalAlpha = object.opacity;
     }
@@ -102,7 +103,8 @@ Element.prototype._renderPlaceholder = function (environment, object) {
 };
 
 Element.prototype.resolveColor = function (environment, color, alpha) {
-  if (environment.options && environment.options.selectionRender) {
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (render === 'select') {
     return 'black';
   } else {
     if (typeof alpha !== 'undefined') {
