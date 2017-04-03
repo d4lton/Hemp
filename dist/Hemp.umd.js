@@ -205,7 +205,7 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
     object._image.onerror = function (event) {
       console.log('could not load image from ', object.url, reflectorUrl, this._resolveMediaUrl(object.url, reflectorUrl));
       this._createPrivateProperty(object, '_imageLoaded', false);
-      reject();
+      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));
@@ -1070,7 +1070,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
         resolve();
       },
       inactive: function inactive() {
-        reject();
+        reject('could not load font from ' + object.customFont.url);
       }
     });
   }.bind(this));
@@ -2277,8 +2277,8 @@ Hemp.prototype.setObjects = function (objects, callback) {
       // if not interactive, run all promises in serial, blocking render until done
       Promise.all(promises).then(function () {
         this._finishLoading(callback);
-      }.bind(this), function () {
-        this._finishLoading(callback);
+      }.bind(this), function (reason) {
+        throw new Error(reason);
       }.bind(this));
     }
   } else {

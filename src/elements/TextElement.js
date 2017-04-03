@@ -56,7 +56,7 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
         resolve();
       },
       inactive: function() {
-        reject();
+        reject('could not load font from ' + object.customFont.url);
       },
     });
   }.bind(this));

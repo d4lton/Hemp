@@ -150,8 +150,8 @@ Hemp.prototype.setObjects = function(objects, callback) {
       // if not interactive, run all promises in serial, blocking render until done
       Promise.all(promises).then(function() {
         this._finishLoading(callback);
-      }.bind(this), function() {
-        this._finishLoading(callback);
+      }.bind(this), function(reason) {
+        throw new Error(reason);
       }.bind(this));
 
     }
