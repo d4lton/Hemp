@@ -119,7 +119,7 @@ ImageElement.getTypes = function() {
               min: 0,
               max: 1,
               step: 0.01,
-              default: 1,
+              default: 0,
               width: 50
             },
             {
