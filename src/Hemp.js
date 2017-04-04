@@ -117,7 +117,7 @@ Hemp.prototype.toImage = function(callback) {
 
 Hemp.prototype.setObjects = function(objects, callback) {
   objects = (objects && Array.isArray(objects)) ? objects : [];
-  
+
   this._addUpdateObjects(objects);
 
   var promises = [];  
@@ -151,9 +151,10 @@ Hemp.prototype.setObjects = function(objects, callback) {
       Promise.all(promises).then(function() {
         this._finishLoading(callback);
       }.bind(this), function(reason) {
-        throw new Error(reason);
+        if (typeof callback === 'function') {
+          callback(this._objects, reason);
+        }
       }.bind(this));
-
     }
   } else {
     this._finishLoading(callback);
