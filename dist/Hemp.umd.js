@@ -1221,13 +1221,13 @@ TextElement.getTypes = function () {
           displayName: 'dist',
           type: 'integer',
           default: '2',
-          width: 20
+          width: 30
         }, {
           name: 'shadowBlur',
           displayName: 'blur',
           type: 'integer',
           default: '5',
-          width: 20
+          width: 30
         }]
       }, {
         name: 'position',
