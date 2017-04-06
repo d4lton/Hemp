@@ -2458,9 +2458,6 @@ Hemp.prototype._onKeyDown = function (event) {
         this._onMouseMove(event);
       }
       break;
-    default:
-      console.log('_onKeyDown event.code:', event.code);
-      break;
   }
 };
 
