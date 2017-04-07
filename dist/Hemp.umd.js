@@ -2189,6 +2189,7 @@ var Hemp = function Hemp(width, height, objects, interactive, selector) {
 
   this._stickyTransform = false;
   this._allowWindowDeselect = false;
+  this._reverseRenderOrder = false;
 
   if (typeof selector !== 'undefined') {
     this._element = this._findElement(selector);
@@ -2226,6 +2227,10 @@ Hemp.prototype.getEnvironment = function () {
 
 Hemp.prototype.setMediaReflectorUrl = function (url) {
   this._mediaReflectorUrl = url;
+};
+
+Hemp.prototype.setReverseRenderOrder = function (reverse) {
+  this._reverseRenderOrder = reverse;
 };
 
 Hemp.prototype.setSize = function (width, height) {
@@ -2288,6 +2293,10 @@ Hemp.prototype.toImage = function (callback) {
 
 Hemp.prototype.setObjects = function (objects, callback) {
   objects = objects && Array.isArray(objects) ? objects : [];
+
+  if (this._reverseRenderOrder) {
+    objects.reverse();
+  }
 
   this._addUpdateObjects(objects);
 
