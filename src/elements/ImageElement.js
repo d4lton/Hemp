@@ -40,8 +40,8 @@ ImageElement.prototype.preload = function(object, reflectorUrl) {
       resolve();
     }.bind(this);
     object._image.onerror = function(event) {
-      console.log('could not load image from ', object.url, reflectorUrl, this._resolveMediaUrl(object.url, reflectorUrl));
       this._createPrivateProperty(object, '_imageLoaded', false);
+      this._createPrivateProperty(object, '_error', {message: 'Error loading image', text: '', url: object.url});
       reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);

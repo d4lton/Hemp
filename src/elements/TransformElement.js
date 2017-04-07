@@ -34,7 +34,7 @@ TransformElement.prototype.renderElement = function(environment, object) {
 TransformElement.prototype.renderCanvas = function(environment, object) {
   environment.context.save();
   
-  var handleSize = TransformElement.handleSize * object._ratios.x;
+  var handleSize = TransformElement.handleSize * environment.scaling.x;
 
   environment.context.translate(object.x, object.y);
   if (typeof object.rotation !== 'undefined') {
@@ -44,12 +44,12 @@ TransformElement.prototype.renderCanvas = function(environment, object) {
   for (var i = 0; i < 2; i++) {
     var type;
     if (i == 0) {
-      environment.context.lineWidth = 4 * object._ratios.x;
+      environment.context.lineWidth = 4 * environment.scaling.x;
       environment.context.setLineDash([]);
       environment.context.strokeStyle = 'rgba(0, 0, 0, 1.0)';
       type = 'stroke';
     } else {
-      environment.context.lineWidth = 2 * object._ratios.x;
+      environment.context.lineWidth = 2 * environment.scaling.x;
       environment.context.setLineDash([6, 2]);
       environment.context.strokeStyle = 'rgba(255, 255, 0, 1.0)';
       environment.context.fillStyle = 'rgba(255, 255, 0, 1.0)';
@@ -101,9 +101,9 @@ TransformElement.fillOrStrokeRect = function(context, x, y, height, width, type)
 };
 
 
-TransformElement.findTransformHandle = function(environment, mouseX, mouseY, object, ratios) {
+TransformElement.findTransformHandle = function(environment, mouseX, mouseY, object) {
   var handles = ['ul', 'ur', 'll', 'lr', 'top', 'right', 'bottom', 'left', 'body', 'rotate'];
-  var handleSize = TransformElement.handleSize * ratios.x;
+  var handleSize = TransformElement.handleSize * environment.scaling.x;
   for (var i = 0; i < handles.length; i++) {
     var handle = handles[i];
 

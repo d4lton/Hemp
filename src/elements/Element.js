@@ -5,6 +5,7 @@
  * Copyright ©2017 Dana Basken <dbasken@gmail.com>
  *
  */
+import CanvasText from '../CanvasText/CanvasText.js';
 
 function Element() {
 };
@@ -98,10 +99,59 @@ Element.prototype.renderCanvas = function(environment, object) {
 };
 
 Element.prototype._renderPlaceholder = function(environment, object) {
-  this._context.strokeStyle = '#FFFF80';
-  this._context.lineWidth = 10;
-  this._context.setLineDash([8, 4]);
+
+  // gray background
+  this._context.fillStyle = 'rgba(64, 32, 32, 1.0)';
+  this._context.fillRect(0, 0, object.width, object.height);
+
+  // draw border
+  this._context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  this._context.lineWidth = 4 * environment.scaling.x;
   this._context.strokeRect(0, 0, object.width, object.height);
+  
+  // draw crosses
+  this._context.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  this._context.lineWidth = 2 * environment.scaling.x;
+  this._context.beginPath();
+  this._context.moveTo(0, 0);
+  this._context.lineTo(object.width, object.height);
+  this._context.moveTo(object.width, 0);
+  this._context.lineTo(0, object.height);
+  this._context.stroke();
+
+  
+  if (object._error) {
+    // draw object text
+    var fontSize = 40 * environment.scaling.x;
+    var textObject = {
+      text: object._error.text,
+      x: object.width / 2,
+      y: object.height / 2,
+      font: fontSize + 'pt sans-serif',
+      color: 'rgba(255, 255, 255, 0.75)',
+      align: 'center',
+      valign: 'middle',
+      height: object.height,
+      width: object.width
+    };
+    CanvasText.drawText(this._context, textObject);
+
+    // draw error message
+    fontSize = 15 * environment.scaling.x;
+    textObject.text = object._error.message;
+    textObject.valign = 'top';
+    textObject.font = fontSize + 'pt sans-serif',
+    textObject.padding = fontSize;
+    CanvasText.drawText(this._context, textObject);
+    
+    // draw URL
+    fontSize = 10 * environment.scaling.x;
+    textObject.text = object._error.url;
+    textObject.valign = 'bottom';
+    textObject.font = fontSize + 'pt sans-serif',
+    CanvasText.drawText(this._context, textObject);
+  }
+
 };
 
 Element.prototype.resolveColor = function(environment, color, alpha) {

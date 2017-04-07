@@ -1,382 +1,6 @@
 'use strict';
 
 /**
- * Hemp
- * Base Element
- *
- * Copyright ©2017 Dana Basken <dbasken@gmail.com>
- *
- */
-
-function Element() {}
-
-/************************************************************************************/
-
-Element.prototype.render = function (environment, object) {
-  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
-  if (object.visible !== false || render === 'select') {
-    this.setupCanvas(environment, object);
-    this.renderElement(environment, object);
-    this.renderCanvas(environment, object);
-  }
-};
-
-Element.prototype.setupCanvas = function (environment, object) {
-  if (!this._canvas) {
-    this._canvas = document.createElement('canvas');
-    this._context = this._canvas.getContext('2d');
-  }
-  this._canvas.width = object.width;
-  this._canvas.height = object.height;
-  this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-  if (object.backgroundColor) {
-    this._context.save();
-    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor, object.backgroundAlpha);
-    this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.backgroundRadius));
-    this._context.restore();
-  }
-};
-
-Element.prototype.resolveRadius = function (radius) {
-  if (typeof radius !== 'undefined') {
-    return radius;
-  } else {
-    return 0;
-  }
-};
-
-Element.prototype._fillRoundRect = function (context, x, y, w, h, r) {
-  if (w < 2 * r) r = w / 2;
-  if (h < 2 * r) r = h / 2;
-  context.beginPath();
-  context.moveTo(x + r, y);
-  context.arcTo(x + w, y, x + w, y + h, r);
-  context.arcTo(x + w, y + h, x, y + h, r);
-  context.arcTo(x, y + h, x, y, r);
-  context.arcTo(x, y, x + w, y, r);
-  context.closePath();
-  context.fill();
-};
-
-Element.prototype.needsPreload = function (object) {
-  return false;
-};
-
-Element.prototype.preload = function (object, reflectorUrl) {};
-
-Element.prototype._resolveMediaUrl = function (url, reflectorUrl) {
-  var result = url;
-  if (reflectorUrl) {
-    result = reflectorUrl.replace('{{url}}', encodeURIComponent(url));
-  }
-  return result;
-};
-
-Element.prototype.renderElement = function (environment, object) {
-  console.warn('override me');
-};
-
-Element.prototype.renderCanvas = function (environment, object) {
-  environment.context.save();
-  environment.context.translate(object.x, object.y);
-  if (typeof object.rotation !== 'undefined' && object.rotation != 0) {
-    environment.context.rotate(object.rotation * Math.PI / 180);
-  }
-
-  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
-  if (render === 'normal') {
-    if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
-      environment.context.globalAlpha = object.opacity;
-    }
-    if (typeof object.compositing !== 'undefined') {
-      environment.context.globalCompositeOperation = object.compositing;
-    }
-  }
-
-  environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
-  environment.context.restore();
-};
-
-Element.prototype._renderPlaceholder = function (environment, object) {
-  this._context.strokeStyle = '#FFFF80';
-  this._context.lineWidth = 10;
-  this._context.setLineDash([8, 4]);
-  this._context.strokeRect(0, 0, object.width, object.height);
-};
-
-Element.prototype.resolveColor = function (environment, color, alpha) {
-  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
-  if (render === 'select') {
-    return 'black';
-  } else {
-    if (typeof alpha !== 'undefined') {
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
-      return 'rgba(' + parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) + ', ' + alpha + ')';
-    } else {
-      return color;
-    }
-  }
-};
-
-Element.prototype._createPrivateProperty = function (object, property, value) {
-  Object.defineProperty(object, property, { enumerable: false, configurable: true, writable: true, value: value });
-};
-
-Element.getTypes = function () {
-  console.warn('override me');
-};
-
-var MediaCache = {
-
-  _entries: {},
-
-  _maxAgeMs: 300000,
-
-  get: function get(key) {
-    this._age();
-    var entry = this._entries[key];
-    if (entry) {
-      entry.hitMs = Date.now();
-      return entry.media;
-    }
-  },
-
-  set: function set(key, media) {
-    this._entries[key] = {
-      hitMs: Date.now(),
-      media: media
-    };
-    this._age();
-  },
-
-  _age: function _age() {
-    var cutoffMs = Date.now() - this._maxAgeMs;
-    Object.keys(this._entries).forEach(function (key) {
-      if (this._entries[key].hitMs < cutoffMs) {
-        delete this._entries[key];
-      }
-    }.bind(this));
-  }
-
-};
-
-/**
- * Hemp
- * Image Element
- *
- * Copyright ©2017 Dana Basken <dbasken@gmail.com>
- *
- */
-
-function ImageElement() {
-  Element.call(this);
-}
-
-ImageElement.prototype = Object.create(Element.prototype);
-ImageElement.prototype.constructor = ImageElement;
-
-/************************************************************************************/
-
-ImageElement.prototype.needsPreload = function (object) {
-  var image = MediaCache.get(object.url);
-  if (image) {
-    this._createPrivateProperty(object, '_image', image);
-    this._createPrivateProperty(object, '_imageLoaded', true);
-    return false;
-  } else {
-    this._createPrivateProperty(object, '_imageLoaded', false);
-    return true;
-  }
-};
-
-ImageElement.prototype.preload = function (object, reflectorUrl) {
-  return new Promise(function (resolve, reject) {
-    this._createPrivateProperty(object, '_image', new Image());
-    object._image.crossOrigin = 'Anonymous';
-    object._image.onload = function () {
-      MediaCache.set(this.url, object._image);
-      this._createPrivateProperty(object, '_imageLoaded', true);
-      resolve();
-    }.bind(this);
-    object._image.onerror = function (event) {
-      console.log('could not load image from ', object.url, reflectorUrl, this._resolveMediaUrl(object.url, reflectorUrl));
-      this._createPrivateProperty(object, '_imageLoaded', false);
-      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
-    }.bind(this);
-    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
-  }.bind(this));
-};
-
-ImageElement.prototype._getFitHeightSource = function (src, dst, valign) {
-  var width = src.width;
-  var height = width * (dst.height / dst.width);
-  if (height > src.height) {
-    width = src.height * (dst.width / dst.height);
-    height = src.height;
-  }
-
-  var offsetX = Math.max(0, src.width - width) / 2;
-
-  var offsetY = Math.max(0, src.height - height) / 2;
-  switch (valign) {
-    case 'top':
-      offsetY = 0;
-      break;
-    case 'bottom':
-      offsetY = src.height - height;
-      break;
-  }
-
-  return {
-    width: width,
-    height: height,
-    x: offsetX,
-    y: offsetY
-  };
-};
-
-ImageElement.prototype.renderElement = function (environment, object) {
-  if (object._imageLoaded) {
-    try {
-      var source = this._getFitHeightSource(object._image, object, object.valign);
-      this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
-    } catch (e) {
-      this._renderPlaceholder(environment, object);
-      console.log('exception when trying to render image', e);
-    }
-  } else {
-    this._renderPlaceholder(environment, object);
-  }
-};
-
-ImageElement.getTypes = function () {
-  return {
-    image: {
-      displayName: 'Image',
-      properties: [{
-        name: 'url',
-        displayName: 'URL',
-        type: 'url',
-        default: ''
-      }, {
-        displayName: 'Background',
-        type: 'group',
-        properties: [{
-          name: 'backgroundColor',
-          displayName: '',
-          type: 'color',
-          default: '#000000'
-        }, {
-          name: 'backgroundAlpha',
-          displayName: '',
-          type: 'range',
-          min: 0,
-          max: 1,
-          step: 0.01,
-          default: 0,
-          width: 50
-        }, {
-          name: 'backgroundRadius',
-          displayName: 'rad',
-          type: 'integer',
-          default: 0,
-          width: 35
-        }]
-      }, {
-        displayName: 'Alignment',
-        type: 'group',
-        properties: [{
-          name: 'valign',
-          displayName: '',
-          type: 'spiffy',
-          values: [{
-            value: 'top',
-            label: '',
-            fontIcon: 'fa fa-long-arrow-down'
-          }, {
-            value: 'middle',
-            label: '',
-            fontIcon: 'fa fa-arrows-v'
-          }, {
-            value: 'bottom',
-            label: '',
-            fontIcon: 'fa fa-long-arrow-up'
-          }],
-          default: 'middle'
-        }]
-      }, {
-        name: 'position',
-        displayName: 'Position',
-        type: 'group',
-        properties: [{
-          type: 'integer',
-          name: 'x',
-          displayName: 'X',
-          default: 120
-        }, {
-          type: 'integer',
-          name: 'y',
-          displayName: 'Y',
-          default: 120
-        }]
-      }, {
-        name: 'size',
-        displayName: 'Size',
-        type: 'group',
-        properties: [{
-          type: 'integer',
-          name: 'width',
-          displayName: 'W',
-          default: 200
-        }, {
-          type: 'integer',
-          name: 'height',
-          displayName: 'H',
-          default: 200
-        }]
-      }, {
-        displayName: 'Rotation',
-        type: 'group',
-        properties: [{
-          name: 'rotation',
-          displayName: '',
-          type: 'range',
-          min: 0,
-          max: 360,
-          step: 1,
-          default: 0,
-          width: 60
-        }, {
-          name: 'rotation',
-          displayName: '',
-          type: 'integer',
-          default: 0,
-          width: 32
-        }]
-      }, {
-        name: 'opacity',
-        displayName: 'Opacity',
-        type: 'range',
-        min: 0,
-        max: 1,
-        step: 0.01,
-        default: 1
-      }, {
-        name: 'compositing',
-        displayName: 'Compositing',
-        type: 'compositing',
-        default: 'source-over'
-      }, {
-        name: 'script',
-        displayName: 'Script',
-        type: 'script',
-        default: ''
-      }]
-    }
-  };
-};
-
-/**
 * Canvas Text
 *
 * Copyright ©2017 Dana Basken <dbasken@gmail.com>
@@ -656,6 +280,426 @@ var CanvasText = {
     return last - first;
   }
 
+};
+
+/**
+ * Hemp
+ * Base Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
+function Element() {}
+
+/************************************************************************************/
+
+Element.prototype.render = function (environment, object) {
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (object.visible !== false || render === 'select') {
+    this.setupCanvas(environment, object);
+    this.renderElement(environment, object);
+    this.renderCanvas(environment, object);
+  }
+};
+
+Element.prototype.setupCanvas = function (environment, object) {
+  if (!this._canvas) {
+    this._canvas = document.createElement('canvas');
+    this._context = this._canvas.getContext('2d');
+  }
+  this._canvas.width = object.width;
+  this._canvas.height = object.height;
+  this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+  if (object.backgroundColor) {
+    this._context.save();
+    this._context.fillStyle = this.resolveColor(environment, object.backgroundColor, object.backgroundAlpha);
+    this._fillRoundRect(this._context, 0, 0, object.width, object.height, this.resolveRadius(object.backgroundRadius));
+    this._context.restore();
+  }
+};
+
+Element.prototype.resolveRadius = function (radius) {
+  if (typeof radius !== 'undefined') {
+    return radius;
+  } else {
+    return 0;
+  }
+};
+
+Element.prototype._fillRoundRect = function (context, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+  context.fill();
+};
+
+Element.prototype.needsPreload = function (object) {
+  return false;
+};
+
+Element.prototype.preload = function (object, reflectorUrl) {};
+
+Element.prototype._resolveMediaUrl = function (url, reflectorUrl) {
+  var result = url;
+  if (reflectorUrl) {
+    result = reflectorUrl.replace('{{url}}', encodeURIComponent(url));
+  }
+  return result;
+};
+
+Element.prototype.renderElement = function (environment, object) {
+  console.warn('override me');
+};
+
+Element.prototype.renderCanvas = function (environment, object) {
+  environment.context.save();
+  environment.context.translate(object.x, object.y);
+  if (typeof object.rotation !== 'undefined' && object.rotation != 0) {
+    environment.context.rotate(object.rotation * Math.PI / 180);
+  }
+
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (render === 'normal') {
+    if (typeof object.opacity !== 'undefined' && object.opacity != 1) {
+      environment.context.globalAlpha = object.opacity;
+    }
+    if (typeof object.compositing !== 'undefined') {
+      environment.context.globalCompositeOperation = object.compositing;
+    }
+  }
+
+  environment.context.drawImage(this._canvas, -object.width / 2, -object.height / 2);
+  environment.context.restore();
+};
+
+Element.prototype._renderPlaceholder = function (environment, object) {
+
+  // gray background
+  this._context.fillStyle = 'rgba(64, 32, 32, 1.0)';
+  this._context.fillRect(0, 0, object.width, object.height);
+
+  // draw border
+  this._context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  this._context.lineWidth = 4 * environment.scaling.x;
+  this._context.strokeRect(0, 0, object.width, object.height);
+
+  // draw crosses
+  this._context.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  this._context.lineWidth = 2 * environment.scaling.x;
+  this._context.beginPath();
+  this._context.moveTo(0, 0);
+  this._context.lineTo(object.width, object.height);
+  this._context.moveTo(object.width, 0);
+  this._context.lineTo(0, object.height);
+  this._context.stroke();
+
+  if (object._error) {
+    // draw object text
+    var fontSize = 40 * environment.scaling.x;
+    var textObject = {
+      text: object._error.text,
+      x: object.width / 2,
+      y: object.height / 2,
+      font: fontSize + 'pt sans-serif',
+      color: 'rgba(255, 255, 255, 0.75)',
+      align: 'center',
+      valign: 'middle',
+      height: object.height,
+      width: object.width
+    };
+    CanvasText.drawText(this._context, textObject);
+
+    // draw error message
+    fontSize = 15 * environment.scaling.x;
+    textObject.text = object._error.message;
+    textObject.valign = 'top';
+    textObject.font = fontSize + 'pt sans-serif', textObject.padding = fontSize;
+    CanvasText.drawText(this._context, textObject);
+
+    // draw URL
+    fontSize = 10 * environment.scaling.x;
+    textObject.text = object._error.url;
+    textObject.valign = 'bottom';
+    textObject.font = fontSize + 'pt sans-serif', CanvasText.drawText(this._context, textObject);
+  }
+};
+
+Element.prototype.resolveColor = function (environment, color, alpha) {
+  var render = environment.options && environment.options.selectionRender === true ? 'select' : 'normal';
+  if (render === 'select') {
+    return 'black';
+  } else {
+    if (typeof alpha !== 'undefined') {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+      return 'rgba(' + parseInt(result[1], 16) + ', ' + parseInt(result[2], 16) + ', ' + parseInt(result[3], 16) + ', ' + alpha + ')';
+    } else {
+      return color;
+    }
+  }
+};
+
+Element.prototype._createPrivateProperty = function (object, property, value) {
+  Object.defineProperty(object, property, { enumerable: false, configurable: true, writable: true, value: value });
+};
+
+Element.getTypes = function () {
+  console.warn('override me');
+};
+
+var MediaCache = {
+
+  _entries: {},
+
+  _maxAgeMs: 300000,
+
+  get: function get(key) {
+    this._age();
+    var entry = this._entries[key];
+    if (entry) {
+      entry.hitMs = Date.now();
+      return entry.media;
+    }
+  },
+
+  set: function set(key, media) {
+    this._entries[key] = {
+      hitMs: Date.now(),
+      media: media
+    };
+    this._age();
+  },
+
+  _age: function _age() {
+    var cutoffMs = Date.now() - this._maxAgeMs;
+    Object.keys(this._entries).forEach(function (key) {
+      if (this._entries[key].hitMs < cutoffMs) {
+        delete this._entries[key];
+      }
+    }.bind(this));
+  }
+
+};
+
+/**
+ * Hemp
+ * Image Element
+ *
+ * Copyright ©2017 Dana Basken <dbasken@gmail.com>
+ *
+ */
+
+function ImageElement() {
+  Element.call(this);
+}
+
+ImageElement.prototype = Object.create(Element.prototype);
+ImageElement.prototype.constructor = ImageElement;
+
+/************************************************************************************/
+
+ImageElement.prototype.needsPreload = function (object) {
+  var image = MediaCache.get(object.url);
+  if (image) {
+    this._createPrivateProperty(object, '_image', image);
+    this._createPrivateProperty(object, '_imageLoaded', true);
+    return false;
+  } else {
+    this._createPrivateProperty(object, '_imageLoaded', false);
+    return true;
+  }
+};
+
+ImageElement.prototype.preload = function (object, reflectorUrl) {
+  return new Promise(function (resolve, reject) {
+    this._createPrivateProperty(object, '_image', new Image());
+    object._image.crossOrigin = 'Anonymous';
+    object._image.onload = function () {
+      MediaCache.set(this.url, object._image);
+      this._createPrivateProperty(object, '_imageLoaded', true);
+      resolve();
+    }.bind(this);
+    object._image.onerror = function (event) {
+      this._createPrivateProperty(object, '_imageLoaded', false);
+      this._createPrivateProperty(object, '_error', { message: 'Error loading image', text: '', url: object.url });
+      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
+    }.bind(this);
+    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
+  }.bind(this));
+};
+
+ImageElement.prototype._getFitHeightSource = function (src, dst, valign) {
+  var width = src.width;
+  var height = width * (dst.height / dst.width);
+  if (height > src.height) {
+    width = src.height * (dst.width / dst.height);
+    height = src.height;
+  }
+
+  var offsetX = Math.max(0, src.width - width) / 2;
+
+  var offsetY = Math.max(0, src.height - height) / 2;
+  switch (valign) {
+    case 'top':
+      offsetY = 0;
+      break;
+    case 'bottom':
+      offsetY = src.height - height;
+      break;
+  }
+
+  return {
+    width: width,
+    height: height,
+    x: offsetX,
+    y: offsetY
+  };
+};
+
+ImageElement.prototype.renderElement = function (environment, object) {
+  if (object._imageLoaded) {
+    try {
+      var source = this._getFitHeightSource(object._image, object, object.valign);
+      this._context.drawImage(object._image, source.x, source.y, source.width, source.height, 0, 0, object.width, object.height);
+    } catch (e) {
+      this._renderPlaceholder(environment, object);
+      console.log('exception when trying to render image', e);
+    }
+  } else {
+    this._renderPlaceholder(environment, object);
+  }
+};
+
+ImageElement.getTypes = function () {
+  return {
+    image: {
+      displayName: 'Image',
+      properties: [{
+        name: 'url',
+        displayName: 'URL',
+        type: 'url',
+        default: ''
+      }, {
+        displayName: 'Background',
+        type: 'group',
+        properties: [{
+          name: 'backgroundColor',
+          displayName: '',
+          type: 'color',
+          default: '#000000'
+        }, {
+          name: 'backgroundAlpha',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 1,
+          step: 0.01,
+          default: 0,
+          width: 50
+        }, {
+          name: 'backgroundRadius',
+          displayName: 'rad',
+          type: 'integer',
+          default: 0,
+          width: 35
+        }]
+      }, {
+        displayName: 'Alignment',
+        type: 'group',
+        properties: [{
+          name: 'valign',
+          displayName: '',
+          type: 'spiffy',
+          values: [{
+            value: 'top',
+            label: '',
+            fontIcon: 'fa fa-long-arrow-down'
+          }, {
+            value: 'middle',
+            label: '',
+            fontIcon: 'fa fa-arrows-v'
+          }, {
+            value: 'bottom',
+            label: '',
+            fontIcon: 'fa fa-long-arrow-up'
+          }],
+          default: 'middle'
+        }]
+      }, {
+        name: 'position',
+        displayName: 'Position',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'x',
+          displayName: 'X',
+          default: 120
+        }, {
+          type: 'integer',
+          name: 'y',
+          displayName: 'Y',
+          default: 120
+        }]
+      }, {
+        name: 'size',
+        displayName: 'Size',
+        type: 'group',
+        properties: [{
+          type: 'integer',
+          name: 'width',
+          displayName: 'W',
+          default: 200
+        }, {
+          type: 'integer',
+          name: 'height',
+          displayName: 'H',
+          default: 200
+        }]
+      }, {
+        displayName: 'Rotation',
+        type: 'group',
+        properties: [{
+          name: 'rotation',
+          displayName: '',
+          type: 'range',
+          min: 0,
+          max: 360,
+          step: 1,
+          default: 0,
+          width: 60
+        }, {
+          name: 'rotation',
+          displayName: '',
+          type: 'integer',
+          default: 0,
+          width: 32
+        }]
+      }, {
+        name: 'opacity',
+        displayName: 'Opacity',
+        type: 'range',
+        min: 0,
+        max: 1,
+        step: 0.01,
+        default: 1
+      }, {
+        name: 'compositing',
+        displayName: 'Compositing',
+        type: 'compositing',
+        default: 'source-over'
+      }, {
+        name: 'script',
+        displayName: 'Script',
+        type: 'script',
+        default: ''
+      }]
+    }
+  };
 };
 
 /* Web Font Loader v1.6.27 - (c) Adobe Systems, Google. License: Apache 2.0 */(function () {
@@ -1065,9 +1109,10 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
         MediaCache.set(object.customFont.url, object.customFont);
         resolve();
       },
-      inactive: function inactive() {
+      inactive: function () {
+        this._createPrivateProperty(object, '_error', { message: 'Error loading custom font', text: object.text, url: object.customFont.url });
         reject('could not load font from ' + object.customFont.url);
-      }
+      }.bind(this)
     });
   }.bind(this));
 };
@@ -1567,7 +1612,7 @@ TransformElement.prototype.renderElement = function (environment, object) {
 TransformElement.prototype.renderCanvas = function (environment, object) {
   environment.context.save();
 
-  var handleSize = TransformElement.handleSize * object._ratios.x;
+  var handleSize = TransformElement.handleSize * environment.scaling.x;
 
   environment.context.translate(object.x, object.y);
   if (typeof object.rotation !== 'undefined') {
@@ -1577,12 +1622,12 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
   for (var i = 0; i < 2; i++) {
     var type;
     if (i == 0) {
-      environment.context.lineWidth = 4 * object._ratios.x;
+      environment.context.lineWidth = 4 * environment.scaling.x;
       environment.context.setLineDash([]);
       environment.context.strokeStyle = 'rgba(0, 0, 0, 1.0)';
       type = 'stroke';
     } else {
-      environment.context.lineWidth = 2 * object._ratios.x;
+      environment.context.lineWidth = 2 * environment.scaling.x;
       environment.context.setLineDash([6, 2]);
       environment.context.strokeStyle = 'rgba(255, 255, 0, 1.0)';
       environment.context.fillStyle = 'rgba(255, 255, 0, 1.0)';
@@ -1632,9 +1677,9 @@ TransformElement.fillOrStrokeRect = function (context, x, y, height, width, type
   }
 };
 
-TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object, ratios) {
+TransformElement.findTransformHandle = function (environment, mouseX, mouseY, object) {
   var handles = ['ul', 'ur', 'll', 'lr', 'top', 'right', 'bottom', 'left', 'body', 'rotate'];
-  var handleSize = TransformElement.handleSize * ratios.x;
+  var handleSize = TransformElement.handleSize * environment.scaling.x;
   for (var i = 0; i < handles.length; i++) {
     var handle = handles[i];
 
@@ -2203,10 +2248,8 @@ Hemp.prototype.setSize = function (width, height) {
   // if we have an element, attach to it
   if (this._element) {
     this._element.appendChild(this._environment.canvas);
-    this._ratios = {
-      x: this._width / this._element.clientWidth,
-      y: this._height / this._element.clientHeight
-    };
+    this._environment.scaling.x = this._width / this._element.clientWidth;
+    this._environment.scaling.x = this._height / this._element.clientHeight;
   }
 
   // if we have user interaction, setup for canvas mousedowns
@@ -2540,7 +2583,7 @@ Hemp.prototype._maximizeObject = function (object) {
 Hemp.prototype._setupTransformingObject = function (mouseX, mouseY, event, hitObjects) {
   var selectedObjects = this._getObjects({ name: '_selected', value: true, op: 'eq' });
   if (selectedObjects.length > 0) {
-    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0], this._ratios);
+    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
       // if we don't want sticky transforms, then if the body handle was clicked, return false if there are other objects
       if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 1) {
@@ -2704,7 +2747,6 @@ Hemp.prototype._cleanObject = function (object) {
 Hemp.prototype._renderTransformBoxForObject = function (environment, object) {
   var transformObject = this._cleanObject(object);
   transformObject.type = 'transform';
-  transformObject._ratios = this._ratios;
   this._createPrivateProperty(transformObject, '_element', ElementFactory.getElement(transformObject));
   this._renderObject(environment, transformObject);
 };
@@ -2723,7 +2765,11 @@ Hemp.prototype._setupRenderEnvironment = function (object, options) {
   return {
     options: options ? options : {},
     canvas: canvas,
-    context: context
+    context: context,
+    scaling: {
+      x: 1,
+      y: 1
+    }
   };
 };
 

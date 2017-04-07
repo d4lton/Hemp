@@ -79,10 +79,8 @@ Hemp.prototype.setSize = function(width, height) {
   // if we have an element, attach to it
   if (this._element) {
     this._element.appendChild(this._environment.canvas);
-    this._ratios = {
-      x: (this._width / this._element.clientWidth),
-      y: (this._height / this._element.clientHeight)
-    }
+    this._environment.scaling.x = (this._width / this._element.clientWidth);
+    this._environment.scaling.x = (this._height / this._element.clientHeight);
   }
 
   // if we have user interaction, setup for canvas mousedowns
@@ -421,7 +419,7 @@ Hemp.prototype._maximizeObject = function(object) {
 Hemp.prototype._setupTransformingObject = function(mouseX, mouseY, event, hitObjects) {
   var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
   if (selectedObjects.length > 0) {
-    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0], this._ratios);
+    var handle = TransformElement.findTransformHandle(this._environment, mouseX, mouseY, selectedObjects[0]);
     if (handle) {
       // if we don't want sticky transforms, then if the body handle was clicked, return false if there are other objects
       if (handle === 'body' && !this._stickyTransform && Array.isArray(hitObjects) && hitObjects.length > 1) {
@@ -584,7 +582,6 @@ Hemp.prototype._cleanObject = function(object) {
 Hemp.prototype._renderTransformBoxForObject = function(environment, object) {
   var transformObject = this._cleanObject(object);
   transformObject.type = 'transform';
-  transformObject._ratios = this._ratios;
   this._createPrivateProperty(transformObject, '_element', ElementFactory.getElement(transformObject));
   this._renderObject(environment, transformObject);
 }
@@ -603,7 +600,11 @@ Hemp.prototype._setupRenderEnvironment = function(object, options) {
   return {
     options: options ? options : {},
     canvas: canvas,
-    context: context
+    context: context,
+    scaling: {
+      x: 1,
+      y: 1,
+    }
   };
 };
 

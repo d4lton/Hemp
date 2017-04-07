@@ -56,8 +56,9 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
         resolve();
       },
       inactive: function() {
+        this._createPrivateProperty(object, '_error', {message: 'Error loading custom font', text: object.text, url: object.customFont.url});
         reject('could not load font from ' + object.customFont.url);
-      },
+      }.bind(this),
     });
   }.bind(this));
 };
