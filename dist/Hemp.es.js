@@ -1622,13 +1622,13 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
     if (i == 0) {
       environment.context.lineWidth = 4 * environment.scaling.x;
       environment.context.setLineDash([]);
-      environment.context.strokeStyle = 'rgba(0, 0, 0, 1.0)';
+      environment.context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
       type = 'stroke';
     } else {
       environment.context.lineWidth = 2 * environment.scaling.x;
       environment.context.setLineDash([6, 2]);
-      environment.context.strokeStyle = 'rgba(255, 255, 0, 1.0)';
-      environment.context.fillStyle = 'rgba(255, 255, 0, 1.0)';
+      environment.context.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+      environment.context.fillStyle = 'rgba(255, 255, 0, 0.5)';
       type = 'fill';
     }
 
@@ -1648,11 +1648,11 @@ TransformElement.prototype.renderCanvas = function (environment, object) {
       // top
       TransformElement.fillOrStrokeRect(environment.context, -handleSize / 2, -object.height / 2, handleSize, handleSize, type);
       // right
-      TransformElement.fillOrStrokeRect(environment.context, object.width / 2 - handleSize, -10, handleSize, handleSize, type);
+      TransformElement.fillOrStrokeRect(environment.context, object.width / 2 - handleSize, -handleSize / 2, handleSize, handleSize, type);
       // bottom
       TransformElement.fillOrStrokeRect(environment.context, -handleSize / 2, object.height / 2 - handleSize, handleSize, handleSize, type);
       // left
-      TransformElement.fillOrStrokeRect(environment.context, -object.width / 2, -10, handleSize, handleSize, type);
+      TransformElement.fillOrStrokeRect(environment.context, -object.width / 2, -handleSize / 2, handleSize, handleSize, type);
 
       // rotate handle
       TransformElement.fillOrStrokeRect(environment.context, -handleSize / 2, -(object.height / 2) - handleSize * 2, handleSize, handleSize, type);
