@@ -91,7 +91,6 @@ TextElement.getTypes = function() {
           name: 'font',
           displayName: 'Font',
           type: 'font',
-          default: '40pt Helvetica'
         },
         {
           name: 'decoration',
