@@ -1142,8 +1142,7 @@ TextElement.getTypes = function () {
       }, {
         name: 'font',
         displayName: 'Font',
-        type: 'font',
-        default: '40pt Helvetica'
+        type: 'font'
       }, {
         name: 'decoration',
         displayName: 'Decoration',
@@ -2464,35 +2463,11 @@ Hemp.prototype._findElement = function (selector) {
 };
 
 Hemp.prototype._onKeyDown = function (event) {
-  //var selectedObjects = this._getObjects({name: '_selected', value: true, op: 'eq'});
-  //var offset = event.altKey ? 10 : 1;
   switch (event.code) {
     case 'Escape':
       this._deselectAllObjects();
       this._renderObjects(this._environment);
       break;
-    /*
-    case 'ArrowLeft':
-    if (selectedObjects.length > 0) {
-      this._nudgeObject(selectedObjects[0], -offset, 0, event);
-    }
-    break;
-    case 'ArrowRight':
-    if (selectedObjects.length > 0) {
-      this._nudgeObject(selectedObjects[0], offset, 0, event);
-    }
-    break;
-    case 'ArrowUp':
-    if (selectedObjects.length > 0) {
-      this._nudgeObject(selectedObjects[0], 0, -offset, event);
-    }
-    break;
-    case 'ArrowDown':
-    if (selectedObjects.length > 0) {
-      this._nudgeObject(selectedObjects[0], 0, offset, event);
-    }
-    break;
-    */
     case 'MetaLeft':
     case 'MetaRight':
       if (this._mouse) {
