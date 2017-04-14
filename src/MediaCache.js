@@ -14,10 +14,12 @@ var MediaCache = {
   },
 
   set: function(key, media) {
-    this._entries[key] = {
-      hitMs: Date.now(),
-      media: media
-    };
+    if (typeof key !== 'undefined') {
+      this._entries[key] = {
+        hitMs: Date.now(),
+        media: media
+      };
+    }
     this._age();
   },
 

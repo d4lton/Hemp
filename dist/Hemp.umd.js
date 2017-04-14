@@ -472,10 +472,12 @@ var MediaCache = {
   },
 
   set: function set(key, media) {
-    this._entries[key] = {
-      hitMs: Date.now(),
-      media: media
-    };
+    if (typeof key !== 'undefined') {
+      this._entries[key] = {
+        hitMs: Date.now(),
+        media: media
+      };
+    }
     this._age();
   },
 
@@ -524,7 +526,7 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
-      MediaCache.set(this.url, object._image);
+      MediaCache.set(object.url, object._image);
       this._createPrivateProperty(object, '_imageLoaded', true);
       resolve();
     }.bind(this);
