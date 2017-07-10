@@ -65,7 +65,7 @@ var CanvasText = {
     context.shadowOffsetY = offset.y;
 
     var area;
-    if (object.fit === true) {
+    if (object.align === 'fit') {
       area = CanvasText.renderTextToFit(context, object);
     } else {
       area = CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
@@ -1165,7 +1165,8 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
+    var url = this._resolveMediaUrl(object.customFont.url, reflectorUrl);
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"));
     document.head.appendChild(style);
 
     window.WebFont.load({
@@ -1266,6 +1267,10 @@ TextElement.getTypes = function () {
             value: 'right',
             label: '',
             fontIcon: 'fa fa-align-right'
+          }, {
+            value: 'fit',
+            label: '',
+            fontIcon: 'fa fa-align-justify'
           }],
           default: 'center'
         }, {

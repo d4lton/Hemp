@@ -37,11 +37,12 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
+    var url = this._resolveMediaUrl(object.customFont.url, reflectorUrl);
     style.appendChild(document.createTextNode(
       "@font-face {font-family: '" +
       object.customFont.name +
       "'; src: url('" +
-      object.customFont.url +
+      url +
       "');}"
     ));
     document.head.appendChild(style);
@@ -160,6 +161,11 @@ TextElement.getTypes = function() {
                   value: 'right',
                   label: '',
                   fontIcon: 'fa fa-align-right'
+                },
+                {
+                  value: 'fit',
+                  label: '',
+                  fontIcon: 'fa fa-align-justify'
                 }
               ],
               default: 'center'
