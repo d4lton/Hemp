@@ -1163,25 +1163,18 @@ TextElement.prototype.needsPreload = function (object) {
 
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
-    // add @font-face for object.customFont.name and object.customFont.url
-    var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
-    document.head.appendChild(style);
-
-    window.WebFont.load({
-      custom: {
-        families: [object.customFont.name]
-      },
-      active: function active() {
-        object.customFont.loaded = true;
+    var font = new FontFace(object.customFont.name, "url('" + object.customFont.url + "')");
+    font.load().then(function (loadedFont) {
+      object.customFont.loaded = true;
+      if (!MediaCache.get(object.customFont.url)) {
         MediaCache.set(object.customFont.url, object.customFont);
-        resolve();
-      },
-      inactive: function () {
-        this._createPrivateProperty(object, '_error', { message: 'Error loading custom font', text: object.text, url: object.customFont.url });
-        reject('could not load font from ' + object.customFont.url);
-      }.bind(this)
-    });
+        document.fonts.add(loadedFont);
+      }
+      resolve();
+    }.bind(this), function (error) {
+      this._createPrivateProperty(object, '_error', { message: 'Error loading custom font: ' + error, text: object.text, url: object.customFont.url });
+      reject(error);
+    }.bind(this));
   }.bind(this));
 };
 
