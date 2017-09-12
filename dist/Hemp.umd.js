@@ -65,7 +65,7 @@ var CanvasText = {
     context.shadowOffsetY = offset.y;
 
     var area;
-    if (object.fit === true) {
+    if (object.align === 'fit') {
       area = CanvasText.renderTextToFit(context, object);
     } else {
       area = CanvasText.renderWordWrapRows(context, object, CanvasText.makeWordWrapRows(context, object));
@@ -1259,6 +1259,10 @@ TextElement.getTypes = function () {
             value: 'right',
             label: '',
             fontIcon: 'fa fa-align-right'
+          }, {
+            value: 'fit',
+            label: '',
+            fontIcon: 'fa fa-align-justify'
           }],
           default: 'center'
         }, {
