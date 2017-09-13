@@ -1263,10 +1263,6 @@ TextElement.getTypes = function () {
             value: 'right',
             label: '',
             fontIcon: 'fa fa-align-right'
-          }, {
-            value: 'fit',
-            label: '',
-            fontIcon: 'fa fa-align-justify'
           }],
           default: 'center'
         }, {
