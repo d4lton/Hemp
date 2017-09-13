@@ -35,7 +35,6 @@ TextElement.prototype.needsPreload = function(object) {
 
 TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
-
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
     style.appendChild(document.createTextNode(
