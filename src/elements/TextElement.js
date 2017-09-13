@@ -8,7 +8,7 @@
 
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
-import '../lib/webfontloader.js';
+import '../lib/fontfaceobserver.js';
 import MediaCache from '../MediaCache.js';
 
 function TextElement() {
@@ -35,27 +35,31 @@ TextElement.prototype.needsPreload = function(object) {
 
 TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
+
+    var url = new URL(object.customFont.url);
+    // upgrade to SSL, some CDNs don't allow non-secure access
+    if (url.protocol === 'http:') {
+      url.protocol = 'https:';
+    }
+
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
     style.appendChild(document.createTextNode(
-      "@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"
+      "@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"
     ));
     document.head.appendChild(style);
 
-    window.WebFont.load({
-      custom: {
-        families: [object.customFont.name]
-      },
-      active: function() {
-        object.customFont.loaded = true;
-        MediaCache.set(object.customFont.url, object.customFont);
-        resolve();
-      },
-      inactive: function() {
-        this._createPrivateProperty(object, '_error', {message: 'Error loading custom font', text: object.text, url: object.customFont.url});
-        reject('could not load font from ' + object.customFont.url);
-      }.bind(this),
-    });
+    var font = new FontFaceObserver(object.customFont.name);
+
+    font.load().then(function() {
+      object.customFont.loaded = true;
+      MediaCache.set(url, object.customFont);
+      resolve();
+    }.bind(this), function() {
+      var error = {message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type};
+      this._createPrivateProperty(object, '_error', error);
+      reject(error);
+    }.bind(this));
 
   }.bind(this));
 };
@@ -328,6 +332,5 @@ TextElement.getTypes = function() {
     }
   };
 };
-
 
 export default TextElement;

@@ -703,365 +703,190 @@ ImageElement.getTypes = function () {
   };
 };
 
-/* Web Font Loader v1.6.27 - (c) Adobe Systems, Google. License: Apache 2.0 */(function () {
-  function aa(a, b, c) {
-    return a.call.apply(a.bind, arguments);
-  }function ba(a, b, c) {
-    if (!a) throw Error();if (2 < arguments.length) {
-      var d = Array.prototype.slice.call(arguments, 2);return function () {
-        var c = Array.prototype.slice.call(arguments);Array.prototype.unshift.apply(c, d);return a.apply(b, c);
-      };
-    }return function () {
-      return a.apply(b, arguments);
-    };
-  }function p(a, b, c) {
-    p = Function.prototype.bind && -1 != Function.prototype.bind.toString().indexOf("native code") ? aa : ba;return p.apply(null, arguments);
-  }var q = Date.now || function () {
-    return +new Date();
-  };function ca(a, b) {
-    this.a = a;this.m = b || a;this.c = this.m.document;
-  }var da = !!window.FontFace;function t(a, b, c, d) {
-    b = a.c.createElement(b);if (c) for (var e in c) {
-      c.hasOwnProperty(e) && ("style" == e ? b.style.cssText = c[e] : b.setAttribute(e, c[e]));
-    }d && b.appendChild(a.c.createTextNode(d));return b;
-  }function u(a, b, c) {
-    a = a.c.getElementsByTagName(b)[0];a || (a = document.documentElement);a.insertBefore(c, a.lastChild);
-  }function v(a) {
-    a.parentNode && a.parentNode.removeChild(a);
-  }
-  function w(a, b, c) {
-    b = b || [];c = c || [];for (var d = a.className.split(/\s+/), e = 0; e < b.length; e += 1) {
-      for (var f = !1, g = 0; g < d.length; g += 1) {
-        if (b[e] === d[g]) {
-          f = !0;break;
-        }
-      }f || d.push(b[e]);
-    }b = [];for (e = 0; e < d.length; e += 1) {
-      f = !1;for (g = 0; g < c.length; g += 1) {
-        if (d[e] === c[g]) {
-          f = !0;break;
-        }
-      }f || b.push(d[e]);
-    }a.className = b.join(" ").replace(/\s+/g, " ").replace(/^\s+|\s+$/, "");
-  }function y(a, b) {
-    for (var c = a.className.split(/\s+/), d = 0, e = c.length; d < e; d++) {
-      if (c[d] == b) return !0;
-    }return !1;
-  }
-  function z(a) {
-    if ("string" === typeof a.f) return a.f;var b = a.m.location.protocol;"about:" == b && (b = a.a.location.protocol);return "https:" == b ? "https:" : "http:";
-  }function ea(a) {
-    return a.m.location.hostname || a.a.location.hostname;
-  }
-  function A(a, b, c) {
-    function d() {
-      k && e && f && (k(g), k = null);
-    }b = t(a, "link", { rel: "stylesheet", href: b, media: "all" });var e = !1,
-        f = !0,
-        g = null,
-        k = c || null;da ? (b.onload = function () {
-      e = !0;d();
-    }, b.onerror = function () {
-      e = !0;g = Error("Stylesheet failed to load");d();
-    }) : setTimeout(function () {
-      e = !0;d();
-    }, 0);u(a, "head", b);
-  }
-  function B(a, b, c, d) {
-    var e = a.c.getElementsByTagName("head")[0];if (e) {
-      var f = t(a, "script", { src: b }),
-          g = !1;f.onload = f.onreadystatechange = function () {
-        g || this.readyState && "loaded" != this.readyState && "complete" != this.readyState || (g = !0, c && c(null), f.onload = f.onreadystatechange = null, "HEAD" == f.parentNode.tagName && e.removeChild(f));
-      };e.appendChild(f);setTimeout(function () {
-        g || (g = !0, c && c(Error("Script load timeout")));
-      }, d || 5E3);return f;
-    }return null;
-  }function C() {
-    this.a = 0;this.c = null;
-  }function D(a) {
-    a.a++;return function () {
-      a.a--;E(a);
-    };
-  }function F(a, b) {
-    a.c = b;E(a);
-  }function E(a) {
-    0 == a.a && a.c && (a.c(), a.c = null);
-  }function G(a) {
-    this.a = a || "-";
-  }G.prototype.c = function (a) {
-    for (var b = [], c = 0; c < arguments.length; c++) {
-      b.push(arguments[c].replace(/[\W_]+/g, "").toLowerCase());
-    }return b.join(this.a);
-  };function H(a, b) {
-    this.c = a;this.f = 4;this.a = "n";var c = (b || "n4").match(/^([nio])([1-9])$/i);c && (this.a = c[1], this.f = parseInt(c[2], 10));
-  }function fa(a) {
-    return I(a) + " " + (a.f + "00") + " 300px " + J(a.c);
-  }function J(a) {
-    var b = [];a = a.split(/,\s*/);for (var c = 0; c < a.length; c++) {
-      var d = a[c].replace(/['"]/g, "");-1 != d.indexOf(" ") || /^\d/.test(d) ? b.push("'" + d + "'") : b.push(d);
-    }return b.join(",");
-  }function K(a) {
-    return a.a + a.f;
-  }function I(a) {
-    var b = "normal";"o" === a.a ? b = "oblique" : "i" === a.a && (b = "italic");return b;
-  }
-  function ga(a) {
-    var b = 4,
-        c = "n",
-        d = null;a && ((d = a.match(/(normal|oblique|italic)/i)) && d[1] && (c = d[1].substr(0, 1).toLowerCase()), (d = a.match(/([1-9]00|normal|bold)/i)) && d[1] && (/bold/i.test(d[1]) ? b = 7 : /[1-9]00/.test(d[1]) && (b = parseInt(d[1].substr(0, 1), 10))));return c + b;
-  }function ha(a, b) {
-    this.c = a;this.f = a.m.document.documentElement;this.h = b;this.a = new G("-");this.j = !1 !== b.events;this.g = !1 !== b.classes;
-  }function ia(a) {
-    a.g && w(a.f, [a.a.c("wf", "loading")]);L(a, "loading");
-  }function M(a) {
-    if (a.g) {
-      var b = y(a.f, a.a.c("wf", "active")),
-          c = [],
-          d = [a.a.c("wf", "loading")];b || c.push(a.a.c("wf", "inactive"));w(a.f, c, d);
-    }L(a, "inactive");
-  }function L(a, b, c) {
-    if (a.j && a.h[b]) if (c) a.h[b](c.c, K(c));else a.h[b]();
-  }function ja() {
-    this.c = {};
-  }function ka(a, b, c) {
-    var d = [],
-        e;for (e in b) {
-      if (b.hasOwnProperty(e)) {
-        var f = a.c[e];f && d.push(f(b[e], c));
-      }
-    }return d;
-  }function N(a, b) {
-    this.c = a;this.f = b;this.a = t(this.c, "span", { "aria-hidden": "true" }, this.f);
-  }function O(a) {
-    u(a.c, "body", a.a);
-  }function P(a) {
-    return "display:block;position:absolute;top:-9999px;left:-9999px;font-size:300px;width:auto;height:auto;line-height:normal;margin:0;padding:0;font-variant:normal;white-space:nowrap;font-family:" + J(a.c) + ";" + ("font-style:" + I(a) + ";font-weight:" + (a.f + "00") + ";");
-  }function Q(a, b, c, d, e, f) {
-    this.g = a;this.j = b;this.a = d;this.c = c;this.f = e || 3E3;this.h = f || void 0;
-  }Q.prototype.start = function () {
-    var a = this.c.m.document,
-        b = this,
-        c = q(),
-        d = new Promise(function (d, e) {
-      function k() {
-        q() - c >= b.f ? e() : a.fonts.load(fa(b.a), b.h).then(function (a) {
-          1 <= a.length ? d() : setTimeout(k, 25);
-        }, function () {
-          e();
-        });
-      }k();
-    }),
-        e = new Promise(function (a, d) {
-      setTimeout(d, b.f);
-    });Promise.race([e, d]).then(function () {
-      b.g(b.a);
-    }, function () {
-      b.j(b.a);
-    });
-  };function R(a, b, c, d, e, f, g) {
-    this.v = a;this.B = b;this.c = c;this.a = d;this.s = g || "BESbswy";this.f = {};this.w = e || 3E3;this.u = f || null;this.o = this.j = this.h = this.g = null;this.g = new N(this.c, this.s);this.h = new N(this.c, this.s);this.j = new N(this.c, this.s);this.o = new N(this.c, this.s);a = new H(this.a.c + ",serif", K(this.a));a = P(a);this.g.a.style.cssText = a;a = new H(this.a.c + ",sans-serif", K(this.a));a = P(a);this.h.a.style.cssText = a;a = new H("serif", K(this.a));a = P(a);this.j.a.style.cssText = a;a = new H("sans-serif", K(this.a));a = P(a);this.o.a.style.cssText = a;O(this.g);O(this.h);O(this.j);O(this.o);
-  }var S = { D: "serif", C: "sans-serif" },
-      T = null;function U() {
-    if (null === T) {
-      var a = /AppleWebKit\/([0-9]+)(?:\.([0-9]+))/.exec(window.navigator.userAgent);T = !!a && (536 > parseInt(a[1], 10) || 536 === parseInt(a[1], 10) && 11 >= parseInt(a[2], 10));
-    }return T;
-  }R.prototype.start = function () {
-    this.f.serif = this.j.a.offsetWidth;this.f["sans-serif"] = this.o.a.offsetWidth;this.A = q();la(this);
-  };
-  function ma(a, b, c) {
-    for (var d in S) {
-      if (S.hasOwnProperty(d) && b === a.f[S[d]] && c === a.f[S[d]]) return !0;
-    }return !1;
-  }function la(a) {
-    var b = a.g.a.offsetWidth,
-        c = a.h.a.offsetWidth,
-        d;(d = b === a.f.serif && c === a.f["sans-serif"]) || (d = U() && ma(a, b, c));d ? q() - a.A >= a.w ? U() && ma(a, b, c) && (null === a.u || a.u.hasOwnProperty(a.a.c)) ? V(a, a.v) : V(a, a.B) : na(a) : V(a, a.v);
-  }function na(a) {
-    setTimeout(p(function () {
-      la(this);
-    }, a), 50);
-  }function V(a, b) {
-    setTimeout(p(function () {
-      v(this.g.a);v(this.h.a);v(this.j.a);v(this.o.a);b(this.a);
-    }, a), 0);
-  }function W(a, b, c) {
-    this.c = a;this.a = b;this.f = 0;this.o = this.j = !1;this.s = c;
-  }var X = null;W.prototype.g = function (a) {
-    var b = this.a;b.g && w(b.f, [b.a.c("wf", a.c, K(a).toString(), "active")], [b.a.c("wf", a.c, K(a).toString(), "loading"), b.a.c("wf", a.c, K(a).toString(), "inactive")]);L(b, "fontactive", a);this.o = !0;oa(this);
-  };
-  W.prototype.h = function (a) {
-    var b = this.a;if (b.g) {
-      var c = y(b.f, b.a.c("wf", a.c, K(a).toString(), "active")),
-          d = [],
-          e = [b.a.c("wf", a.c, K(a).toString(), "loading")];c || d.push(b.a.c("wf", a.c, K(a).toString(), "inactive"));w(b.f, d, e);
-    }L(b, "fontinactive", a);oa(this);
-  };function oa(a) {
-    0 == --a.f && a.j && (a.o ? (a = a.a, a.g && w(a.f, [a.a.c("wf", "active")], [a.a.c("wf", "loading"), a.a.c("wf", "inactive")]), L(a, "active")) : M(a.a));
-  }function pa(a) {
-    this.j = a;this.a = new ja();this.h = 0;this.f = this.g = !0;
-  }pa.prototype.load = function (a) {
-    this.c = new ca(this.j, a.context || this.j);this.g = !1 !== a.events;this.f = !1 !== a.classes;qa(this, new ha(this.c, a), a);
-  };
-  function ra(a, b, c, d, e) {
-    var f = 0 == --a.h;(a.f || a.g) && setTimeout(function () {
-      var a = e || null,
-          k = d || null || {};if (0 === c.length && f) M(b.a);else {
-        b.f += c.length;f && (b.j = f);var h,
-            m = [];for (h = 0; h < c.length; h++) {
-          var l = c[h],
-              n = k[l.c],
-              r = b.a,
-              x = l;r.g && w(r.f, [r.a.c("wf", x.c, K(x).toString(), "loading")]);L(r, "fontloading", x);r = null;if (null === X) if (window.FontFace) {
-            var x = /Gecko.*Firefox\/(\d+)/.exec(window.navigator.userAgent),
-                ya = /OS X.*Version\/10\..*Safari/.exec(window.navigator.userAgent) && /Apple/.exec(window.navigator.vendor);
-            X = x ? 42 < parseInt(x[1], 10) : ya ? !1 : !0;
-          } else X = !1;X ? r = new Q(p(b.g, b), p(b.h, b), b.c, l, b.s, n) : r = new R(p(b.g, b), p(b.h, b), b.c, l, b.s, a, n);m.push(r);
-        }for (h = 0; h < m.length; h++) {
-          m[h].start();
-        }
-      }
-    }, 0);
-  }function qa(a, b, c) {
-    var d = [],
-        e = c.timeout;ia(b);var d = ka(a.a, c, a.c),
-        f = new W(a.c, b, e);a.h = d.length;b = 0;for (c = d.length; b < c; b++) {
-      d[b].load(function (b, d, c) {
-        ra(a, f, b, d, c);
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/* Font Face Observer v2.0.13 - © Bram Stein. License: BSD-3-Clause */(function () {
+  'use strict';
+  var f,
+      g = [];function l(a) {
+    g.push(a);1 == g.length && f();
+  }function m() {
+    for (; g.length;) {
+      g[0](), g.shift();
+    }
+  }f = function f() {
+    setTimeout(m);
+  };function n(a) {
+    this.a = p;this.b = void 0;this.f = [];var b = this;try {
+      a(function (a) {
+        q(b, a);
+      }, function (a) {
+        r(b, a);
       });
+    } catch (c) {
+      r(b, c);
     }
-  }function sa(a, b) {
-    this.c = a;this.a = b;
-  }function ta(a, b, c) {
-    var d = z(a.c);a = (a.a.api || "fast.fonts.net/jsapi").replace(/^.*http(s?):(\/\/)?/, "");return d + "//" + a + "/" + b + ".js" + (c ? "?v=" + c : "");
-  }
-  sa.prototype.load = function (a) {
-    function b() {
-      if (f["__mti_fntLst" + d]) {
-        var c = f["__mti_fntLst" + d](),
-            e = [],
-            h;if (c) for (var m = 0; m < c.length; m++) {
-          var l = c[m].fontfamily;void 0 != c[m].fontStyle && void 0 != c[m].fontWeight ? (h = c[m].fontStyle + c[m].fontWeight, e.push(new H(l, h))) : e.push(new H(l));
-        }a(e);
-      } else setTimeout(function () {
-        b();
-      }, 50);
-    }var c = this,
-        d = c.a.projectId,
-        e = c.a.version;if (d) {
-      var f = c.c.m;B(this.c, ta(c, d, e), function (e) {
-        e ? a([]) : (f["__MonotypeConfiguration__" + d] = function () {
-          return c.a;
-        }, b());
-      }).id = "__MonotypeAPIScript__" + d;
-    } else a([]);
-  };function ua(a, b) {
-    this.c = a;this.a = b;
-  }ua.prototype.load = function (a) {
-    var b,
-        c,
-        d = this.a.urls || [],
-        e = this.a.families || [],
-        f = this.a.testStrings || {},
-        g = new C();b = 0;for (c = d.length; b < c; b++) {
-      A(this.c, d[b], D(g));
-    }var k = [];b = 0;for (c = e.length; b < c; b++) {
-      if (d = e[b].split(":"), d[1]) for (var h = d[1].split(","), m = 0; m < h.length; m += 1) {
-        k.push(new H(d[0], h[m]));
-      } else k.push(new H(d[0]));
-    }F(g, function () {
-      a(k, f);
+  }var p = 2;function t(a) {
+    return new n(function (b, c) {
+      c(a);
     });
-  };function va(a, b, c) {
-    a ? this.c = a : this.c = b + wa;this.a = [];this.f = [];this.g = c || "";
-  }var wa = "//fonts.googleapis.com/css";function xa(a, b) {
-    for (var c = b.length, d = 0; d < c; d++) {
-      var e = b[d].split(":");3 == e.length && a.f.push(e.pop());var f = "";2 == e.length && "" != e[1] && (f = ":");a.a.push(e.join(f));
-    }
-  }
-  function za(a) {
-    if (0 == a.a.length) throw Error("No fonts to load!");if (-1 != a.c.indexOf("kit=")) return a.c;for (var b = a.a.length, c = [], d = 0; d < b; d++) {
-      c.push(a.a[d].replace(/ /g, "+"));
-    }b = a.c + "?family=" + c.join("%7C");0 < a.f.length && (b += "&subset=" + a.f.join(","));0 < a.g.length && (b += "&text=" + encodeURIComponent(a.g));return b;
-  }function Aa(a) {
-    this.f = a;this.a = [];this.c = {};
-  }
-  var Ba = { latin: "BESbswy", "latin-ext": "\xE7\xF6\xFC\u011F\u015F", cyrillic: "\u0439\u044F\u0416", greek: "\u03B1\u03B2\u03A3", khmer: "\u1780\u1781\u1782", Hanuman: "\u1780\u1781\u1782" },
-      Ca = { thin: "1", extralight: "2", "extra-light": "2", ultralight: "2", "ultra-light": "2", light: "3", regular: "4", book: "4", medium: "5", "semi-bold": "6", semibold: "6", "demi-bold": "6", demibold: "6", bold: "7", "extra-bold": "8", extrabold: "8", "ultra-bold": "8", ultrabold: "8", black: "9", heavy: "9", l: "3", r: "4", b: "7" },
-      Da = { i: "i", italic: "i", n: "n", normal: "n" },
-      Ea = /^(thin|(?:(?:extra|ultra)-?)?light|regular|book|medium|(?:(?:semi|demi|extra|ultra)-?)?bold|black|heavy|l|r|b|[1-9]00)?(n|i|normal|italic)?$/;
-  function Fa(a) {
-    for (var b = a.f.length, c = 0; c < b; c++) {
-      var d = a.f[c].split(":"),
-          e = d[0].replace(/\+/g, " "),
-          f = ["n4"];if (2 <= d.length) {
-        var g;var k = d[1];g = [];if (k) for (var k = k.split(","), h = k.length, m = 0; m < h; m++) {
-          var l;l = k[m];if (l.match(/^[\w-]+$/)) {
-            var n = Ea.exec(l.toLowerCase());if (null == n) l = "";else {
-              l = n[2];l = null == l || "" == l ? "n" : Da[l];n = n[1];if (null == n || "" == n) n = "4";else var r = Ca[n],
-                  n = r ? r : isNaN(n) ? "4" : n.substr(0, 1);l = [l, n].join("");
-            }
-          } else l = "";l && g.push(l);
-        }0 < g.length && (f = g);3 == d.length && (d = d[2], g = [], d = d ? d.split(",") : g, 0 < d.length && (d = Ba[d[0]]) && (a.c[e] = d));
-      }a.c[e] || (d = Ba[e]) && (a.c[e] = d);for (d = 0; d < f.length; d += 1) {
-        a.a.push(new H(e, f[d]));
-      }
-    }
-  }function Ga(a, b) {
-    this.c = a;this.a = b;
-  }var Ha = { Arimo: !0, Cousine: !0, Tinos: !0 };Ga.prototype.load = function (a) {
-    var b = new C(),
-        c = this.c,
-        d = new va(this.a.api, z(c), this.a.text),
-        e = this.a.families;xa(d, e);var f = new Aa(e);Fa(f);A(c, za(d), D(b));F(b, function () {
-      a(f.a, f.c, Ha);
+  }function u(a) {
+    return new n(function (b) {
+      b(a);
     });
-  };function Ia(a, b) {
-    this.c = a;this.a = b;
-  }Ia.prototype.load = function (a) {
-    var b = this.a.id,
-        c = this.c.m;b ? B(this.c, (this.a.api || "https://use.typekit.net") + "/" + b + ".js", function (b) {
-      if (b) a([]);else if (c.Typekit && c.Typekit.config && c.Typekit.config.fn) {
-        b = c.Typekit.config.fn;for (var e = [], f = 0; f < b.length; f += 2) {
-          for (var g = b[f], k = b[f + 1], h = 0; h < k.length; h++) {
-            e.push(new H(g, k[h]));
-          }
-        }try {
-          c.Typekit.load({ events: !1, classes: !1, async: !0 });
-        } catch (m) {}a(e);
+  }function q(a, b) {
+    if (a.a == p) {
+      if (b == a) throw new TypeError();var c = !1;try {
+        var d = b && b.then;if (null != b && "object" == (typeof b === "undefined" ? "undefined" : _typeof(b)) && "function" == typeof d) {
+          d.call(b, function (b) {
+            c || q(a, b);c = !0;
+          }, function (b) {
+            c || r(a, b);c = !0;
+          });return;
+        }
+      } catch (e) {
+        c || r(a, e);return;
+      }a.a = 0;a.b = b;v(a);
+    }
+  }
+  function r(a, b) {
+    if (a.a == p) {
+      if (b == a) throw new TypeError();a.a = 1;a.b = b;v(a);
+    }
+  }function v(a) {
+    l(function () {
+      if (a.a != p) for (; a.f.length;) {
+        var b = a.f.shift(),
+            c = b[0],
+            d = b[1],
+            e = b[2],
+            b = b[3];try {
+          0 == a.a ? "function" == typeof c ? e(c.call(void 0, a.b)) : e(a.b) : 1 == a.a && ("function" == typeof d ? e(d.call(void 0, a.b)) : b(a.b));
+        } catch (h) {
+          b(h);
+        }
       }
-    }, 2E3) : a([]);
-  };function Ja(a, b) {
-    this.c = a;this.f = b;this.a = [];
-  }Ja.prototype.load = function (a) {
-    var b = this.f.id,
-        c = this.c.m,
-        d = this;b ? (c.__webfontfontdeckmodule__ || (c.__webfontfontdeckmodule__ = {}), c.__webfontfontdeckmodule__[b] = function (b, c) {
-      for (var g = 0, k = c.fonts.length; g < k; ++g) {
-        var h = c.fonts[g];d.a.push(new H(h.name, ga("font-weight:" + h.weight + ";font-style:" + h.style)));
-      }a(d.a);
-    }, B(this.c, z(this.c) + (this.f.api || "//f.fontdeck.com/s/css/js/") + ea(this.c) + "/" + b + ".js", function (b) {
-      b && a([]);
-    })) : a([]);
-  };var Y = new pa(window);Y.a.c.custom = function (a, b) {
-    return new ua(b, a);
-  };Y.a.c.fontdeck = function (a, b) {
-    return new Ja(b, a);
-  };Y.a.c.monotype = function (a, b) {
-    return new sa(b, a);
-  };Y.a.c.typekit = function (a, b) {
-    return new Ia(b, a);
-  };Y.a.c.google = function (a, b) {
-    return new Ga(b, a);
+    });
+  }n.prototype.g = function (a) {
+    return this.c(void 0, a);
+  };n.prototype.c = function (a, b) {
+    var c = this;return new n(function (d, e) {
+      c.f.push([a, b, d, e]);v(c);
+    });
   };
-  var Z = { load: p(Y.load, Y) };
-  window.WebFont = Z, window.WebFontConfig && Y.load(window.WebFontConfig);
-  /*
-  "function"===typeof define&&define.amd?
-    define(function(){return Z}):
-    "undefined"!==typeof module&&module.exports?
-      module.exports=Z:
-      (window.WebFont=Z,window.WebFontConfig&&Y.load(window.WebFontConfig));
-  */
+  function w(a) {
+    return new n(function (b, c) {
+      function d(c) {
+        return function (d) {
+          h[c] = d;e += 1;e == a.length && b(h);
+        };
+      }var e = 0,
+          h = [];0 == a.length && b(h);for (var k = 0; k < a.length; k += 1) {
+        u(a[k]).c(d(k), c);
+      }
+    });
+  }function x(a) {
+    return new n(function (b, c) {
+      for (var d = 0; d < a.length; d += 1) {
+        u(a[d]).c(b, c);
+      }
+    });
+  }window.Promise || (window.Promise = n, window.Promise.resolve = u, window.Promise.reject = t, window.Promise.race = x, window.Promise.all = w, window.Promise.prototype.then = n.prototype.c, window.Promise.prototype["catch"] = n.prototype.g);
+})();
+
+(function () {
+  function l(a, b) {
+    document.addEventListener ? a.addEventListener("scroll", b, !1) : a.attachEvent("scroll", b);
+  }function m(a) {
+    document.body ? a() : document.addEventListener ? document.addEventListener("DOMContentLoaded", function c() {
+      document.removeEventListener("DOMContentLoaded", c);a();
+    }) : document.attachEvent("onreadystatechange", function k() {
+      if ("interactive" == document.readyState || "complete" == document.readyState) document.detachEvent("onreadystatechange", k), a();
+    });
+  }function r(a) {
+    this.a = document.createElement("div");this.a.setAttribute("aria-hidden", "true");this.a.appendChild(document.createTextNode(a));this.b = document.createElement("span");this.c = document.createElement("span");this.h = document.createElement("span");this.f = document.createElement("span");this.g = -1;this.b.style.cssText = "max-width:none;display:inline-block;position:absolute;height:100%;width:100%;overflow:scroll;font-size:16px;";this.c.style.cssText = "max-width:none;display:inline-block;position:absolute;height:100%;width:100%;overflow:scroll;font-size:16px;";
+    this.f.style.cssText = "max-width:none;display:inline-block;position:absolute;height:100%;width:100%;overflow:scroll;font-size:16px;";this.h.style.cssText = "display:inline-block;width:200%;height:200%;font-size:16px;max-width:none;";this.b.appendChild(this.h);this.c.appendChild(this.f);this.a.appendChild(this.b);this.a.appendChild(this.c);
+  }
+  function t(a, b) {
+    a.a.style.cssText = "max-width:none;min-width:20px;min-height:20px;display:inline-block;overflow:hidden;position:absolute;width:auto;margin:0;padding:0;top:-999px;white-space:nowrap;font-synthesis:none;font:" + b + ";";
+  }function y(a) {
+    var b = a.a.offsetWidth,
+        c = b + 100;a.f.style.width = c + "px";a.c.scrollLeft = c;a.b.scrollLeft = a.b.scrollWidth + 100;return a.g !== b ? (a.g = b, !0) : !1;
+  }function z(a, b) {
+    function c() {
+      var a = k;y(a) && a.a.parentNode && b(a.g);
+    }var k = a;l(a.b, c);l(a.c, c);y(a);
+  }function A(a, b) {
+    var c = b || {};this.family = a;this.style = c.style || "normal";this.weight = c.weight || "normal";this.stretch = c.stretch || "normal";
+  }var B = null,
+      C = null,
+      E = null,
+      F = null;function G() {
+    if (null === C) if (J() && /Apple/.test(window.navigator.vendor)) {
+      var a = /AppleWebKit\/([0-9]+)(?:\.([0-9]+))(?:\.([0-9]+))/.exec(window.navigator.userAgent);C = !!a && 603 > parseInt(a[1], 10);
+    } else C = !1;return C;
+  }function J() {
+    null === F && (F = !!document.fonts);return F;
+  }
+  function K() {
+    if (null === E) {
+      var a = document.createElement("div");try {
+        a.style.font = "condensed 100px sans-serif";
+      } catch (b) {}E = "" !== a.style.font;
+    }return E;
+  }function L(a, b) {
+    return [a.style, a.weight, K() ? a.stretch : "", "100px", b].join(" ");
+  }
+  A.prototype.load = function (a, b) {
+    var c = this,
+        k = a || "BESbswy",
+        q = 0,
+        D = b || 3E3,
+        H = new Date().getTime();return new Promise(function (a, b) {
+      if (J() && !G()) {
+        var M = new Promise(function (a, b) {
+          function e() {
+            new Date().getTime() - H >= D ? b() : document.fonts.load(L(c, '"' + c.family + '"'), k).then(function (c) {
+              1 <= c.length ? a() : setTimeout(e, 25);
+            }, function () {
+              b();
+            });
+          }e();
+        }),
+            N = new Promise(function (a, c) {
+          q = setTimeout(c, D);
+        });Promise.race([N, M]).then(function () {
+          clearTimeout(q);a(c);
+        }, function () {
+          b(c);
+        });
+      } else m(function () {
+        function u() {
+          var b;if (b = -1 != f && -1 != g || -1 != f && -1 != h || -1 != g && -1 != h) (b = f != g && f != h && g != h) || (null === B && (b = /AppleWebKit\/([0-9]+)(?:\.([0-9]+))/.exec(window.navigator.userAgent), B = !!b && (536 > parseInt(b[1], 10) || 536 === parseInt(b[1], 10) && 11 >= parseInt(b[2], 10))), b = B && (f == v && g == v && h == v || f == w && g == w && h == w || f == x && g == x && h == x)), b = !b;b && (d.parentNode && d.parentNode.removeChild(d), clearTimeout(q), a(c));
+        }function I() {
+          if (new Date().getTime() - H >= D) d.parentNode && d.parentNode.removeChild(d), b(c);else {
+            var a = document.hidden;if (!0 === a || void 0 === a) f = e.a.offsetWidth, g = n.a.offsetWidth, h = p.a.offsetWidth, u();q = setTimeout(I, 50);
+          }
+        }var e = new r(k),
+            n = new r(k),
+            p = new r(k),
+            f = -1,
+            g = -1,
+            h = -1,
+            v = -1,
+            w = -1,
+            x = -1,
+            d = document.createElement("div");d.dir = "ltr";t(e, L(c, "sans-serif"));t(n, L(c, "serif"));t(p, L(c, "monospace"));d.appendChild(e.a);d.appendChild(n.a);d.appendChild(p.a);document.body.appendChild(d);v = e.a.offsetWidth;w = n.a.offsetWidth;x = p.a.offsetWidth;I();z(e, function (a) {
+          f = a;u();
+        });t(e, L(c, '"' + c.family + '",sans-serif'));z(n, function (a) {
+          g = a;u();
+        });t(n, L(c, '"' + c.family + '",serif'));
+        z(p, function (a) {
+          h = a;u();
+        });t(p, L(c, '"' + c.family + '",monospace'));
+      });
+    });
+  };"object" === (typeof module === "undefined" ? "undefined" : _typeof(module)) ? module.exports = A : (window.FontFaceObserver = A, window.FontFaceObserver.prototype.load = A.prototype.load);
 })();
 
 /**
@@ -1096,25 +921,29 @@ TextElement.prototype.needsPreload = function (object) {
 
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
+
+    var url = new URL(object.customFont.url);
+    // upgrade to SSL, some CDNs don't allow non-secure access
+    if (url.protocol === 'http:') {
+      url.protocol = 'https:';
+    }
+
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + object.customFont.url + "');}"));
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"));
     document.head.appendChild(style);
 
-    window.WebFont.load({
-      custom: {
-        families: [object.customFont.name]
-      },
-      active: function active() {
-        object.customFont.loaded = true;
-        MediaCache.set(object.customFont.url, object.customFont);
-        resolve();
-      },
-      inactive: function () {
-        this._createPrivateProperty(object, '_error', { message: 'Error loading custom font', text: object.text, url: object.customFont.url });
-        reject('could not load font from ' + object.customFont.url);
-      }.bind(this)
-    });
+    var font = new FontFaceObserver(object.customFont.name);
+
+    font.load().then(function () {
+      object.customFont.loaded = true;
+      MediaCache.set(url, object.customFont);
+      resolve();
+    }.bind(this), function () {
+      var error = { message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type };
+      this._createPrivateProperty(object, '_error', error);
+      reject(error);
+    }.bind(this));
   }.bind(this));
 };
 
@@ -2288,27 +2117,28 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
   // if there are any media-load promises, run them
   if (promises.length > 0) {
-    if (this._interactive) {
-      // if interactive, run promises in parallel to not block render
-      promises.forEach(function (promise) {
-        promise.then(function () {
-          this._finishLoading(callback);
-        }.bind(this), function () {
-          this._finishLoading(callback);
-        }.bind(this));
+    var complete = 0,
+        errors = [];
+    promises.forEach(function (promise) {
+      promise.then(function () {
+        complete++;
+        this._preloadComplete(complete >= promises.length, errors, callback);
+      }.bind(this), function (error) {
+        complete++;
+        errors.push(error);
+        this._preloadComplete(complete >= promises.length, errors, callback);
       }.bind(this));
-    } else {
-      // if not interactive, run all promises in serial, blocking render until done
-      Promise.all(promises).then(function () {
-        this._finishLoading(callback);
-      }.bind(this), function (reason) {
-        if (typeof callback === 'function') {
-          callback(this._objects, reason);
-        }
-      }.bind(this));
-    }
+    }.bind(this));
   } else {
     this._finishLoading(callback);
+  }
+};
+
+Hemp.prototype._preloadComplete = function (allDone, errors, callback) {
+  if (allDone) {
+    this._finishLoading(callback, errors);
+  } else {
+    this.render();
   }
 };
 
@@ -2372,10 +2202,10 @@ Hemp.prototype._addUpdateObjects = function (objects) {
   }.bind(this));
 };
 
-Hemp.prototype._finishLoading = function (callback) {
+Hemp.prototype._finishLoading = function (callback, errors) {
   this.render();
   if (typeof callback === 'function') {
-    callback(this._objects);
+    callback(this._objects, errors);
   }
 };
 
