@@ -523,6 +523,8 @@ ImageElement.prototype.needsPreload = function (object) {
 ImageElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
     var url = this._resolveMediaUrl(object.url, reflectorUrl);
+    // remove specific http protocol, allow automatic selection
+    url = url.replace('http:', '').replace('https:', '');
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
@@ -923,8 +925,8 @@ TextElement.prototype.needsPreload = function (object) {
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
 
-    // upgrade to SSL, some CDNs don't allow non-secure access
-    var url = object.customFont.url.replace('http:', 'https:');
+    // remove specific http protocol, allow automatic selection
+    var url = object.customFont.url.replace('http:', '').replace('https:', '');
 
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');

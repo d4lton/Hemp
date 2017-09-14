@@ -33,6 +33,8 @@ ImageElement.prototype.needsPreload = function(object) {
 ImageElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
     var url = this._resolveMediaUrl(object.url, reflectorUrl);
+    // remove specific http protocol, allow automatic selection
+    url = url.replace('http:', '').replace('https:', '');
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function() {
