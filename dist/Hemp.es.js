@@ -917,15 +917,12 @@ TextElement.prototype.needsPreload = function (object) {
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
 
-    var url = new URL(object.customFont.url);
     // upgrade to SSL, some CDNs don't allow non-secure access
-    if (url.protocol === 'http:') {
-      url.protocol = 'https:';
-    }
+    var url = object.customFont.url.replace('http:', 'https:');
 
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url.href + "');}"));
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"));
     document.head.appendChild(style);
 
     var font = new FontFaceObserver(object.customFont.name);
@@ -935,7 +932,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
       MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function () {
-      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url.href + '"';
+      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
