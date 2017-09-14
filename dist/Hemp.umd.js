@@ -404,10 +404,10 @@ Element.prototype._renderPlaceholder = function (environment, object) {
   this._context.stroke();
 
   if (object._error) {
-    // draw object text
+
+    // setup text object
     var fontSize = 40 * environment.scaling.x;
     var textObject = {
-      text: object._error.text,
       x: object.width / 2,
       y: object.height / 2,
       font: fontSize + 'pt sans-serif',
@@ -417,20 +417,19 @@ Element.prototype._renderPlaceholder = function (environment, object) {
       height: object.height,
       width: object.width
     };
-    CanvasText.drawText(this._context, textObject);
+
+    // draw Text Object's text
+    if (object.type === 'text') {
+      textObject.text = object.text;
+      CanvasText.drawText(this._context, textObject);
+    }
 
     // draw error message
     fontSize = 15 * environment.scaling.x;
-    textObject.text = object._error.message;
+    textObject.text = object._error;
     textObject.valign = 'top';
     textObject.font = fontSize + 'pt sans-serif', textObject.padding = fontSize;
     CanvasText.drawText(this._context, textObject);
-
-    // draw URL
-    fontSize = 10 * environment.scaling.x;
-    textObject.text = object._error.url;
-    textObject.valign = 'bottom';
-    textObject.font = fontSize + 'pt sans-serif', CanvasText.drawText(this._context, textObject);
   }
 };
 
@@ -523,6 +522,7 @@ ImageElement.prototype.needsPreload = function (object) {
 
 ImageElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
+    var url = this._resolveMediaUrl(object.url, reflectorUrl);
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
@@ -532,10 +532,11 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
     }.bind(this);
     object._image.onerror = function (event) {
       this._createPrivateProperty(object, '_imageLoaded', false);
-      this._createPrivateProperty(object, '_error', { message: 'Error loading image', text: '', url: object.url });
-      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
+      var error = 'Error loading image from URL "' + url + '"';
+      this._createPrivateProperty(object, '_error', error);
+      reject(error);
     }.bind(this);
-    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
+    object._image.src = url;
   }.bind(this));
 };
 
@@ -940,7 +941,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
       MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function () {
-      var error = { message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type };
+      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url.toString() + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
