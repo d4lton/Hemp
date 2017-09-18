@@ -36,11 +36,7 @@ TextElement.prototype.needsPreload = function(object) {
 TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
 
-    var url = new URL(object.customFont.url);
-    // upgrade to SSL, some CDNs don't allow non-secure access
-    if (url.protocol === 'http:') {
-      url.protocol = 'https:';
-    }
+    var url = object.customFont.url;
 
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
@@ -53,10 +49,9 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
 
     font.load().then(function() {
       object.customFont.loaded = true;
-      MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function() {
-      var error = {message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type};
+      var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + url;
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));

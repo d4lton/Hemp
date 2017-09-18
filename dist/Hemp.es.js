@@ -401,7 +401,7 @@ Element.prototype._renderPlaceholder = function (environment, object) {
     // draw object text
     var fontSize = 40 * environment.scaling.x;
     var textObject = {
-      text: object._error.text,
+      text: object.text,
       x: object.width / 2,
       y: object.height / 2,
       font: fontSize + 'pt sans-serif',
@@ -415,16 +415,10 @@ Element.prototype._renderPlaceholder = function (environment, object) {
 
     // draw error message
     fontSize = 15 * environment.scaling.x;
-    textObject.text = object._error.message;
+    textObject.text = object._error;
     textObject.valign = 'top';
     textObject.font = fontSize + 'pt sans-serif', textObject.padding = fontSize;
     CanvasText.drawText(this._context, textObject);
-
-    // draw URL
-    fontSize = 10 * environment.scaling.x;
-    textObject.text = object._error.url;
-    textObject.valign = 'bottom';
-    textObject.font = fontSize + 'pt sans-serif', CanvasText.drawText(this._context, textObject);
   }
 };
 
@@ -526,8 +520,9 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
     }.bind(this);
     object._image.onerror = function (event) {
       this._createPrivateProperty(object, '_imageLoaded', false);
-      this._createPrivateProperty(object, '_error', { message: 'Error loading image', text: '', url: object.url });
-      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
+      var error = 'Error loading image from URL ' + url;
+      this._createPrivateProperty(object, '_error', error);
+      reject(error);
     }.bind(this);
     object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));
@@ -916,11 +911,7 @@ TextElement.prototype.needsPreload = function (object) {
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
 
-    var url = new URL(object.customFont.url);
-    // upgrade to SSL, some CDNs don't allow non-secure access
-    if (url.protocol === 'http:') {
-      url.protocol = 'https:';
-    }
+    var url = object.customFont.url;
 
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
@@ -931,10 +922,9 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
 
     font.load().then(function () {
       object.customFont.loaded = true;
-      MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function () {
-      var error = { message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type };
+      var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + url;
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
@@ -2199,7 +2189,7 @@ Hemp.prototype._addUpdateObjects = function (objects) {
 Hemp.prototype._finishLoading = function (callback, errors) {
   this.render();
   if (typeof callback === 'function') {
-    callback(this._objects, errors);
+    callback(this._objects, errors.join(','));
   }
 };
 

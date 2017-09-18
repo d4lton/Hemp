@@ -124,7 +124,7 @@ Element.prototype._renderPlaceholder = function(environment, object) {
     // draw object text
     var fontSize = 40 * environment.scaling.x;
     var textObject = {
-      text: object._error.text,
+      text: object.text,
       x: object.width / 2,
       y: object.height / 2,
       font: fontSize + 'pt sans-serif',
@@ -138,17 +138,10 @@ Element.prototype._renderPlaceholder = function(environment, object) {
 
     // draw error message
     fontSize = 15 * environment.scaling.x;
-    textObject.text = object._error.message;
+    textObject.text = object._error;
     textObject.valign = 'top';
     textObject.font = fontSize + 'pt sans-serif',
     textObject.padding = fontSize;
-    CanvasText.drawText(this._context, textObject);
-    
-    // draw URL
-    fontSize = 10 * environment.scaling.x;
-    textObject.text = object._error.url;
-    textObject.valign = 'bottom';
-    textObject.font = fontSize + 'pt sans-serif',
     CanvasText.drawText(this._context, textObject);
   }
 
