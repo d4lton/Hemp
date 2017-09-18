@@ -32,7 +32,6 @@ ImageElement.prototype.needsPreload = function(object) {
 
 ImageElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
-    var url = this._resolveMediaUrl(object.url, reflectorUrl);
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function() {
@@ -42,11 +41,10 @@ ImageElement.prototype.preload = function(object, reflectorUrl) {
     }.bind(this);
     object._image.onerror = function(event) {
       this._createPrivateProperty(object, '_imageLoaded', false);
-      var error = 'Error loading image from URL "' + url + '"';
-      this._createPrivateProperty(object, '_error', error);
-      reject(error);
+      this._createPrivateProperty(object, '_error', {message: 'Error loading image', text: '', url: object.url});
+      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
     }.bind(this);
-    object._image.src = url;
+    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
   }.bind(this));  
 };
 

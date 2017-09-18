@@ -56,7 +56,7 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
       MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function() {
-      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url.toString() + '"';
+      var error = {message: 'Error loading custom font', text: object.text, url: object.customFont.url, type: object.type};
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
