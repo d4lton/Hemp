@@ -534,7 +534,7 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
     }.bind(this);
     object._image.onerror = function (event) {
       this._createPrivateProperty(object, '_imageLoaded', false);
-      var error = 'Error loading image from URL ' + encodeURI(url);
+      var error = 'Error loading image from URL "' + url + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this);
@@ -911,7 +911,12 @@ TextElement.prototype.constructor = TextElement;
 
 TextElement.prototype.needsPreload = function (object) {
   if (object.customFont) {
-    return true;
+    if (MediaCache.get(object.customFont.url)) {
+      object.customFont.loaded = true;
+      return false;
+    } else {
+      return true;
+    }
   } else {
     return false;
   }
@@ -932,9 +937,10 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
 
     font.load().then(function () {
       object.customFont.loaded = true;
+      MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function () {
-      var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + encodeURI(url);
+      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
@@ -2130,7 +2136,7 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
 Hemp.prototype._preloadComplete = function (allDone, errors, callback) {
   if (allDone) {
-    this._finishLoading(callback, errors.join(','));
+    this._finishLoading(callback, errors);
   } else {
     this.render();
   }

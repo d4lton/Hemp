@@ -9,6 +9,7 @@
 import Element from './Element.js';
 import CanvasText from '../CanvasText/CanvasText.js';
 import '../lib/fontfaceobserver.js';
+import MediaCache from '../MediaCache.js';
 
 function TextElement() {
   Element.call(this);
@@ -21,7 +22,12 @@ TextElement.prototype.constructor = TextElement;
 
 TextElement.prototype.needsPreload = function(object) {
   if (object.customFont) {
-    return true;
+    if (MediaCache.get(object.customFont.url)) {
+      object.customFont.loaded = true;
+      return false;
+    } else {
+      return true;
+    }
   } else {
     return false;
   }
@@ -44,9 +50,10 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
 
     font.load().then(function() {
       object.customFont.loaded = true;
+      MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function() {
-      var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + encodeURI(url);
+      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));

@@ -44,7 +44,7 @@ ImageElement.prototype.preload = function(object, reflectorUrl) {
     }.bind(this);
     object._image.onerror = function(event) {
       this._createPrivateProperty(object, '_imageLoaded', false);
-      var error = 'Error loading image from URL ' + encodeURI(url);
+      var error = 'Error loading image from URL "' + url + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this);

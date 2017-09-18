@@ -152,7 +152,7 @@ Hemp.prototype.setObjects = function(objects, callback) {
 
 Hemp.prototype._preloadComplete = function(allDone, errors, callback) {
   if (allDone) {
-    this._finishLoading(callback, errors.join(','));
+    this._finishLoading(callback, errors);
   } else {
     this.render();
   }
