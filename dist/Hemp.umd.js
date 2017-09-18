@@ -931,7 +931,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
 
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url.href + "');}"));
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"));
     document.head.appendChild(style);
 
     var font = new FontFaceObserver(object.customFont.name);
@@ -941,7 +941,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
       MediaCache.set(url, object.customFont);
       resolve();
     }.bind(this), function () {
-      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url.href + '"';
+      var error = 'Error loading custom font "' + object.customFont.name + '" from URL "' + url.toString() + '"';
       this._createPrivateProperty(object, '_error', error);
       reject(error);
     }.bind(this));
