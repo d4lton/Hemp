@@ -146,7 +146,7 @@ Hemp.prototype.setObjects = function(objects, callback) {
       }.bind(this));
     }.bind(this));
   } else {
-    this._finishLoading(callback);
+    this._preloadComplete(true, [], callback);
   }
 };
 
