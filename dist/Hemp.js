@@ -403,7 +403,6 @@ Element.prototype._renderPlaceholder = function (environment, object) {
     // draw object text
     var fontSize = 40 * environment.scaling.x;
     var textObject = {
-      text: object._error.text,
       x: object.width / 2,
       y: object.height / 2,
       font: fontSize + 'pt sans-serif',
@@ -413,20 +412,19 @@ Element.prototype._renderPlaceholder = function (environment, object) {
       height: object.height,
       width: object.width
     };
-    CanvasText.drawText(this._context, textObject);
+
+    // draw Text Object's text
+    if (object.type === 'text') {
+      textObject.text = object.text;
+      CanvasText.drawText(this._context, textObject);
+    }
 
     // draw error message
     fontSize = 15 * environment.scaling.x;
-    textObject.text = object._error.message;
+    textObject.text = object._error;
     textObject.valign = 'top';
     textObject.font = fontSize + 'pt sans-serif', textObject.padding = fontSize;
     CanvasText.drawText(this._context, textObject);
-
-    // draw URL
-    fontSize = 10 * environment.scaling.x;
-    textObject.text = object._error.url;
-    textObject.valign = 'bottom';
-    textObject.font = fontSize + 'pt sans-serif', CanvasText.drawText(this._context, textObject);
   }
 };
 
@@ -519,6 +517,7 @@ ImageElement.prototype.needsPreload = function (object) {
 
 ImageElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
+    var url = this._resolveMediaUrl(object.url, reflectorUrl);
     this._createPrivateProperty(object, '_image', new Image());
     object._image.crossOrigin = 'Anonymous';
     object._image.onload = function () {
@@ -527,11 +526,11 @@ ImageElement.prototype.preload = function (object, reflectorUrl) {
       resolve();
     }.bind(this);
     object._image.onerror = function (event) {
-      this._createPrivateProperty(object, '_imageLoaded', false);
-      this._createPrivateProperty(object, '_error', { message: 'Error loading image', text: '', url: object.url });
-      reject('could not load image from ' + this._resolveMediaUrl(object.url, reflectorUrl));
+      var error = 'Error loading image from URL ' + url;
+      this._createPrivateProperty(object, '_error', error);
+      reject(error);
     }.bind(this);
-    object._image.src = this._resolveMediaUrl(object.url, reflectorUrl);
+    object._image.src = url;
   }.bind(this));
 };
 
@@ -1075,16 +1074,13 @@ function TextElement() {
 TextElement.prototype = Object.create(Element.prototype);
 TextElement.prototype.constructor = TextElement;
 
+TextElement.fontID = 0;
+
 /************************************************************************************/
 
 TextElement.prototype.needsPreload = function (object) {
   if (object.customFont) {
-    if (MediaCache.get(object.customFont.url)) {
-      object.customFont.loaded = true;
-      return false;
-    } else {
-      return true;
-    }
+    return true;
   } else {
     return false;
   }
@@ -1092,27 +1088,40 @@ TextElement.prototype.needsPreload = function (object) {
 
 TextElement.prototype.preload = function (object, reflectorUrl) {
   return new Promise(function (resolve, reject) {
+
+    var url = object.customFont.url;
+    var name = this._generateUniqueFontName(object);
+
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
-    var url = this._resolveMediaUrl(object.customFont.url, reflectorUrl);
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + object.customFont.name + "'; src: url('" + url + "');}"));
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + name + "'; src: url('" + url + "');}"));
     document.head.appendChild(style);
 
     window.WebFont.load({
       custom: {
-        families: [object.customFont.name]
+        families: [name]
       },
       active: function active() {
         object.customFont.loaded = true;
-        MediaCache.set(object.customFont.url, object.customFont);
         resolve();
       },
       inactive: function () {
-        this._createPrivateProperty(object, '_error', { message: 'Error loading custom font', text: object.text, url: object.customFont.url });
-        reject('could not load font from ' + object.customFont.url);
+        var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + url;
+        this._createPrivateProperty(object, '_error', error);
+        reject(error);
       }.bind(this)
     });
   }.bind(this));
+};
+
+TextElement.prototype._generateUniqueFontName = function (object) {
+  TextElement.fontID++;
+  var name = "HempCustomFont_" + TextElement.fontID;
+  var fontParts = object.font.split(/\s+/);
+  if (fontParts.length > 1) {
+    object.font = fontParts[0] + ' "' + name + '"';
+  }
+  return name;
 };
 
 TextElement.prototype.renderElement = function (environment, object) {
@@ -2289,27 +2298,28 @@ Hemp.prototype.setObjects = function (objects, callback) {
 
   // if there are any media-load promises, run them
   if (promises.length > 0) {
-    if (this._interactive) {
-      // if interactive, run promises in parallel to not block render
-      promises.forEach(function (promise) {
-        promise.then(function () {
-          this._finishLoading(callback);
-        }.bind(this), function () {
-          this._finishLoading(callback);
-        }.bind(this));
+    var complete = 0,
+        errors = [];
+    promises.forEach(function (promise) {
+      promise.then(function () {
+        complete++;
+        this._preloadComplete(complete >= promises.length, errors, callback);
+      }.bind(this), function (error) {
+        complete++;
+        errors.push(error);
+        this._preloadComplete(complete >= promises.length, errors, callback);
       }.bind(this));
-    } else {
-      // if not interactive, run all promises in serial, blocking render until done
-      Promise.all(promises).then(function () {
-        this._finishLoading(callback);
-      }.bind(this), function (reason) {
-        if (typeof callback === 'function') {
-          callback(this._objects, reason);
-        }
-      }.bind(this));
-    }
+    }.bind(this));
   } else {
     this._finishLoading(callback);
+  }
+};
+
+Hemp.prototype._preloadComplete = function (allDone, errors, callback) {
+  if (allDone) {
+    this._finishLoading(callback, errors);
+  } else {
+    this.render();
   }
 };
 
@@ -2373,10 +2383,10 @@ Hemp.prototype._addUpdateObjects = function (objects) {
   }.bind(this));
 };
 
-Hemp.prototype._finishLoading = function (callback) {
+Hemp.prototype._finishLoading = function (callback, errors) {
   this.render();
   if (typeof callback === 'function') {
-    callback(this._objects);
+    callback(this._objects, errors);
   }
 };
 
