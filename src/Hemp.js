@@ -106,11 +106,11 @@ Hemp.prototype.destroy = function() {
 };
 
 Hemp.prototype.toImage = function(callback) {
-  var image = new Image();
-  image.onload = function() {
-    callback(image);
-  }
-  image.src = this._environment.canvas.toDataURL("image/png");
+	var image = new Image();
+	image.onload = function() {
+  	callback(image);
+	}
+	image.src = this._environment.canvas.toDataURL("image/png");
 }
 
 Hemp.prototype.setObjects = function(objects, callback) {
@@ -134,27 +134,28 @@ Hemp.prototype.setObjects = function(objects, callback) {
 
   // if there are any media-load promises, run them
   if (promises.length > 0) {
-      var complete = 0, errors = [];
+    if (this._interactive) {
+      // if interactive, run promises in parallel to not block render
       promises.forEach(function(promise) {
         promise.then(function() {
-          complete++;
-          this._preloadComplete(complete >= promises.length, errors, callback);
-        }.bind(this), function(error) {
-          complete++;
-          errors.push(error);
-          this._preloadComplete(complete >= promises.length, errors, callback);
+          this._finishLoading(callback);
+        }.bind(this), function() {
+          this._finishLoading(callback);
         }.bind(this));
       }.bind(this));
+      
+    } else {
+      // if not interactive, run all promises in serial, blocking render until done
+      Promise.all(promises).then(function() {
+        this._finishLoading(callback);
+      }.bind(this), function(reason) {
+        if (typeof callback === 'function') {
+          callback(this._objects, reason);
+        }
+      }.bind(this));
+    }
   } else {
     this._finishLoading(callback);
-  }
-};
-
-Hemp.prototype._preloadComplete = function(allDone, errors, callback) {
-  if (allDone) {
-    this._finishLoading(callback, errors);
-  } else {
-    this.render();
   }
 };
 
@@ -219,10 +220,10 @@ Hemp.prototype._addUpdateObjects = function(objects) {
 
 };
 
-Hemp.prototype._finishLoading = function(callback, errors) {
+Hemp.prototype._finishLoading = function(callback) {
   this.render();
   if (typeof callback === 'function') {
-    callback(this._objects, errors.join(','));
+    callback(this._objects);
   }
 };
 

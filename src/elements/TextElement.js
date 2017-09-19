@@ -18,13 +18,16 @@ function TextElement() {
 TextElement.prototype = Object.create(Element.prototype);
 TextElement.prototype.constructor = TextElement;
 
-TextElement.fontID = 0;
-
 /************************************************************************************/
 
 TextElement.prototype.needsPreload = function(object) {
   if (object.customFont) {
-    return true;
+    if (MediaCache.get(object.customFont.url)) {
+      object.customFont.loaded = true;
+      return false;
+    } else {
+      return true;
+    }
   } else {
     return false;
   }
@@ -32,43 +35,33 @@ TextElement.prototype.needsPreload = function(object) {
 
 TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
-
-    var url = object.customFont.url;
-    var name = this._generateUniqueFontName(object);
-
     // add @font-face for object.customFont.name and object.customFont.url
     var style = document.createElement('style');
+    var url = this._resolveMediaUrl(object.customFont.url, reflectorUrl);
     style.appendChild(document.createTextNode(
-      '@font-face {font-family: "' + name + '"; src: url("' + url + '");}'
+      "@font-face {font-family: '" +
+      object.customFont.name +
+      "'; src: url('" +
+      url +
+      "');}"
     ));
     document.head.appendChild(style);
 
     window.WebFont.load({
       custom: {
-        families: [name]
+        families: [object.customFont.name]
       },
-      active: function active() {
+      active: function() {
         object.customFont.loaded = true;
+        MediaCache.set(object.customFont.url, object.customFont);
         resolve();
       },
-      inactive: function () {
-        var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + url;
-        this._createPrivateProperty(object, '_error', error);
-        reject(error);
-      }.bind(this)
+      inactive: function() {
+        this._createPrivateProperty(object, '_error', {message: 'Error loading custom font', text: object.text, url: object.customFont.url});
+        reject('could not load font from ' + object.customFont.url);
+      }.bind(this),
     });
-
   }.bind(this));
-};
-
-TextElement.prototype._generateUniqueFontName = function(object) {
-  TextElement.fontID++;
-  var name = "CustomFont_" + TextElement.fontID;
-  var fontParts = object.font.split(/\s+/);
-  if (fontParts.length > 1) {
-    object.font = fontParts[0] + ' "' + name + '"';
-  }
-  return name;
 };
 
 TextElement.prototype.renderElement = function(environment, object) {
@@ -169,13 +162,11 @@ TextElement.getTypes = function() {
                   label: '',
                   fontIcon: 'fa fa-align-right'
                 },
-/*
                 {
                   value: 'fit',
                   label: '',
                   fontIcon: 'fa fa-align-justify'
                 }
-*/
               ],
               default: 'center'
             },
@@ -339,5 +330,6 @@ TextElement.getTypes = function() {
     }
   };
 };
+
 
 export default TextElement;
