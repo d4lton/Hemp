@@ -1117,7 +1117,7 @@ TextElement.prototype.preload = function (object, reflectorUrl) {
 TextElement.prototype._generateUniqueFontName = function (object) {
   var name = TextElement.fontURLCache[object.customFont.url];
 
-  // if we haven't seen this font URL, cache it and create the @font-face style
+  // if we haven't seen this font URL, generate a new name, cache it and create the @font-face style
   if (!name) {
     // generate a unique font name
     TextElement.fontID++;
@@ -1126,7 +1126,7 @@ TextElement.prototype._generateUniqueFontName = function (object) {
     TextElement.fontURLCache[object.customFont.url] = name;
     // create the @font-face style
     var style = document.createElement('style');
-    style.appendChild(document.createTextNode("@font-face {font-family: '" + name + "'; src: url('" + object.customFont.url + "');}"));
+    style.appendChild(document.createTextNode('@font-face {font-family: "' + name + '"; src: url("' + object.customFont.url + '");}'));
     document.head.appendChild(style);
   }
   // extract the font size from the font, rebuild the font with the generated font name
