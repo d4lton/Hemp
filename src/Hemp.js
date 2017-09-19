@@ -222,7 +222,7 @@ Hemp.prototype._addUpdateObjects = function(objects) {
 Hemp.prototype._finishLoading = function(callback, errors) {
   this.render();
   if (typeof callback === 'function') {
-    callback(this._objects, errors);
+    callback(this._objects, errors.join(','));
   }
 };
 

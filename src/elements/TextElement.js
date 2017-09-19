@@ -19,6 +19,7 @@ TextElement.prototype = Object.create(Element.prototype);
 TextElement.prototype.constructor = TextElement;
 
 TextElement.fontID = 0;
+TextElement.fontURLCache = {};
 
 /************************************************************************************/
 
@@ -33,15 +34,8 @@ TextElement.prototype.needsPreload = function(object) {
 TextElement.prototype.preload = function(object, reflectorUrl) {
   return new Promise(function(resolve, reject) {
 
-    var url = object.customFont.url;
+    // get a unique name for this font's URL
     var name = this._generateUniqueFontName(object);
-
-    // add @font-face for object.customFont.name and object.customFont.url
-    var style = document.createElement('style');
-    style.appendChild(document.createTextNode(
-      "@font-face {font-family: '" + name + "'; src: url('" + url + "');}"
-    ));
-    document.head.appendChild(style);
 
     window.WebFont.load({
       custom: {
@@ -52,7 +46,7 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
         resolve();
       },
       inactive: function () {
-        var error = 'Error loading custom font ' + object.customFont.name + ' from URL ' + url;
+        var error = 'Error loading custom font from URL ' + object.customFont.url;
         this._createPrivateProperty(object, '_error', error);
         reject(error);
       }.bind(this)
@@ -62,8 +56,21 @@ TextElement.prototype.preload = function(object, reflectorUrl) {
 };
 
 TextElement.prototype._generateUniqueFontName = function(object) {
-  TextElement.fontID++;
-  var name = "HempCustomFont_" + TextElement.fontID;
+  var name = TextElement.fontURLCache[object.customFont.url];
+
+  // if we haven't seen this font URL, cache it and create the @font-face style
+  if (!name) {
+    // generate a unique font name
+    TextElement.fontID++;
+    name = "HempCustomFont_" + TextElement.fontID;
+    // cache the name for this URL
+    TextElement.fontURLCache[object.customFont.url] = name;
+    // create the @font-face style
+    var style = document.createElement('style');
+    style.appendChild(document.createTextNode("@font-face {font-family: '" + name + "'; src: url('" + object.customFont.url + "');}"));
+    document.head.appendChild(style);
+  }
+  // extract the font size from the font, rebuild the font with the generated font name
   var fontParts = object.font.split(/\s+/);
   if (fontParts.length > 1) {
     object.font = fontParts[0] + ' "' + name + '"';
